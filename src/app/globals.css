@@ -68,8 +68,25 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --radius: var(--radius);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-dm-serif);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* MusicBox design tokens */
+  --color-mb-bg: #0A0A0F;
+  --color-mb-card: #111118;
+  --color-mb-border: #252332;
+  --color-mb-input: #1A1A26;
+  --color-mb-primary: #6B35D4;
+  --color-mb-primary-h: #8B56E8;
+  --color-mb-dp: #1E0A3C;
+  --color-mb-ddp: #3D1A7A;
+  --color-mb-text: #F0EEFA;
+  --color-mb-muted: #9B95B0;
+  --color-mb-dim: #5C5670;
+  --color-mb-accent: #C4A8F5;
+  --color-mb-error: #F87171;
+  --color-mb-success: #4ADE80;
 }
 
 body {
