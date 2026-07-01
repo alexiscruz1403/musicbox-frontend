@@ -6,6 +6,13 @@ import type {
   HandleCheckResponse,
   AvatarUploadResponse,
   RefreshResponse,
+  CatalogAlbum,
+  CatalogTrack,
+  CatalogPage,
+  CatalogSearchResult,
+  CatalogSearchType,
+  ReviewsResponse,
+  TrendingAlbum,
 } from "@/types/api";
 import { tokenStore } from "@/lib/token-store";
 
@@ -226,4 +233,71 @@ export async function apiUnfollow(
     method: "DELETE",
     accessToken,
   });
+}
+
+// Catalog endpoints
+
+export async function apiCatalogSearch(
+  q: string,
+  type: CatalogSearchType,
+  limit = 20,
+  cursor?: string,
+): Promise<ApiSuccessResponse<CatalogPage<CatalogSearchResult>>> {
+  const params = new URLSearchParams({ q, type, limit: String(limit) });
+  if (cursor) params.set("cursor", cursor);
+  return apiFetch<ApiSuccessResponse<CatalogPage<CatalogSearchResult>>>(
+    `/catalog/search?${params}`,
+  );
+}
+
+export async function apiCatalogAlbum(
+  deezerId: string,
+): Promise<ApiSuccessResponse<CatalogAlbum>> {
+  return apiFetch<ApiSuccessResponse<CatalogAlbum>>(
+    `/catalog/albums/${deezerId}`,
+  );
+}
+
+export async function apiCatalogTrack(
+  deezerId: string,
+): Promise<ApiSuccessResponse<CatalogTrack>> {
+  return apiFetch<ApiSuccessResponse<CatalogTrack>>(
+    `/catalog/tracks/${deezerId}`,
+  );
+}
+
+// Reviews (Fase 3 — backend not yet implemented)
+
+export async function apiAlbumReviews(
+  deezerId: string,
+  sort: "recent" | "rating" = "recent",
+  cursor?: string,
+): Promise<ApiSuccessResponse<ReviewsResponse>> {
+  const params = new URLSearchParams({ sort });
+  if (cursor) params.set("cursor", cursor);
+  return apiFetch<ApiSuccessResponse<ReviewsResponse>>(
+    `/albums/${deezerId}/reviews?${params}`,
+  );
+}
+
+export async function apiTrackReviews(
+  deezerId: string,
+  sort: "recent" | "rating" = "recent",
+  cursor?: string,
+): Promise<ApiSuccessResponse<ReviewsResponse>> {
+  const params = new URLSearchParams({ sort });
+  if (cursor) params.set("cursor", cursor);
+  return apiFetch<ApiSuccessResponse<ReviewsResponse>>(
+    `/tracks/${deezerId}/reviews?${params}`,
+  );
+}
+
+// Trending (Fase 5 — backend not yet implemented)
+
+export async function apiTrendingAlbums(
+  limit = 6,
+): Promise<ApiSuccessResponse<{ items: TrendingAlbum[] }>> {
+  return apiFetch<ApiSuccessResponse<{ items: TrendingAlbum[] }>>(
+    `/trending/albums?limit=${limit}`,
+  );
 }
