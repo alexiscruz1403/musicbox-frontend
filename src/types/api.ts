@@ -85,3 +85,80 @@ export interface PaginatedFollowersResponse {
   items: FollowerItem[];
   nextCursor: string | null;
 }
+
+// ─── Catalog ─────────────────────────────────────────────────────────────────
+
+export interface CatalogArtist {
+  deezerId: string;
+  name: string;
+  imageUrl: string | null;
+}
+
+export interface CatalogTrack {
+  deezerId: string;
+  title: string;
+  artist: CatalogArtist;
+  albumDeezerId: string | null;
+  coverUrl: string | null;
+  releaseDate: string | null;
+  durationMs: number | null;
+  trackNumber: number | null;
+  previewUrl: string | null;
+}
+
+export interface CatalogAlbum {
+  deezerId: string;
+  title: string;
+  artist: CatalogArtist;
+  coverUrl: string | null;
+  releaseDate: string | null;
+  genreLabel: string | null;
+  tracks: CatalogTrack[];
+}
+
+export interface CatalogPage<T> {
+  items: T[];
+  nextCursor: string | null;
+  total: number;
+}
+
+export type CatalogSearchType = "album" | "track" | "artist";
+
+export type CatalogSearchResult =
+  | { type: "artist"; item: CatalogArtist }
+  | { type: "album"; item: CatalogAlbum }
+  | { type: "track"; item: CatalogTrack };
+
+// ─── Reviews (Fase 3) ────────────────────────────────────────────────────────
+
+export interface CatalogReview {
+  id: string;
+  user: {
+    handle: string;
+    displayName: string;
+    avatarUrl: string | null;
+  };
+  rating: number;
+  description: string;
+  likesCount: number;
+  dislikesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  userReaction: "LIKE" | "DISLIKE" | null;
+}
+
+export interface ReviewsResponse {
+  items: CatalogReview[];
+  nextCursor: string | null;
+}
+
+// ─── Trending (Fase 5) ───────────────────────────────────────────────────────
+
+export interface TrendingAlbum {
+  deezerId: string;
+  title: string;
+  artistName: string;
+  coverUrl: string | null;
+  avgRating: number | null;
+  reviewCount: number;
+}
