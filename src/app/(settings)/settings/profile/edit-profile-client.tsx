@@ -10,6 +10,7 @@ import {
   apiCheckHandle,
   ApiError,
 } from "@/lib/api";
+import { getInitials } from "@/lib/review-format";
 import type { MeResponse } from "@/types/api";
 
 type HandleStatus =
@@ -27,14 +28,6 @@ const BIO_MAX = 300;
 interface EditProfileClientProps {
   initialUser: MeResponse["user"];
   accessToken: string;
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
 }
 
 export default function EditProfileClient({

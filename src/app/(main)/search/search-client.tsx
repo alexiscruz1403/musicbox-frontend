@@ -7,6 +7,7 @@ import { Search, X } from "lucide-react";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiCatalogSearch, apiTrendingAlbums } from "@/lib/api";
+import { ratingColor, formatMs, getInitials, coverGradient } from "@/lib/review-format";
 import type {
   CatalogAlbum,
   CatalogTrack,
@@ -15,28 +16,6 @@ import type {
 } from "@/types/api";
 
 type SearchTab = "todo" | "albums" | "songs" | "artists";
-
-function ratingColor(r: number): string {
-  if (r >= 8) return "#A78BFA";
-  if (r >= 5) return "#7C6CAD";
-  return "#4A4265";
-}
-
-function formatMs(ms: number): string {
-  const total = Math.round(ms / 1000);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function getInitials(name: string | null | undefined): string {
-  if (!name) return "?";
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
@@ -59,14 +38,6 @@ function ArtistChipSkeleton() {
   );
 }
 
-// ─── Album cover placeholder (gradient by deezerId hash) ─────────────────────
-
-function coverGradient(seed: string): string {
-  const h = seed.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const hues = [258, 280, 240, 300, 220];
-  const hue = hues[h % hues.length];
-  return `linear-gradient(135deg, hsl(${hue},60%,20%) 0%, hsl(${hue + 20},40%,12%) 100%)`;
-}
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 

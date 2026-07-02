@@ -152,6 +152,87 @@ export interface ReviewsResponse {
   nextCursor: string | null;
 }
 
+// ─── Reviews (Fase 3) — create/detail/history ─────────────────────────────────
+
+export type ReviewType = "TRACK" | "ALBUM";
+
+export interface TrackReviewItemDto {
+  deezerId: string;
+  rating: number;
+  description?: string;
+}
+
+export interface CreateReviewDto {
+  type: ReviewType;
+  deezerId: string;
+  description: string;
+  rating?: number;
+  trackItems?: TrackReviewItemDto[];
+}
+
+export interface UpdateReviewDto {
+  description?: string;
+  rating?: number;
+  trackItems?: TrackReviewItemDto[];
+}
+
+export interface Review {
+  id: string;
+  userId: string;
+  type: ReviewType;
+  rating: string;
+  description: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface TrackReviewItem {
+  deezerId?: string;
+  title?: string;
+  trackNumber?: number | null;
+  rating: number;
+  description: string | null;
+}
+
+export interface ReviewDetail {
+  id: string;
+  userId: string;
+  type: ReviewType;
+  rating: string;
+  description: string;
+  createdAt: string;
+  updatedAt?: string;
+  user: {
+    handle: string;
+    displayName: string;
+    avatarUrl: string | null;
+  };
+  externalTitle?: string;
+  externalArtistName?: string;
+  externalCoverUrl?: string | null;
+  targetDeezerId?: string;
+  trackReviewItems?: TrackReviewItem[];
+  reactionStats: { likes: number; dislikes: number };
+}
+
+export interface UserReviewHistoryItem {
+  id: string;
+  type: ReviewType;
+  rating: string;
+  description: string;
+  createdAt: string;
+  externalTitle?: string;
+  externalArtistName?: string;
+  externalCoverUrl?: string | null;
+  targetDeezerId?: string;
+  avatarUrl?: string | null;
+}
+
+export interface UserReviewHistoryResponse {
+  items: UserReviewHistoryItem[];
+  nextCursor: string | null;
+}
+
 // ─── Trending (Fase 5) ───────────────────────────────────────────────────────
 
 export interface TrendingAlbum {

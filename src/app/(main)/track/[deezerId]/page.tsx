@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { auth } from "@/auth";
 import { apiCatalogTrack } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { TrackClient } from "./track-client";
@@ -22,6 +23,7 @@ export default async function TrackPage({
   params,
 }: PageProps<"/track/[deezerId]">) {
   const { deezerId } = await params;
+  const session = await auth();
 
   let track;
   try {
@@ -34,5 +36,5 @@ export default async function TrackPage({
     throw err;
   }
 
-  return <TrackClient track={track} />;
+  return <TrackClient track={track} hasSession={!!session} />;
 }

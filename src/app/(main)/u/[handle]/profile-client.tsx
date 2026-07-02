@@ -1,27 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { UserCheck, UserPlus, Pencil } from "lucide-react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { apiFollow, apiUnfollow } from "@/lib/api";
-import type { PublicProfileResponse } from "@/types/api";
+import { apiFollow, apiUnfollow, apiUserReviews } from "@/lib/api";
+import { getInitials } from "@/lib/review-format";
+import { ProfileReviewCard } from "@/components/reviews/profile-review-card";
+import type { PublicProfileResponse, UserReviewHistoryItem } from "@/types/api";
 
-type Tab = "reviews" | "albums" | "songs";
+type Tab = "todo" | "albums" | "songs";
 
 interface ProfileClientProps {
   profile: PublicProfileResponse;
   isOwnProfile: boolean;
   currentUserHandle?: string;
   accessToken?: string;
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
 }
 
 function StatItem({ value, label }: { value: number; label: string }) {
@@ -45,10 +40,81 @@ export default function ProfileClient({
   const [followerCount, setFollowerCount] = useState(
     profile.stats.followersCount,
   );
-  const [activeTab, setActiveTab] = useState<Tab>("reviews");
+  const [activeTab, setActiveTab] = useState<Tab>("todo");
   const [isPending, startTransition] = useTransition();
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { user, stats } = profile;
+
+  const {
+    data: reviewPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetching: reviewsFetching,
+  } = useInfiniteQuery({
+    queryKey: ["user-reviews", user.handle],
+    queryFn: ({ pageParam }) => apiUserReviews(user.handle, pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
+    staleTime: 60 * 1000,
+  });
+
+  const reviewItems = (reviewPages?.pages ?? []).flatMap((p) => p.data.items);
+  const albumItems = reviewItems.filter((item) => item.type === "ALBUM");
+  const songItems = reviewItems.filter((item) => item.type === "TRACK");
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasNextPage) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
+      },
+      { threshold: 0.1 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [activeTab, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  function renderReviewList(items: UserReviewHistoryItem[], emptyMessage: string) {
+    if (reviewsFetching && reviewItems.length === 0) {
+      return (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse h-24 bg-mb-card border border-mb-border rounded-xl"
+            />
+          ))}
+        </div>
+      );
+    }
+    if (items.length === 0) {
+      return (
+        <div className="py-12 text-center">
+          <p className="text-mb-muted text-sm">{emptyMessage}</p>
+        </div>
+      );
+    }
+    return (
+      <>
+        <div className="space-y-3 pb-6">
+          {items.map((item) => (
+            <ProfileReviewCard key={item.id} item={item} />
+          ))}
+        </div>
+        <div ref={sentinelRef} className="h-8 flex items-center justify-center mt-4">
+          {isFetchingNextPage && (
+            <div
+              className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
+              aria-label="Cargando más reseñas"
+            />
+          )}
+        </div>
+      </>
+    );
+  }
 
   function handleFollowToggle() {
     if (!accessToken) return;
@@ -172,7 +238,7 @@ export default function ProfileClient({
           <div className="flex gap-0">
             {(
               [
-                { id: "reviews" as Tab, label: "Reseñas" },
+                { id: "todo" as Tab, label: "Todo" },
                 { id: "albums" as Tab, label: "Álbumes" },
                 { id: "songs" as Tab, label: "Canciones" },
               ] as const
@@ -193,15 +259,13 @@ export default function ProfileClient({
           </div>
         </div>
 
-        {/* Tab content — all empty in Fase 1 */}
-        <div className="py-12 text-center space-y-2">
-          <p className="text-mb-muted text-sm">
-            {activeTab === "reviews" &&
-              "Todavía no hay reseñas. ¡Sé el primero en compartir!"}
-            {activeTab === "albums" && "Todavía no hay álbumes favoritos."}
-            {activeTab === "songs" && "Todavía no hay canciones favoritas."}
-          </p>
-        </div>
+        {/* Tab content */}
+        {activeTab === "todo" &&
+          renderReviewList(reviewItems, "Todavía no hay reseñas. ¡Sé el primero en compartir!")}
+        {activeTab === "albums" &&
+          renderReviewList(albumItems, "Todavía no hay reseñas de álbumes.")}
+        {activeTab === "songs" &&
+          renderReviewList(songItems, "Todavía no hay reseñas de canciones.")}
       </div>
     </div>
   );
