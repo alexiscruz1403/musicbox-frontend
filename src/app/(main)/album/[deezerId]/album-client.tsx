@@ -1,57 +1,22 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Play } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiAlbumReviews } from "@/lib/api";
-import type { CatalogAlbum, CatalogReview } from "@/types/api";
+import { formatMs, coverGradient } from "@/lib/review-format";
+import { CommunityReviewList } from "@/components/reviews/community-review-list";
+import { useMeasuredWidth } from "@/hooks/use-measured-width";
+import type { CatalogAlbum } from "@/types/api";
 
 type ReviewSort = "recent" | "rating";
-
-function ratingColor(r: number): string {
-  if (r >= 8) return "#A78BFA";
-  if (r >= 5) return "#7C6CAD";
-  return "#4A4265";
-}
-
-function formatMs(ms: number): string {
-  const total = Math.round(ms / 1000);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
 
 function releaseYear(date: string | null): string {
   if (!date) return "";
   return date.slice(0, 4);
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `hace ${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `hace ${hours}h`;
-  const days = Math.floor(hours / 24);
-  return `hace ${days}d`;
-}
-
-function coverGradient(seed: string): string {
-  const h = seed.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const hues = [258, 280, 240, 300, 220];
-  const hue = hues[h % hues.length];
-  return `linear-gradient(135deg, hsl(${hue},60%,20%) 0%, hsl(${hue + 20},40%,12%) 100%)`;
 }
 
 // ─── Animated wave bars ──────────────────────────────────────────────────────
@@ -83,91 +48,20 @@ function WaveBars({ playing }: { playing: boolean }) {
   );
 }
 
-// ─── Review card ─────────────────────────────────────────────────────────────
-
-function ReviewCard({ review }: { review: CatalogReview }) {
-  const [reaction, setReaction] = useState<"LIKE" | "DISLIKE" | null>(
-    review.userReaction,
-  );
-
-  return (
-    <article className="bg-mb-card border border-mb-border rounded-xl p-5">
-      <div className="flex items-center gap-2.5 mb-3.5">
-        <span
-          aria-hidden
-          className="w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-xs font-semibold text-mb-accent shrink-0"
-        >
-          {getInitials(review.user.displayName)}
-        </span>
-        <div className="min-w-0 flex-1 flex items-baseline gap-1.5 flex-wrap">
-          <span className="text-sm font-medium text-mb-text">
-            {review.user.displayName}
-          </span>
-          <Link
-            href={`/u/${review.user.handle}`}
-            className="font-mono text-xs text-mb-muted hover:text-mb-accent"
-          >
-            @{review.user.handle}
-          </Link>
-          <span className="text-xs text-mb-dim">· {timeAgo(review.createdAt)}</span>
-        </div>
-        <span
-          className="shrink-0 font-mono font-bold text-[26px] leading-none"
-          style={{ color: ratingColor(review.rating) }}
-        >
-          {review.rating.toFixed(1)}
-        </span>
-      </div>
-
-      <p className="text-[15px] leading-relaxed text-mb-text mb-3.5 line-clamp-4">
-        {review.description}
-      </p>
-
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => setReaction((r) => (r === "LIKE" ? null : "LIKE"))}
-          aria-label="Me gusta"
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input"
-          style={{ color: reaction === "LIKE" ? "#8B56E8" : "#9B95B0" }}
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v11"/><path d="M7 10l4-7a2.5 2.5 0 0 1 3 2.5L13.5 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>
-          {review.likesCount + (reaction === "LIKE" ? 1 : 0)}
-        </button>
-        <button
-          type="button"
-          onClick={() => setReaction((r) => (r === "DISLIKE" ? null : "DISLIKE"))}
-          aria-label="No me gusta"
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input"
-          style={{ color: reaction === "DISLIKE" ? "#8B56E8" : "#9B95B0" }}
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M17 14V3"/><path d="M17 14l-4 7a2.5 2.5 0 0 1-3-2.5L10.5 15H5a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 6.2 4H17"/></svg>
-          {review.dislikesCount + (reaction === "DISLIKE" ? 1 : 0)}
-        </button>
-        <button
-          type="button"
-          aria-label="Comentarios"
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors"
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8 8 0 0 1-11.7 7L3 21l2.5-6.3A8 8 0 1 1 21 11.5Z"/></svg>
-          {review.commentsCount}
-        </button>
-      </div>
-    </article>
-  );
-}
-
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface AlbumClientProps {
   album: CatalogAlbum;
+  hasSession: boolean;
 }
 
-export function AlbumClient({ album }: AlbumClientProps) {
+export function AlbumClient({ album, hasSession }: AlbumClientProps) {
   const router = useRouter();
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [titleRef, titleWidth] = useMeasuredWidth<HTMLHeadingElement>([album.title]);
 
   const togglePlay = useCallback(
     (trackId: string, previewUrl: string | null) => {
@@ -191,13 +85,34 @@ export function AlbumClient({ album }: AlbumClientProps) {
     [playingId],
   );
 
-  const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
+  const {
+    data: reviewPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetching: reviewsFetching,
+  } = useInfiniteQuery({
     queryKey: ["album-reviews", album.deezerId, reviewSort],
-    queryFn: () => apiAlbumReviews(album.deezerId, reviewSort),
+    queryFn: ({ pageParam }) => apiAlbumReviews(album.deezerId, reviewSort, pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
     staleTime: 60 * 1000,
   });
 
-  const reviews: CatalogReview[] = reviewsData?.data?.items ?? [];
+  const reviews = (reviewPages?.pages ?? []).flatMap((p) => p.data.items);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasNextPage) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
+      },
+      { threshold: 0.1 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const reviewTabs: { id: ReviewSort; label: string }[] = [
     { id: "recent", label: "Recientes" },
@@ -242,7 +157,10 @@ export function AlbumClient({ album }: AlbumClientProps) {
             <span className="inline-block px-2.5 py-1 border border-mb-ddp rounded-full text-[11px] tracking-widest uppercase text-mb-accent font-semibold mb-3.5">
               Álbum
             </span>
-            <h1 className="font-serif font-normal text-[32px] md:text-5xl leading-[1.05] text-mb-text mb-2.5">
+            <h1
+              ref={titleRef}
+              className="font-serif font-normal text-[32px] md:text-5xl leading-[1.05] text-mb-text mb-2.5"
+            >
               {album.title}
             </h1>
             <div className="flex items-center gap-2 flex-wrap mb-5 justify-center md:justify-start">
@@ -261,13 +179,16 @@ export function AlbumClient({ album }: AlbumClientProps) {
                 </>
               )}
             </div>
-            <div
-              aria-hidden
-              className="h-px w-[200px] mx-auto md:mx-0 mb-5"
-              style={{
-                background: "linear-gradient(90deg,#6B35D4,transparent)",
-              }}
-            />
+            {titleWidth !== null && (
+              <div
+                aria-hidden
+                className="h-px mx-auto md:mx-0 mb-5"
+                style={{
+                  width: titleWidth,
+                  background: "linear-gradient(90deg,#6B35D4,transparent)",
+                }}
+              />
+            )}
             <div className="flex items-end gap-6 flex-wrap justify-center md:justify-start">
               <div role="group" aria-label="0 reseñas">
                 <p className="text-mb-muted text-sm mt-1.5">
@@ -276,6 +197,13 @@ export function AlbumClient({ album }: AlbumClientProps) {
               </div>
               <button
                 type="button"
+                onClick={() =>
+                  router.push(
+                    hasSession
+                      ? `/album/${album.deezerId}/review/new`
+                      : `/login?callbackUrl=${encodeURIComponent(`/album/${album.deezerId}/review/new`)}`,
+                  )
+                }
                 className="h-12 px-7 bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)]"
               >
                 Escribir reseña
@@ -370,37 +298,13 @@ export function AlbumClient({ album }: AlbumClientProps) {
           </div>
 
           {/* Review list */}
-          {reviewsLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="animate-pulse bg-mb-card border border-mb-border rounded-xl p-5">
-                  <div className="flex items-center gap-2.5 mb-3">
-                    <div className="w-9 h-9 rounded-full bg-mb-input" />
-                    <div className="flex-1 space-y-1.5">
-                      <div className="h-3 w-1/3 rounded bg-mb-input" />
-                      <div className="h-3 w-1/4 rounded bg-mb-input" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-3 rounded bg-mb-input" />
-                    <div className="h-3 w-4/5 rounded bg-mb-input" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : reviews.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-mb-muted text-sm">
-                Todavía no hay reseñas de este álbum.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {reviews.map((r) => (
-                <ReviewCard key={r.id} review={r} />
-              ))}
-            </div>
-          )}
+          <CommunityReviewList
+            reviews={reviews}
+            isLoading={reviewsFetching && reviews.length === 0}
+            isFetchingNextPage={isFetchingNextPage}
+            sentinelRef={sentinelRef}
+            emptyMessage="Todavía no hay reseñas de este álbum."
+          />
         </section>
       </div>
 

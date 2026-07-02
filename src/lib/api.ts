@@ -12,7 +12,14 @@ import type {
   CatalogSearchResult,
   CatalogSearchType,
   ReviewsResponse,
+  CatalogReview,
   TrendingAlbum,
+  CreateReviewDto,
+  UpdateReviewDto,
+  Review,
+  ReviewType,
+  ReviewDetail,
+  UserReviewHistoryResponse,
 } from "@/types/api";
 import { tokenStore } from "@/lib/token-store";
 
@@ -266,7 +273,201 @@ export async function apiCatalogTrack(
   );
 }
 
-// Reviews (Fase 3 — backend not yet implemented)
+// Reviews (Fase 3)
+//
+// The backend's listing endpoints (/albums/:id/reviews, /tracks/:id/reviews,
+// /users/:handle/reviews) respond with { data: Row[], meta: { cursor } } — a flat
+// array in `data` plus the cursor in `meta`, NOT the nested { items, nextCursor }
+// shape used by the Catalog module. The functions below fetch that raw envelope
+// and normalize it into the { items, nextCursor } shape the rest of the frontend
+// expects. Raw row shapes come from ReviewsRepository/ReviewsController in
+// musicbox-api (not fully documented in fase-3-features.md).
+
+interface RawListEnvelope<T> {
+  data: T[];
+  meta: { cursor: string | null };
+}
+
+interface RawReviewUser {
+  id: string;
+  handle: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+interface RawReviewListRow {
+  id: string;
+  rating: string;
+  description: string;
+  createdAt: string;
+  user: RawReviewUser;
+}
+
+function toCatalogReview(row: RawReviewListRow): CatalogReview {
+  return {
+    id: row.id,
+    user: {
+      handle: row.user.handle,
+      displayName: row.user.displayName,
+      avatarUrl: row.user.avatarUrl,
+    },
+    rating: Number(row.rating),
+    description: row.description,
+    // SocialModule (Fase 4) doesn't write reactions/comments yet — always 0/null.
+    likesCount: 0,
+    dislikesCount: 0,
+    commentsCount: 0,
+    userReaction: null,
+    createdAt: row.createdAt,
+  };
+}
+
+interface RawUserReviewRow {
+  id: string;
+  type: ReviewType;
+  rating: string;
+  description: string;
+  createdAt: string;
+  externalTitle: string;
+  externalArtistName: string;
+  externalCoverUrl: string | null;
+  // Flattened onto the row by ReviewsService.listByUserHandle (no nested
+  // `user` object here — the caller already knows whose history this is).
+  avatarUrl: string | null;
+}
+
+interface RawTrackReviewItem {
+  id: string;
+  trackId: string;
+  rating: number;
+  description: string | null;
+  position: number;
+  // Nested Track relation — ReviewsRepository.findById includes it so the UI
+  // can show the real track title instead of a "Canción N" placeholder.
+  track?: { deezerId: string; title: string; trackNumber: number | null } | null;
+}
+
+interface RawReviewDetail {
+  id: string;
+  userId: string;
+  type: ReviewType;
+  rating: string;
+  description: string;
+  createdAt: string;
+  updatedAt?: string;
+  externalTitle: string;
+  externalArtistName: string;
+  externalCoverUrl: string | null;
+  trackReviewItems?: RawTrackReviewItem[];
+  album: { deezerId: string } | null;
+  track: { deezerId: string } | null;
+  reactionStats: { likes: number; dislikes: number };
+  // Kept optional so older backend deployments (or a query without the
+  // include) still degrade to a "Usuario" fallback instead of crashing.
+  user?: RawReviewUser;
+}
+
+function toReviewDetail(row: RawReviewDetail): ReviewDetail {
+  return {
+    id: row.id,
+    userId: row.userId,
+    type: row.type,
+    rating: row.rating,
+    description: row.description,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    user: row.user
+      ? { handle: row.user.handle, displayName: row.user.displayName, avatarUrl: row.user.avatarUrl }
+      : { handle: "", displayName: "Usuario", avatarUrl: null },
+    externalTitle: row.externalTitle,
+    externalArtistName: row.externalArtistName,
+    externalCoverUrl: row.externalCoverUrl,
+    targetDeezerId: row.album?.deezerId ?? row.track?.deezerId,
+    trackReviewItems: row.trackReviewItems?.map((item) => ({
+      deezerId: item.track?.deezerId,
+      title: item.track?.title,
+      trackNumber: item.track?.trackNumber ?? item.position,
+      rating: item.rating,
+      description: item.description,
+    })),
+    reactionStats: row.reactionStats,
+  };
+}
+
+export async function apiCreateReview(
+  accessToken: string,
+  payload: CreateReviewDto,
+  idempotencyKey: string,
+): Promise<ApiSuccessResponse<Review>> {
+  return apiFetch<ApiSuccessResponse<Review>>("/reviews", {
+    method: "POST",
+    accessToken,
+    headers: { "Idempotency-Key": idempotencyKey },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function apiGetReview(
+  id: string,
+  accessToken?: string,
+): Promise<ApiSuccessResponse<ReviewDetail>> {
+  const raw = await apiFetch<ApiSuccessResponse<RawReviewDetail>>(`/reviews/${id}`, {
+    accessToken,
+  });
+  return { data: toReviewDetail(raw.data) };
+}
+
+export async function apiUpdateReview(
+  accessToken: string,
+  id: string,
+  payload: UpdateReviewDto,
+): Promise<ApiSuccessResponse<Review>> {
+  return apiFetch<ApiSuccessResponse<Review>>(`/reviews/${id}`, {
+    method: "PATCH",
+    accessToken,
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function apiDeleteReview(
+  accessToken: string,
+  id: string,
+): Promise<void> {
+  return apiFetch<void>(`/reviews/${id}`, {
+    method: "DELETE",
+    accessToken,
+  });
+}
+
+export async function apiUserReviews(
+  handle: string,
+  cursor?: string,
+  accessToken?: string,
+): Promise<ApiSuccessResponse<UserReviewHistoryResponse>> {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  const qs = params.toString();
+  const raw = await apiFetch<RawListEnvelope<RawUserReviewRow>>(
+    `/users/${handle}/reviews${qs ? `?${qs}` : ""}`,
+    { accessToken },
+  );
+  return {
+    data: {
+      items: raw.data.map((row) => ({
+        id: row.id,
+        type: row.type,
+        rating: row.rating,
+        description: row.description,
+        createdAt: row.createdAt,
+        externalTitle: row.externalTitle,
+        externalArtistName: row.externalArtistName,
+        externalCoverUrl: row.externalCoverUrl,
+        avatarUrl: row.avatarUrl,
+      })),
+      nextCursor: raw.meta.cursor,
+    },
+  };
+}
 
 export async function apiAlbumReviews(
   deezerId: string,
@@ -275,9 +476,10 @@ export async function apiAlbumReviews(
 ): Promise<ApiSuccessResponse<ReviewsResponse>> {
   const params = new URLSearchParams({ sort });
   if (cursor) params.set("cursor", cursor);
-  return apiFetch<ApiSuccessResponse<ReviewsResponse>>(
+  const raw = await apiFetch<RawListEnvelope<RawReviewListRow>>(
     `/albums/${deezerId}/reviews?${params}`,
   );
+  return { data: { items: raw.data.map(toCatalogReview), nextCursor: raw.meta.cursor } };
 }
 
 export async function apiTrackReviews(
@@ -287,9 +489,10 @@ export async function apiTrackReviews(
 ): Promise<ApiSuccessResponse<ReviewsResponse>> {
   const params = new URLSearchParams({ sort });
   if (cursor) params.set("cursor", cursor);
-  return apiFetch<ApiSuccessResponse<ReviewsResponse>>(
+  const raw = await apiFetch<RawListEnvelope<RawReviewListRow>>(
     `/tracks/${deezerId}/reviews?${params}`,
   );
+  return { data: { items: raw.data.map(toCatalogReview), nextCursor: raw.meta.cursor } };
 }
 
 // Trending (Fase 5 — backend not yet implemented)

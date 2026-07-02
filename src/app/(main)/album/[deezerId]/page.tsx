@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { auth } from "@/auth";
 import { apiCatalogAlbum } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { AlbumClient } from "./album-client";
@@ -22,6 +23,7 @@ export default async function AlbumPage({
   params,
 }: PageProps<"/album/[deezerId]">) {
   const { deezerId } = await params;
+  const session = await auth();
 
   let album;
   try {
@@ -34,5 +36,5 @@ export default async function AlbumPage({
     throw err;
   }
 
-  return <AlbumClient album={album} />;
+  return <AlbumClient album={album} hasSession={!!session} />;
 }
