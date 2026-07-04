@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { ArrowLeft, MoreVertical, Pencil, Trash2, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { apiDeleteReview, ApiError } from "@/lib/api";
+import {
+  apiDeleteReview,
+  apiGetComments,
+  apiCreateComment,
+  apiDeleteComment,
+  generateIdempotencyKey,
+  ApiError,
+} from "@/lib/api";
+import { sendReaction } from "@/lib/reactions";
 import { ratingColor, timeAgo, getInitials, coverGradient } from "@/lib/review-format";
-import type { ReviewDetail } from "@/types/api";
+import type { ReviewDetail, ReactionType } from "@/types/api";
 
 interface ReviewDetailClientProps {
   review: ReviewDetail;
@@ -15,11 +24,6 @@ interface ReviewDetailClientProps {
   currentUserHandle?: string;
   currentUserDisplayName?: string;
   accessToken?: string;
-}
-
-interface LocalComment {
-  id: string;
-  text: string;
 }
 
 export function ReviewDetailClient({
@@ -32,18 +36,51 @@ export function ReviewDetailClient({
   const router = useRouter();
   const isOwner = !!currentUserId && currentUserId === review.userId;
 
-  const [reaction, setReaction] = useState<"LIKE" | "DISLIKE" | null>(null);
-  const [comments, setComments] = useState<LocalComment[]>([]);
+  const [reaction, setReaction] = useState<ReactionType | null>(review.userReaction);
+  const [likes, setLikes] = useState(review.likesCount);
+  const [dislikes, setDislikes] = useState(review.dislikesCount);
+  const [commentsCount, setCommentsCount] = useState(review.commentsCount);
   const [draftComment, setDraftComment] = useState("");
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [, startReactionTransition] = useTransition();
+  const [commentPending, startCommentTransition] = useTransition();
+  const commentsSentinelRef = useRef<HTMLDivElement>(null);
 
   const rating = Number(review.rating);
-  const liked = reaction === "LIKE";
-  const disliked = reaction === "DISLIKE";
-  const likeCount = review.reactionStats.likes + (liked ? 1 : 0);
-  const dislikeCount = review.reactionStats.dislikes + (disliked ? 1 : 0);
+
+  const {
+    data: commentPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetching: commentsFetching,
+    refetch: refetchComments,
+  } = useInfiniteQuery({
+    queryKey: ["review-comments", review.id],
+    queryFn: ({ pageParam }) => apiGetComments(review.id, pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
+    staleTime: 30 * 1000,
+  });
+
+  const comments = (commentPages?.pages ?? []).flatMap((p) => p.data.items);
+
+  useEffect(() => {
+    const el = commentsSentinelRef.current;
+    if (!el || !hasNextPage) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
+      },
+      { threshold: 0.1 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const targetKind = review.type === "ALBUM" ? "album" : "track";
   const targetHref = review.targetDeezerId ? `/${targetKind}/${review.targetDeezerId}` : null;
@@ -51,11 +88,67 @@ export function ReviewDetailClient({
     ? `/${targetKind}/${review.targetDeezerId}/review/new?edit=${review.id}`
     : null;
 
+  function handleReact(clicked: ReactionType) {
+    if (!accessToken) {
+      router.push(`/login?callbackUrl=${encodeURIComponent(`/reviews/${review.id}`)}`);
+      return;
+    }
+
+    const prevReaction = reaction;
+    const prevLikes = likes;
+    const prevDislikes = dislikes;
+
+    const next = prevReaction === clicked ? null : clicked;
+    setReaction(next);
+    setLikes(prevLikes + (clicked === "LIKE" ? (next ? 1 : -1) : prevReaction === "LIKE" ? -1 : 0));
+    setDislikes(
+      prevDislikes + (clicked === "DISLIKE" ? (next ? 1 : -1) : prevReaction === "DISLIKE" ? -1 : 0),
+    );
+
+    startReactionTransition(async () => {
+      try {
+        await sendReaction(accessToken, review.id, prevReaction, clicked);
+      } catch {
+        setReaction(prevReaction);
+        setLikes(prevLikes);
+        setDislikes(prevDislikes);
+      }
+    });
+  }
+
   function addComment() {
     const text = draftComment.trim();
-    if (!text) return;
-    setComments((prev) => [...prev, { id: crypto.randomUUID(), text }]);
-    setDraftComment("");
+    if (!text || !accessToken) return;
+    setCommentError(null);
+    setCommentsCount((c) => c + 1);
+    startCommentTransition(async () => {
+      try {
+        await apiCreateComment(accessToken, review.id, text, generateIdempotencyKey());
+        setDraftComment("");
+        await refetchComments();
+      } catch (err) {
+        setCommentsCount((c) => c - 1);
+        const apiErr = err as ApiError;
+        setCommentError(apiErr.message || "No se pudo publicar el comentario.");
+      }
+    });
+  }
+
+  function handleDeleteComment(commentId: string) {
+    if (!accessToken) return;
+    if (!window.confirm("¿Eliminar este comentario?")) return;
+    setCommentsCount((c) => c - 1);
+    setDeletingCommentId(commentId);
+    startCommentTransition(async () => {
+      try {
+        await apiDeleteComment(accessToken, commentId);
+        await refetchComments();
+      } catch {
+        setCommentsCount((c) => c + 1);
+      } finally {
+        setDeletingCommentId(null);
+      }
+    });
   }
 
   function handleDelete() {
@@ -282,83 +375,157 @@ export function ReviewDetailClient({
         <div className="flex items-center gap-1.5 py-3.5 border-t border-b border-mb-border mb-9 flex-wrap">
           <button
             type="button"
-            onClick={() => setReaction((r) => (r === "LIKE" ? null : "LIKE"))}
+            onClick={() => handleReact("LIKE")}
             aria-label="Me gusta"
+            aria-pressed={reaction === "LIKE"}
             className="inline-flex items-center gap-2 min-h-11 px-3.5 rounded-lg text-sm font-medium hover:bg-mb-input transition-colors"
-            style={{ color: liked ? "#8B56E8" : "#9B95B0" }}
+            style={{ color: reaction === "LIKE" ? "#8B56E8" : "#9B95B0" }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v11"/><path d="M7 10l4-7a2.5 2.5 0 0 1 3 2.5L13.5 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>
-            {likeCount}
+            <ThumbsUp width={18} height={18} strokeWidth={1.75} fill={reaction === "LIKE" ? "currentColor" : "none"} />
+            {likes}
           </button>
           <button
             type="button"
-            onClick={() => setReaction((r) => (r === "DISLIKE" ? null : "DISLIKE"))}
+            onClick={() => handleReact("DISLIKE")}
             aria-label="No me gusta"
+            aria-pressed={reaction === "DISLIKE"}
             className="inline-flex items-center gap-2 min-h-11 px-3.5 rounded-lg text-sm font-medium hover:bg-mb-input transition-colors"
-            style={{ color: disliked ? "#8B56E8" : "#9B95B0" }}
+            style={{ color: reaction === "DISLIKE" ? "#8B56E8" : "#9B95B0" }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill={disliked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M17 14V3"/><path d="M17 14l-4 7a2.5 2.5 0 0 1-3-2.5L10.5 15H5a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 6.2 4H17"/></svg>
-            {dislikeCount}
+            <ThumbsDown width={18} height={18} strokeWidth={1.75} fill={reaction === "DISLIKE" ? "currentColor" : "none"} />
+            {dislikes}
           </button>
           <span className="inline-flex items-center gap-2 min-h-11 px-3.5 rounded-lg text-sm font-medium text-mb-muted">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8 8 0 0 1-11.7 7L3 21l2.5-6.3A8 8 0 1 1 21 11.5Z"/></svg>
-            {comments.length}
+            <MessageCircle width={18} height={18} strokeWidth={1.75} />
+            {commentsCount}
           </span>
         </div>
 
-        {/* Comments — local-only, no persistence */}
+        {/* Comments */}
         <section>
           <h2 className="font-serif font-normal text-[22px] text-mb-text mb-5">
-            {comments.length} comentarios
+            {commentsCount} comentarios
           </h2>
 
-          <div className="flex gap-3 mb-7">
-            <span
-              aria-hidden
-              className="shrink-0 w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-xs font-semibold text-mb-accent"
-            >
-              {getInitials(currentUserDisplayName)}
-            </span>
-            <div className="flex-1 min-w-0">
-              <textarea
-                value={draftComment}
-                onChange={(e) => setDraftComment(e.target.value)}
-                placeholder="Sumá tu comentario…"
-                className="w-full min-h-11 p-2.5 bg-mb-input border border-mb-border focus:border-mb-primary rounded-lg text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-y text-sm leading-relaxed"
-              />
-              <div className="flex justify-end mt-2.5">
-                <button
-                  type="button"
-                  onClick={addComment}
-                  disabled={draftComment.trim().length === 0}
-                  className={cn(
-                    "min-h-10 px-4.5 rounded-lg font-semibold text-sm transition-colors",
-                    draftComment.trim().length === 0
-                      ? "bg-mb-border text-mb-dim cursor-not-allowed"
-                      : "bg-mb-primary hover:bg-mb-primary-h text-white cursor-pointer",
-                  )}
-                >
-                  Comentar
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-5">
-            {comments.map((c) => (
-              <div key={c.id} className="flex gap-3">
-                <span
-                  aria-hidden
-                  className="shrink-0 w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-xs font-semibold text-mb-accent"
-                >
-                  {getInitials(currentUserDisplayName)}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm leading-relaxed text-mb-text">{c.text}</p>
+          {accessToken ? (
+            <div className="flex gap-3 mb-7">
+              <span
+                aria-hidden
+                className="shrink-0 w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-xs font-semibold text-mb-accent"
+              >
+                {getInitials(currentUserDisplayName)}
+              </span>
+              <div className="flex-1 min-w-0">
+                <textarea
+                  value={draftComment}
+                  onChange={(e) => setDraftComment(e.target.value)}
+                  placeholder="Sumá tu comentario…"
+                  className="w-full min-h-11 p-2.5 bg-mb-input border border-mb-border focus:border-mb-primary rounded-lg text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-y text-sm leading-relaxed"
+                />
+                {commentError && (
+                  <p role="alert" className="text-mb-error text-xs mt-1.5">
+                    {commentError}
+                  </p>
+                )}
+                <div className="flex justify-end mt-2.5">
+                  <button
+                    type="button"
+                    onClick={addComment}
+                    disabled={draftComment.trim().length === 0 || commentPending}
+                    className={cn(
+                      "min-h-10 px-4.5 rounded-lg font-semibold text-sm transition-colors",
+                      draftComment.trim().length === 0 || commentPending
+                        ? "bg-mb-border text-mb-dim cursor-not-allowed"
+                        : "bg-mb-primary hover:bg-mb-primary-h text-white cursor-pointer",
+                    )}
+                  >
+                    Comentar
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <p className="text-mb-muted text-sm mb-7">
+              <Link href="/login" className="text-mb-accent hover:underline">
+                Iniciá sesión
+              </Link>{" "}
+              para comentar.
+            </p>
+          )}
+
+          {commentsFetching && comments.length === 0 ? (
+            <div className="flex flex-col gap-5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex gap-3 animate-pulse">
+                  <div className="shrink-0 w-9 h-9 rounded-full bg-mb-input" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-1/4 rounded bg-mb-input" />
+                    <div className="h-3 w-4/5 rounded bg-mb-input" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : comments.length === 0 ? (
+            <p className="text-mb-muted text-sm">Todavía no hay comentarios. Sé el primero.</p>
+          ) : (
+            <>
+              <div className="flex flex-col gap-5">
+                {comments.map((c) => (
+                  <div key={c.id} className="flex gap-3">
+                    {c.user.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={c.user.avatarUrl}
+                        alt={`Avatar de ${c.user.displayName}`}
+                        className="shrink-0 w-9 h-9 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="shrink-0 w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-xs font-semibold text-mb-accent"
+                      >
+                        {getInitials(c.user.displayName)}
+                      </span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-1.5 flex-wrap mb-1">
+                        <span className="text-sm font-medium text-mb-text">{c.user.displayName}</span>
+                        {c.user.handle && (
+                          <Link
+                            href={`/u/${c.user.handle}`}
+                            className="font-mono text-xs text-mb-muted hover:text-mb-accent"
+                          >
+                            @{c.user.handle}
+                          </Link>
+                        )}
+                        <span className="text-xs text-mb-dim">· {timeAgo(c.createdAt)}</span>
+                      </div>
+                      <p className="text-sm leading-relaxed text-mb-text">{c.content}</p>
+                      {currentUserId === c.userId && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteComment(c.id)}
+                          disabled={commentPending && deletingCommentId === c.id}
+                          aria-label="Eliminar comentario"
+                          className="min-h-8 py-1 mt-1 bg-transparent border-none text-mb-dim text-xs font-medium cursor-pointer hover:text-mb-error transition-colors disabled:opacity-60"
+                        >
+                          {commentPending && deletingCommentId === c.id ? "Eliminando…" : "Eliminar"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div ref={commentsSentinelRef} className="h-8 flex items-center justify-center mt-4">
+                {isFetchingNextPage && (
+                  <div
+                    className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
+                    aria-label="Cargando más comentarios"
+                  />
+                )}
+              </div>
+            </>
+          )}
         </section>
       </div>
     </div>

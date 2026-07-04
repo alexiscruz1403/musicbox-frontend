@@ -1,23 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ratingColor, timeAgo, getInitials } from "@/lib/review-format";
-import type { CatalogReview } from "@/types/api";
+import { ratingColor, timeAgo, getInitials, coverGradient } from "@/lib/review-format";
+import { sendReaction } from "@/lib/reactions";
+import { tokenStore } from "@/lib/token-store";
+import type { CatalogReview, ReactionType } from "@/types/api";
 
 interface CommunityReviewCardProps {
   review: CatalogReview;
   clampDescription?: boolean;
+  hasSession: boolean;
 }
 
 export function CommunityReviewCard({
   review,
   clampDescription = true,
+  hasSession,
 }: CommunityReviewCardProps) {
-  const [reaction, setReaction] = useState<"LIKE" | "DISLIKE" | null>(
-    review.userReaction,
-  );
+  const router = useRouter();
+  const pathname = usePathname();
+  const [reaction, setReaction] = useState<ReactionType | null>(review.userReaction);
+  const [likes, setLikes] = useState(review.likesCount);
+  const [dislikes, setDislikes] = useState(review.dislikesCount);
+  const [, startTransition] = useTransition();
+
+  const targetHref =
+    review.targetDeezerId && review.targetType
+      ? review.targetType === "ALBUM"
+        ? `/album/${review.targetDeezerId}`
+        : `/track/${review.targetDeezerId}`
+      : null;
+
+  function handleReact(clicked: ReactionType) {
+    if (!hasSession) {
+      router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+      return;
+    }
+
+    const prevReaction = reaction;
+    const prevLikes = likes;
+    const prevDislikes = dislikes;
+
+    const next = prevReaction === clicked ? null : clicked;
+    setReaction(next);
+    setLikes(prevLikes + (clicked === "LIKE" ? (next ? 1 : -1) : prevReaction === "LIKE" ? -1 : 0));
+    setDislikes(
+      prevDislikes + (clicked === "DISLIKE" ? (next ? 1 : -1) : prevReaction === "DISLIKE" ? -1 : 0),
+    );
+
+    startTransition(async () => {
+      const token = tokenStore.getAccessToken();
+      if (!token) {
+        setReaction(prevReaction);
+        setLikes(prevLikes);
+        setDislikes(prevDislikes);
+        return;
+      }
+      try {
+        await sendReaction(token, review.id, prevReaction, clicked);
+      } catch {
+        setReaction(prevReaction);
+        setLikes(prevLikes);
+        setDislikes(prevDislikes);
+      }
+    });
+  }
 
   return (
     <article className="bg-mb-card border border-mb-border rounded-xl p-5">
@@ -62,6 +113,30 @@ export function CommunityReviewCard({
         </span>
       </div>
 
+      {targetHref && (
+        <Link
+          href={targetHref}
+          className="flex items-center gap-3 p-2.5 bg-mb-input rounded-lg mb-3.5 hover:bg-mb-border transition-colors"
+        >
+          <div
+            className="shrink-0 w-12 h-12 rounded-md"
+            style={
+              review.externalCoverUrl
+                ? { backgroundImage: `url(${review.externalCoverUrl})`, backgroundSize: "cover" }
+                : { background: coverGradient(review.id) }
+            }
+            role="img"
+            aria-label={`Cover de ${review.externalTitle ?? ""}`}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="font-serif text-[15px] text-mb-text truncate">
+              {review.externalTitle ?? "—"}
+            </div>
+            <div className="text-xs text-mb-muted truncate">{review.externalArtistName ?? ""}</div>
+          </div>
+        </Link>
+      )}
+
       <Link href={`/reviews/${review.id}`}>
         <p
           className={cn(
@@ -76,30 +151,42 @@ export function CommunityReviewCard({
       <div className="flex items-center gap-1">
         <button
           type="button"
-          onClick={() => setReaction((r) => (r === "LIKE" ? null : "LIKE"))}
+          onClick={() => handleReact("LIKE")}
           aria-label="Me gusta"
+          aria-pressed={reaction === "LIKE"}
           className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input"
           style={{ color: reaction === "LIKE" ? "#8B56E8" : "#9B95B0" }}
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v11"/><path d="M7 10l4-7a2.5 2.5 0 0 1 3 2.5L13.5 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>
-          {review.likesCount + (reaction === "LIKE" ? 1 : 0)}
+          <ThumbsUp
+            width={17}
+            height={17}
+            strokeWidth={1.75}
+            fill={reaction === "LIKE" ? "currentColor" : "none"}
+          />
+          {likes}
         </button>
         <button
           type="button"
-          onClick={() => setReaction((r) => (r === "DISLIKE" ? null : "DISLIKE"))}
+          onClick={() => handleReact("DISLIKE")}
           aria-label="No me gusta"
+          aria-pressed={reaction === "DISLIKE"}
           className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input"
           style={{ color: reaction === "DISLIKE" ? "#8B56E8" : "#9B95B0" }}
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M17 14V3"/><path d="M17 14l-4 7a2.5 2.5 0 0 1-3-2.5L10.5 15H5a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 6.2 4H17"/></svg>
-          {review.dislikesCount + (reaction === "DISLIKE" ? 1 : 0)}
+          <ThumbsDown
+            width={17}
+            height={17}
+            strokeWidth={1.75}
+            fill={reaction === "DISLIKE" ? "currentColor" : "none"}
+          />
+          {dislikes}
         </button>
         <Link
           href={`/reviews/${review.id}`}
           aria-label="Comentarios"
           className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors"
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8 8 0 0 1-11.7 7L3 21l2.5-6.3A8 8 0 1 1 21 11.5Z"/></svg>
+          <MessageCircle width={17} height={17} strokeWidth={1.75} />
           {review.commentsCount}
         </Link>
       </div>

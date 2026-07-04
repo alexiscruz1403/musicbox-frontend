@@ -11,6 +11,8 @@ interface CommunityReviewListProps {
   sentinelRef: RefObject<HTMLDivElement | null>;
   emptyMessage: string;
   clampDescription?: boolean;
+  hasSession: boolean;
+  hasMore?: boolean;
 }
 
 export function CommunityReviewList({
@@ -20,6 +22,8 @@ export function CommunityReviewList({
   sentinelRef,
   emptyMessage,
   clampDescription,
+  hasSession,
+  hasMore = true,
 }: CommunityReviewListProps) {
   if (isLoading) {
     return (
@@ -55,15 +59,24 @@ export function CommunityReviewList({
     <>
       <div className="flex flex-col gap-4">
         {reviews.map((r) => (
-          <CommunityReviewCard key={r.id} review={r} clampDescription={clampDescription} />
+          <CommunityReviewCard
+            key={r.id}
+            review={r}
+            clampDescription={clampDescription}
+            hasSession={hasSession}
+          />
         ))}
       </div>
       <div ref={sentinelRef} className="h-8 flex items-center justify-center mt-4">
-        {isFetchingNextPage && (
+        {isFetchingNextPage ? (
           <div
             className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
             aria-label="Cargando más reseñas"
           />
+        ) : (
+          !hasMore && (
+            <p className="text-mb-dim text-sm">Ya viste todas las reseñas por ahora.</p>
+          )
         )}
       </div>
     </>
