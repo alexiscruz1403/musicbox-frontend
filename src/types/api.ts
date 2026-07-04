@@ -131,6 +131,8 @@ export type CatalogSearchResult =
 
 // ─── Reviews (Fase 3) ────────────────────────────────────────────────────────
 
+export type ReactionType = "LIKE" | "DISLIKE";
+
 export interface CatalogReview {
   id: string;
   user: {
@@ -144,13 +146,28 @@ export interface CatalogReview {
   dislikesCount: number;
   commentsCount: number;
   createdAt: string;
-  userReaction: "LIKE" | "DISLIKE" | null;
+  userReaction: ReactionType | null;
+  // Target (album/track) info — only populated in contexts spanning multiple
+  // targets (e.g. the Feed). Undefined on album/track detail pages, where the
+  // target is already implicit from page context.
+  targetType?: ReviewType;
+  targetDeezerId?: string;
+  externalTitle?: string;
+  externalArtistName?: string;
+  externalCoverUrl?: string | null;
 }
 
 export interface ReviewsResponse {
   items: CatalogReview[];
   nextCursor: string | null;
 }
+
+export interface FeedResponse {
+  items: CatalogReview[];
+  nextCursor: string | null;
+}
+
+export type FeedType = "FOLLOWED" | "ALL";
 
 // ─── Reviews (Fase 3) — create/detail/history ─────────────────────────────────
 
@@ -212,7 +229,10 @@ export interface ReviewDetail {
   externalCoverUrl?: string | null;
   targetDeezerId?: string;
   trackReviewItems?: TrackReviewItem[];
-  reactionStats: { likes: number; dislikes: number };
+  likesCount: number;
+  dislikesCount: number;
+  commentsCount: number;
+  userReaction: ReactionType | null;
 }
 
 export interface UserReviewHistoryItem {
@@ -242,4 +262,43 @@ export interface TrendingAlbum {
   coverUrl: string | null;
   avgRating: number | null;
   reviewCount: number;
+}
+
+// ─── Social (Fase 4) — comments, follow suggestions ───────────────────────────
+
+export interface Comment {
+  id: string;
+  userId: string;
+  content: string;
+  createdAt: string;
+  user: {
+    handle: string;
+    displayName: string;
+    avatarUrl: string | null;
+  };
+}
+
+export interface CommentsResponse {
+  items: Comment[];
+  nextCursor: string | null;
+}
+
+export interface FollowSuggestion {
+  id: string;
+  handle: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+export interface UserSearchResult {
+  id: string;
+  handle: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isFollowing: boolean;
+}
+
+export interface UserSearchResponse {
+  items: UserSearchResult[];
+  nextCursor: string | null;
 }

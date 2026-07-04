@@ -304,6 +304,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
             isFetchingNextPage={isFetchingNextPage}
             sentinelRef={sentinelRef}
             emptyMessage="Todavía no hay reseñas de este álbum."
+            hasSession={hasSession}
           />
         </section>
       </div>

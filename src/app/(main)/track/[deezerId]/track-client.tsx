@@ -365,6 +365,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
             sentinelRef={sentinelRef}
             emptyMessage="Todavía no hay reseñas de esta canción."
             clampDescription={false}
+            hasSession={hasSession}
           />
         </section>
       </div>
