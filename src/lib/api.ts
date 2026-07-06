@@ -14,6 +14,7 @@ import type {
   ReviewsResponse,
   CatalogReview,
   TrendingAlbum,
+  TrendingTrack,
   CreateReviewDto,
   UpdateReviewDto,
   Review,
@@ -28,6 +29,8 @@ import type {
   FeedType,
   UserSearchResult,
   UserSearchResponse,
+  NotificationRow,
+  NotificationsResponse,
 } from "@/types/api";
 import { tokenStore } from "@/lib/token-store";
 
@@ -684,12 +687,56 @@ export async function apiSearchUsers(
   return { data: { items: raw.data, nextCursor: raw.meta.cursor } };
 }
 
-// Trending (Fase 5 — backend not yet implemented)
+// Trending (Fase 5)
 
 export async function apiTrendingAlbums(
-  limit = 6,
-): Promise<ApiSuccessResponse<{ items: TrendingAlbum[] }>> {
-  return apiFetch<ApiSuccessResponse<{ items: TrendingAlbum[] }>>(
+  limit = 20,
+): Promise<ApiSuccessResponse<TrendingAlbum[]>> {
+  return apiFetch<ApiSuccessResponse<TrendingAlbum[]>>(
     `/trending/albums?limit=${limit}`,
   );
+}
+
+export async function apiTrendingTracks(
+  limit = 20,
+): Promise<ApiSuccessResponse<TrendingTrack[]>> {
+  return apiFetch<ApiSuccessResponse<TrendingTrack[]>>(
+    `/trending/tracks?limit=${limit}`,
+  );
+}
+
+// Notifications (Fase 5)
+
+export async function apiNotifications(
+  accessToken: string,
+  options: { cursor?: string; limit?: number; unreadOnly?: boolean } = {},
+): Promise<ApiSuccessResponse<NotificationsResponse>> {
+  const { cursor, limit = 20, unreadOnly = false } = options;
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set("cursor", cursor);
+  if (unreadOnly) params.set("unreadOnly", "true");
+  const raw = await apiFetch<RawListEnvelope<NotificationRow>>(
+    `/notifications?${params}`,
+    { accessToken },
+  );
+  return { data: { items: raw.data, nextCursor: raw.meta.cursor } };
+}
+
+export async function apiMarkNotificationRead(
+  accessToken: string,
+  id: string,
+): Promise<void> {
+  return apiFetch<void>(`/notifications/${id}/read`, {
+    method: "PATCH",
+    accessToken,
+  });
+}
+
+export async function apiMarkAllNotificationsRead(
+  accessToken: string,
+): Promise<void> {
+  return apiFetch<void>("/notifications/read-all", {
+    method: "POST",
+    accessToken,
+  });
 }

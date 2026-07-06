@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import type { Session } from "next-auth";
 
 const NAV_ITEMS = [
@@ -50,6 +51,9 @@ export function Sidebar({ session }: SidebarProps) {
           <span className="font-serif text-lg text-mb-text font-semibold whitespace-nowrap">
             MusicBox
           </span>
+        )}
+        {session && (
+          <NotificationBell accessToken={session.accessToken} className="ml-auto w-8 h-8 shrink-0" />
         )}
       </div>
 

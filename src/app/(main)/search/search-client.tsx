@@ -274,7 +274,7 @@ export function SearchClient() {
     enabled: !debouncedQuery,
   });
 
-  const trendingAlbums: TrendingAlbum[] = trendingData?.data?.items ?? [];
+  const trendingAlbums: TrendingAlbum[] = trendingData?.data ?? [];
 
   // ── Infinite search queries ───────────────────────────────────────────────
 
@@ -404,7 +404,7 @@ export function SearchClient() {
   // Derive artists list for initial state from trending
   const trendingArtists = Array.from(
     new Map(
-      trendingAlbums.map((a) => [a.artistName, { name: a.artistName, id: a.deezerId }])
+      trendingAlbums.map((a) => [a.artist.name, { name: a.artist.name, id: a.deezerId }])
     ).values()
   ).slice(0, 7);
 
@@ -487,7 +487,7 @@ export function SearchClient() {
                       key={a.deezerId}
                       deezerId={a.deezerId}
                       title={a.title}
-                      artist={a.artistName}
+                      artist={a.artist.name}
                       coverUrl={a.coverUrl}
                       avgRating={a.avgRating}
                     />

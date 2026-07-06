@@ -258,10 +258,56 @@ export interface UserReviewHistoryResponse {
 export interface TrendingAlbum {
   deezerId: string;
   title: string;
-  artistName: string;
+  artist: CatalogArtist;
   coverUrl: string | null;
   avgRating: number | null;
   reviewCount: number;
+}
+
+export interface TrendingTrack {
+  deezerId: string;
+  title: string;
+  artist: CatalogArtist;
+  coverUrl: string | null;
+  avgRating: number | null;
+  reviewCount: number;
+  albumDeezerId: string | null;
+}
+
+// ─── Notifications (Fase 5) ──────────────────────────────────────────────────
+
+export type NotificationType = "LIKE" | "DISLIKE" | "COMMENT" | "FOLLOW";
+
+export interface NotificationActor {
+  handle: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+export interface NotificationReviewRef {
+  id: string;
+  externalTitle: string;
+  externalArtistName: string;
+  externalCoverUrl: string | null;
+}
+
+export interface NotificationRow {
+  id: string;
+  recipientId: string;
+  actorId: string;
+  type: NotificationType;
+  reviewId: string | null;
+  commentId: string | null;
+  actorCount: number | null;
+  readAt: string | null;
+  createdAt: string;
+  actor: NotificationActor;
+  review: NotificationReviewRef | null;
+}
+
+export interface NotificationsResponse {
+  items: NotificationRow[];
+  nextCursor: string | null;
 }
 
 // ─── Social (Fase 4) — comments, follow suggestions ───────────────────────────
