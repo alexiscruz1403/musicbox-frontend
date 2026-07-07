@@ -15,6 +15,7 @@ import type {
   CatalogReview,
   TrendingAlbum,
   TrendingTrack,
+  RecommendationsResponse,
   CreateReviewDto,
   UpdateReviewDto,
   Review,
@@ -739,4 +740,16 @@ export async function apiMarkAllNotificationsRead(
     method: "POST",
     accessToken,
   });
+}
+
+// Recommendations (Fase 6)
+
+export async function apiGetRecommendations(
+  accessToken: string,
+): Promise<ApiSuccessResponse<RecommendationsResponse> | null> {
+  const result = await apiFetch<ApiSuccessResponse<RecommendationsResponse> | undefined>(
+    "/recommendations",
+    { accessToken },
+  );
+  return result ?? null;
 }
