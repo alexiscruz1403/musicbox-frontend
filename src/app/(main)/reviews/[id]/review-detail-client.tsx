@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { ArrowLeft, MoreVertical, Pencil, Trash2, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
+import { ArrowLeft, MoreVertical, Pencil, Trash2, Flag, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   apiDeleteReview,
@@ -16,7 +16,15 @@ import {
 } from "@/lib/api";
 import { sendReaction } from "@/lib/reactions";
 import { ratingColor, timeAgo, getInitials, coverGradient } from "@/lib/review-format";
-import type { ReviewDetail, ReactionType } from "@/types/api";
+import { ReportModal } from "@/components/reports/report-modal";
+import type { ReviewDetail, ReactionType, ReportTargetType } from "@/types/api";
+
+interface ReportTarget {
+  targetType: ReportTargetType;
+  targetId: string;
+  previewTitle: string;
+  previewSubtitle?: string;
+}
 
 interface ReviewDetailClientProps {
   review: ReviewDetail;
@@ -45,6 +53,7 @@ export function ReviewDetailClient({
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [isPending, startTransition] = useTransition();
   const [, startReactionTransition] = useTransition();
   const [commentPending, startCommentTransition] = useTransition();
@@ -249,6 +258,28 @@ export function ReviewDetailClient({
                 </div>
               )}
             </div>
+          )}
+
+          {!isOwner && accessToken && (
+            <button
+              type="button"
+              onClick={() =>
+                setReportTarget({
+                  targetType: "REVIEW",
+                  targetId: review.id,
+                  previewTitle: review.externalTitle
+                    ? `Reseña de ${review.externalTitle}`
+                    : "Esta reseña",
+                  previewSubtitle: review.user.handle
+                    ? `de @${review.user.handle}`
+                    : undefined,
+                })
+              }
+              aria-label="Reportar reseña"
+              className="shrink-0 w-11 h-11 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-error transition-colors"
+            >
+              <Flag className="w-[18px] h-[18px]" />
+            </button>
           )}
         </div>
 
@@ -501,7 +532,7 @@ export function ReviewDetailClient({
                         <span className="text-xs text-mb-dim">· {timeAgo(c.createdAt)}</span>
                       </div>
                       <p className="text-sm leading-relaxed text-mb-text">{c.content}</p>
-                      {currentUserId === c.userId && (
+                      {currentUserId === c.userId ? (
                         <button
                           type="button"
                           onClick={() => handleDeleteComment(c.id)}
@@ -511,6 +542,26 @@ export function ReviewDetailClient({
                         >
                           {commentPending && deletingCommentId === c.id ? "Eliminando…" : "Eliminar"}
                         </button>
+                      ) : (
+                        currentUserId && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setReportTarget({
+                                targetType: "COMMENT",
+                                targetId: c.id,
+                                previewTitle: c.content.slice(0, 140),
+                                previewSubtitle: c.user.handle
+                                  ? `de @${c.user.handle}`
+                                  : undefined,
+                              })
+                            }
+                            aria-label="Reportar comentario"
+                            className="min-h-8 py-1 mt-1 bg-transparent border-none text-mb-dim text-xs font-medium cursor-pointer hover:text-mb-error transition-colors"
+                          >
+                            Reportar
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -528,6 +579,18 @@ export function ReviewDetailClient({
           )}
         </section>
       </div>
+
+      {reportTarget && accessToken && (
+        <ReportModal
+          open={!!reportTarget}
+          onClose={() => setReportTarget(null)}
+          accessToken={accessToken}
+          targetType={reportTarget.targetType}
+          targetId={reportTarget.targetId}
+          previewTitle={reportTarget.previewTitle}
+          previewSubtitle={reportTarget.previewSubtitle}
+        />
+      )}
     </div>
   );
 }

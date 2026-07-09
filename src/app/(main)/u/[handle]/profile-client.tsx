@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { UserCheck, UserPlus, Pencil } from "lucide-react";
+import { UserCheck, UserPlus, Pencil, Flag, Settings } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiFollow, apiUnfollow, apiUserReviews } from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
 import { ProfileReviewCard } from "@/components/reviews/profile-review-card";
+import { ReportModal } from "@/components/reports/report-modal";
 import type { PublicProfileResponse, UserReviewHistoryItem } from "@/types/api";
 
 type Tab = "todo" | "albums" | "songs";
@@ -41,6 +42,7 @@ export default function ProfileClient({
     profile.stats.followersCount,
   );
   const [activeTab, setActiveTab] = useState<Tab>("todo");
+  const [reportOpen, setReportOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -167,15 +169,36 @@ export default function ProfileClient({
           </div>
 
           {/* Action button */}
-          <div className="mb-1">
-            {isOwnProfile ? (
-              <Link
-                href="/settings/profile"
-                className="flex items-center gap-2 px-4 h-9 bg-mb-input border border-mb-border rounded-lg text-sm font-medium text-mb-text hover:border-mb-primary/50 transition-colors"
+          <div className="mb-1 flex items-center gap-2">
+            {!isOwnProfile && accessToken && (
+              <button
+                type="button"
+                onClick={() => setReportOpen(true)}
+                aria-label="Reportar usuario"
+                title="Reportar usuario"
+                className="flex items-center justify-center w-9 h-9 bg-mb-input border border-mb-border rounded-lg text-mb-muted hover:border-mb-error hover:text-mb-error transition-colors"
               >
-                <Pencil className="w-3.5 h-3.5" />
-                Editar perfil
-              </Link>
+                <Flag className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {isOwnProfile ? (
+              <>
+                <Link
+                  href="/settings/profile"
+                  className="flex items-center gap-2 px-4 h-9 bg-mb-input border border-mb-border rounded-lg text-sm font-medium text-mb-text hover:border-mb-primary/50 transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Editar perfil
+                </Link>
+                <Link
+                  href="/settings"
+                  aria-label="Configuración"
+                  title="Configuración"
+                  className="md:hidden flex items-center justify-center w-9 h-9 bg-mb-input border border-mb-border rounded-lg text-mb-muted hover:border-mb-primary/50 hover:text-mb-text transition-colors"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </Link>
+              </>
             ) : accessToken ? (
               <button
                 onClick={handleFollowToggle}
@@ -267,6 +290,17 @@ export default function ProfileClient({
         {activeTab === "songs" &&
           renderReviewList(songItems, "Todavía no hay reseñas de canciones.")}
       </div>
+
+      {reportOpen && accessToken && (
+        <ReportModal
+          open={reportOpen}
+          onClose={() => setReportOpen(false)}
+          accessToken={accessToken}
+          targetType="USER"
+          targetId={user.id}
+          previewTitle={`@${user.handle}`}
+        />
+      )}
     </div>
   );
 }

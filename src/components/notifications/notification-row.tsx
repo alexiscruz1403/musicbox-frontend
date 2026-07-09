@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
+import { ShieldAlert } from "lucide-react";
 import { getInitials, timeAgo } from "@/lib/review-format";
 import { getNotificationText, notificationHref } from "@/lib/notification-format";
 import { apiMarkNotificationRead } from "@/lib/api";
@@ -53,16 +54,22 @@ export function NotificationRow({ notification, forceRead, onClose }: Notificati
       )}
     >
       <span className="relative shrink-0" aria-hidden>
-        {notification.actor.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={notification.actor.avatarUrl}
-            alt=""
-            className="w-9 h-9 rounded-full object-cover"
-          />
+        {notification.actor ? (
+          notification.actor.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={notification.actor.avatarUrl}
+              alt=""
+              className="w-9 h-9 rounded-full object-cover"
+            />
+          ) : (
+            <span className="w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-xs font-semibold text-mb-accent">
+              {getInitials(notification.actor.displayName)}
+            </span>
+          )
         ) : (
-          <span className="w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-xs font-semibold text-mb-accent">
-            {getInitials(notification.actor.displayName)}
+          <span className="w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-mb-accent">
+            <ShieldAlert className="w-4 h-4" />
           </span>
         )}
         {grouped && (
@@ -74,7 +81,11 @@ export function NotificationRow({ notification, forceRead, onClose }: Notificati
 
       <span className="min-w-0 flex-1 pt-0.5">
         <span className="block text-[13px] leading-relaxed text-mb-text">
-          <span className="font-mono text-mb-accent">@{notification.actor.handle}</span>{" "}
+          {notification.actor && (
+            <>
+              <span className="font-mono text-mb-accent">@{notification.actor.handle}</span>{" "}
+            </>
+          )}
           {getNotificationText(notification)}
         </span>
         <span className="block text-[11px] text-mb-dim mt-1">

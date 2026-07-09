@@ -16,7 +16,8 @@ export interface AuthUser {
   displayName: string;
   email: string;
   avatarUrl?: string | null;
-  status: "ACTIVE" | "DELETED";
+  status: "ACTIVE" | "SUSPENDED" | "DELETED";
+  role: "USER" | "ADMIN";
 }
 
 export interface AuthTokens {
@@ -276,7 +277,7 @@ export interface TrendingTrack {
 
 // ─── Notifications (Fase 5) ──────────────────────────────────────────────────
 
-export type NotificationType = "LIKE" | "DISLIKE" | "COMMENT" | "FOLLOW";
+export type NotificationType = "LIKE" | "DISLIKE" | "COMMENT" | "FOLLOW" | "MODERATION";
 
 export interface NotificationActor {
   handle: string;
@@ -294,14 +295,14 @@ export interface NotificationReviewRef {
 export interface NotificationRow {
   id: string;
   recipientId: string;
-  actorId: string;
+  actorId: string | null;
   type: NotificationType;
   reviewId: string | null;
   commentId: string | null;
   actorCount: number | null;
   readAt: string | null;
   createdAt: string;
-  actor: NotificationActor;
+  actor: NotificationActor | null;
   review: NotificationReviewRef | null;
 }
 
@@ -367,3 +368,93 @@ export interface UserSearchResponse {
   items: UserSearchResult[];
   nextCursor: string | null;
 }
+
+// ─── Moderation (Fase 7) ───────────────────────────────────────────────────
+
+export type ReportTargetType = "REVIEW" | "COMMENT" | "USER";
+export type ReportStatus = "PENDING" | "REVIEWED" | "DISMISSED";
+
+export interface ReportedContentReviewTrack {
+  reviewType: "TRACK";
+  description: string;
+}
+
+export interface ReportedContentReviewAlbum {
+  reviewType: "ALBUM";
+  description: string;
+  trackDescriptions: { trackTitle: string; description: string | null }[];
+}
+
+export interface ReportedContentComment {
+  content: string;
+}
+
+export interface ReportedContentUser {
+  handle: string;
+}
+
+export type ReportedContent =
+  | ReportedContentReviewTrack
+  | ReportedContentReviewAlbum
+  | ReportedContentComment
+  | ReportedContentUser
+  | null;
+
+export interface AdminReportRow {
+  id: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: string;
+  status: ReportStatus;
+  createdAt: string;
+  reporter: { id: string; handle: string; displayName: string };
+  reportedContent: ReportedContent;
+}
+
+export interface AdminReportsResponse {
+  items: AdminReportRow[];
+  nextCursor: string | null;
+}
+
+export interface CreateReportDto {
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: string;
+}
+
+export interface CreatedReport {
+  id: string;
+  reporterId: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  reason: string;
+  status: "PENDING";
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+// Opaque envelope — the export button only serializes and downloads it.
+export type ExportDataResponse = Record<string, unknown>;
+
+// ─── Notification preferences (Fase 1) ─────────────────────────────────────
+
+export interface NotificationPreferences {
+  userId: string;
+  likesEnabled: boolean;
+  dislikesEnabled: boolean;
+  commentsEnabled: boolean;
+  // Named `followsEnabled` by the live backend — docs/fase-1-features.md
+  // documents it as `followersEnabled`, but that 400s in practice.
+  followsEnabled: boolean;
+  // Documented in docs/fase-1-features.md but has no UI in the design —
+  // read on GET, never written back by this app. See NotificationPrefsUpdate.
+  reviewsEnabled: boolean;
+}
+
+export type NotificationPrefsUpdate = Partial<
+  Pick<
+    NotificationPreferences,
+    "likesEnabled" | "dislikesEnabled" | "commentsEnabled" | "followsEnabled"
+  >
+>;
