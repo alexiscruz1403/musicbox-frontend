@@ -15,7 +15,7 @@ export function LoginClient() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = searchParams.get("callbackUrl") || "/feed";
 
   function handleGoogleSignIn() {
     startTransition(async () => {

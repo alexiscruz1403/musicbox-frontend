@@ -1,6 +1,7 @@
 import type {
   ApiSuccessResponse,
   AuthResponse,
+  MessageResponse,
   MeResponse,
   PublicProfileResponse,
   HandleCheckResponse,
@@ -163,6 +164,47 @@ export async function apiLogin(
   return apiFetch<ApiSuccessResponse<AuthResponse>>("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function apiForgotPassword(
+  email: string,
+): Promise<ApiSuccessResponse<MessageResponse>> {
+  return apiFetch<ApiSuccessResponse<MessageResponse>>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function apiResetPassword(
+  userId: string,
+  token: string,
+  newPassword: string,
+): Promise<ApiSuccessResponse<MessageResponse>> {
+  return apiFetch<ApiSuccessResponse<MessageResponse>>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ userId, token, newPassword }),
+  });
+}
+
+export async function apiChangeEmail(
+  accessToken: string,
+  newEmail: string,
+): Promise<ApiSuccessResponse<MessageResponse>> {
+  return apiFetch<ApiSuccessResponse<MessageResponse>>("/auth/change-email", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify({ newEmail }),
+  });
+}
+
+export async function apiConfirmChangeEmail(
+  userId: string,
+  token: string,
+): Promise<ApiSuccessResponse<MessageResponse>> {
+  return apiFetch<ApiSuccessResponse<MessageResponse>>("/auth/confirm-change-email", {
+    method: "POST",
+    body: JSON.stringify({ userId, token }),
   });
 }
 
