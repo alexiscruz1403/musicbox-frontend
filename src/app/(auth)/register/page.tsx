@@ -7,26 +7,9 @@ import { signIn } from "next-auth/react";
 import { Eye, EyeOff, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRegister, apiCheckHandle, generateIdempotencyKey, type ApiError } from "@/lib/api";
+import { getPasswordStrength, STRENGTH_COLORS } from "@/lib/password-strength";
 
 type HandleStatus = "idle" | "short" | "invalid" | "checking" | "available" | "taken";
-
-function getPasswordStrength(pw: string): { score: number; label: string } {
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^a-zA-Z0-9]/.test(pw)) score++;
-  const labels = ["", "Débil", "Regular", "Fuerte", "Muy fuerte"];
-  return { score, label: labels[score] ?? "" };
-}
-
-const STRENGTH_COLORS = [
-  "",
-  "bg-mb-error",
-  "bg-orange-400",
-  "bg-yellow-300",
-  "bg-mb-success",
-];
 
 const HANDLE_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
@@ -81,7 +64,7 @@ export default function RegisterPage() {
 
   function handleGoogleSignIn() {
     startTransition(async () => {
-      await signIn("google", { callbackUrl: "/settings/profile" });
+      await signIn("google", { callbackUrl: "/feed" });
     });
   }
 
@@ -125,7 +108,7 @@ export default function RegisterPage() {
         if (result?.error) {
           router.push("/login");
         } else {
-          router.push(`/u/${handle}`);
+          router.push("/feed");
           router.refresh();
         }
       } catch (err) {

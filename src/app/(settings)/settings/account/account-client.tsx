@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
-import { apiExportUserData, ApiError } from "@/lib/api";
+import { apiExportUserData, apiForgotPassword, ApiError } from "@/lib/api";
 import { DeleteAccountModal } from "./delete-account-modal";
+import { ChangeEmailModal } from "./change-email-modal";
 
 interface AccountClientProps {
   email: string;
@@ -16,7 +17,24 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
   const [exportError, setExportError] = useState<string | null>(null);
   const [isExporting, startExportTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [changeEmailOpen, setChangeEmailOpen] = useState(false);
+  const [pwSent, setPwSent] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [isPwPending, startPwTransition] = useTransition();
   const router = useRouter();
+
+  function handleChangePassword() {
+    setPwError(null);
+    startPwTransition(async () => {
+      try {
+        await apiForgotPassword(email);
+        setPwSent(true);
+      } catch (err) {
+        const apiErr = err as ApiError;
+        setPwError(apiErr.message || "No se pudo enviar el email. Intentá de nuevo.");
+      }
+    });
+  }
 
   function handleExport() {
     setExportError(null);
@@ -72,16 +90,52 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
         </div>
 
         {/* Email */}
-        <section className="py-2 border-b border-mb-border">
+        <section className="py-7 border-b border-mb-border">
           <h2 className="text-sm font-semibold text-mb-text mb-3.5">Email</h2>
-          <input
-            type="email"
-            value={email}
-            readOnly
-            disabled
-            aria-label="Email actual"
-            className="w-full h-12 px-3.5 bg-mb-input border border-mb-border rounded-lg text-mb-muted cursor-not-allowed outline-none"
-          />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <input
+              type="email"
+              value={email}
+              readOnly
+              disabled
+              aria-label="Email actual"
+              className="flex-1 min-w-0 py-4 px-3.5 sm:py-0 sm:h-12 bg-mb-input border border-mb-border rounded-lg text-mb-muted cursor-not-allowed outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setChangeEmailOpen(true)}
+              className="shrink-0 min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors"
+            >
+              Cambiar email
+            </button>
+          </div>
+        </section>
+
+        {/* Password */}
+        <section className="py-7 border-b border-mb-border">
+          <h2 className="text-sm font-semibold text-mb-text mb-1.5">Contraseña</h2>
+          <p className="text-[13px] text-mb-muted leading-relaxed mb-3.5">
+            Te enviamos un link para restablecer tu contraseña a tu email actual.
+          </p>
+          {pwError && (
+            <p role="alert" className="text-mb-error text-xs mb-3">
+              {pwError}
+            </p>
+          )}
+          {pwSent ? (
+            <p role="status" className="text-mb-success text-sm">
+              Te enviamos un email a {email} con instrucciones.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleChangePassword}
+              disabled={isPwPending}
+              className="min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors disabled:opacity-60"
+            >
+              {isPwPending ? "Enviando…" : "Cambiar contraseña"}
+            </button>
+          )}
         </section>
 
         {/* Export */}
@@ -128,6 +182,14 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
           onClose={() => setDeleteOpen(false)}
           accessToken={accessToken}
           handle={handle}
+        />
+      )}
+
+      {changeEmailOpen && (
+        <ChangeEmailModal
+          open={changeEmailOpen}
+          onClose={() => setChangeEmailOpen(false)}
+          accessToken={accessToken}
         />
       )}
     </div>

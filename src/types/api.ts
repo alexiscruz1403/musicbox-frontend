@@ -31,6 +31,10 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
+export interface MessageResponse {
+  message: string;
+}
+
 export interface UserStats {
   reviewCount: number;
   followersCount: number;
@@ -40,7 +44,6 @@ export interface UserStats {
 export interface MeResponse {
   user: AuthUser & {
     bio?: string | null;
-    emailVerifiedAt?: string | null;
     createdAt: string;
   };
   stats: UserStats;
