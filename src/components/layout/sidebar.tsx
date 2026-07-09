@@ -9,6 +9,8 @@ import {
   Search,
   Sparkles,
   User,
+  Settings,
+  Shield,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -96,6 +98,42 @@ export function Sidebar({ session }: SidebarProps) {
             )}
             <User className="w-4 h-4 shrink-0" />
             {!collapsed && <span className="truncate">Mi perfil</span>}
+          </Link>
+        )}
+
+        {session && (
+          <Link
+            href="/settings"
+            className={cn(
+              "relative flex items-center gap-3 h-10 px-3 rounded-lg text-sm font-medium transition-colors",
+              pathname.startsWith("/settings")
+                ? "bg-mb-dp text-mb-accent"
+                : "text-mb-muted hover:bg-mb-input hover:text-mb-text",
+            )}
+          >
+            {pathname.startsWith("/settings") && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-mb-primary rounded-r-full" />
+            )}
+            <Settings className="w-4 h-4 shrink-0" />
+            {!collapsed && <span className="truncate">Configuración</span>}
+          </Link>
+        )}
+
+        {session?.user.role === "ADMIN" && (
+          <Link
+            href="/admin/reports"
+            className={cn(
+              "relative flex items-center gap-3 h-10 px-3 rounded-lg text-sm font-medium transition-colors",
+              pathname.startsWith("/admin")
+                ? "bg-mb-dp text-mb-accent"
+                : "text-mb-muted hover:bg-mb-input hover:text-mb-text",
+            )}
+          >
+            {pathname.startsWith("/admin") && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-mb-primary rounded-r-full" />
+            )}
+            <Shield className="w-4 h-4 shrink-0" />
+            {!collapsed && <span className="truncate">Reportes</span>}
           </Link>
         )}
       </nav>

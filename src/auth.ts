@@ -42,6 +42,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: data.user.email,
           avatarUrl: data.user.avatarUrl ?? null,
           status: data.user.status,
+          role: data.user.role,
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
         };
@@ -62,6 +63,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.displayName = user.displayName;
         token.avatarUrl = user.avatarUrl ?? null;
         token.status = user.status;
+        token.role = user.role;
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
       }
@@ -79,6 +81,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.displayName = data.user.displayName;
           token.avatarUrl = data.user.avatarUrl ?? null;
           token.status = data.user.status;
+          token.role = data.user.role;
           token.accessToken = data.accessToken;
           token.refreshToken = data.refreshToken;
         } else {
@@ -116,6 +119,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.displayName = token.displayName as string;
       session.user.avatarUrl = (token.avatarUrl as string | null) ?? undefined;
       session.user.status = token.status as string;
+      session.user.role = token.role as string;
       session.accessToken = token.accessToken as string;
       session.refreshToken = token.refreshToken as string;
       if (token.error) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/auth";
 
-const PROTECTED_PREFIXES = ["/settings"];
+const PROTECTED_PREFIXES = ["/settings", "/admin"];
 const AUTH_ONLY_PREFIXES = ["/login", "/register"];
 
 export async function proxy(req: NextRequest) {
@@ -15,6 +15,12 @@ export async function proxy(req: NextRequest) {
   if (isProtected && !session) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname.startsWith("/admin") && session && session.user.role !== "ADMIN") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/feed";
     return NextResponse.redirect(url);
   }
 

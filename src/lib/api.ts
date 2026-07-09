@@ -32,6 +32,15 @@ import type {
   UserSearchResponse,
   NotificationRow,
   NotificationsResponse,
+  ReportTargetType,
+  ReportStatus,
+  AdminReportRow,
+  AdminReportsResponse,
+  CreateReportDto,
+  CreatedReport,
+  ExportDataResponse,
+  NotificationPreferences,
+  NotificationPrefsUpdate,
 } from "@/types/api";
 import { tokenStore } from "@/lib/token-store";
 
@@ -136,6 +145,7 @@ export async function apiRegister(payload: {
   displayName: string;
   email: string;
   password: string;
+  consent: true;
   idempotencyKey: string;
 }): Promise<ApiSuccessResponse<AuthResponse>> {
   const { idempotencyKey, ...body } = payload;
@@ -752,4 +762,92 @@ export async function apiGetRecommendations(
     { accessToken },
   );
   return result ?? null;
+}
+
+// Moderation (Fase 7)
+
+export async function apiCreateReport(
+  accessToken: string,
+  payload: CreateReportDto,
+  idempotencyKey: string,
+): Promise<ApiSuccessResponse<CreatedReport>> {
+  return apiFetch<ApiSuccessResponse<CreatedReport>>("/reports", {
+    method: "POST",
+    accessToken,
+    headers: { "Idempotency-Key": idempotencyKey },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function apiAdminListReports(
+  accessToken: string,
+  options: {
+    status?: ReportStatus;
+    targetType?: ReportTargetType;
+    cursor?: string;
+    limit?: number;
+  } = {},
+): Promise<ApiSuccessResponse<AdminReportsResponse>> {
+  const { status, targetType, cursor, limit = 20 } = options;
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (status) params.set("status", status);
+  if (targetType) params.set("targetType", targetType);
+  if (cursor) params.set("cursor", cursor);
+  const raw = await apiFetch<RawListEnvelope<AdminReportRow>>(
+    `/admin/reports?${params}`,
+    { accessToken },
+  );
+  return { data: { items: raw.data, nextCursor: raw.meta.cursor } };
+}
+
+export async function apiAdminUpdateReportStatus(
+  accessToken: string,
+  reportId: string,
+  status: "REVIEWED" | "DISMISSED",
+): Promise<void> {
+  return apiFetch<void>(`/admin/reports/${reportId}`, {
+    method: "PATCH",
+    accessToken,
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function apiExportUserData(
+  accessToken: string,
+): Promise<ApiSuccessResponse<ExportDataResponse>> {
+  return apiFetch<ApiSuccessResponse<ExportDataResponse>>("/users/me/export", {
+    accessToken,
+  });
+}
+
+export async function apiDeleteMe(accessToken: string): Promise<void> {
+  return apiFetch<void>("/users/me", {
+    method: "DELETE",
+    accessToken,
+  });
+}
+
+// Notification preferences (Fase 1)
+
+export async function apiGetNotificationPrefs(
+  accessToken: string,
+): Promise<ApiSuccessResponse<NotificationPreferences>> {
+  return apiFetch<ApiSuccessResponse<NotificationPreferences>>(
+    "/users/me/notifications-prefs",
+    { accessToken },
+  );
+}
+
+export async function apiUpdateNotificationPrefs(
+  accessToken: string,
+  updates: NotificationPrefsUpdate,
+): Promise<ApiSuccessResponse<NotificationPreferences>> {
+  return apiFetch<ApiSuccessResponse<NotificationPreferences>>(
+    "/users/me/notifications-prefs",
+    {
+      method: "PATCH",
+      accessToken,
+      body: JSON.stringify(updates),
+    },
+  );
 }

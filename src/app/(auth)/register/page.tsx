@@ -113,6 +113,7 @@ export default function RegisterPage() {
           displayName,
           email,
           password,
+          consent: true,
           idempotencyKey: idempotencyKey.current,
         });
         // Sign in after successful registration
@@ -379,11 +380,21 @@ export default function RegisterPage() {
           </button>
           <span className="text-sm text-mb-muted leading-snug">
             Acepto los{" "}
-            <a href="#" className="text-mb-accent hover:text-mb-primary-h transition-colors">
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-mb-accent hover:text-mb-primary-h transition-colors"
+            >
               términos de servicio
             </a>{" "}
             y la{" "}
-            <a href="#" className="text-mb-accent hover:text-mb-primary-h transition-colors">
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-mb-accent hover:text-mb-primary-h transition-colors"
+            >
               política de privacidad
             </a>
           </span>

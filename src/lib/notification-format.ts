@@ -26,11 +26,16 @@ export function getNotificationText(row: NotificationRow): string {
       return grouped
         ? `y ${others} persona${others === 1 ? "" : "s"} más empezaron a seguirte`
         : "empezó a seguirte";
+    case "MODERATION":
+      return row.reviewId
+        ? "Tu reseña fue ocultada por moderación."
+        : "Tu contenido fue ocultado por moderación.";
   }
 }
 
 export function notificationHref(row: NotificationRow): string {
-  if (row.type === "FOLLOW") return `/u/${row.actor.handle}`;
+  if (row.type === "FOLLOW" && row.actor) return `/u/${row.actor.handle}`;
   if (row.review) return `/reviews/${row.review.id}`;
-  return `/u/${row.actor.handle}`;
+  if (row.actor) return `/u/${row.actor.handle}`;
+  return "/feed";
 }
