@@ -100,7 +100,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isPending}
-              className="w-full h-11 bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+              className="w-full h-11 bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
               {isPending ? (
                 <>
@@ -130,7 +130,7 @@ export default function ForgotPasswordPage() {
             type="button"
             onClick={send}
             disabled={isPending}
-            className="min-h-11 px-5 bg-transparent border border-mb-primary rounded-xl text-mb-accent font-medium text-sm hover:bg-mb-primary/10 transition-colors disabled:opacity-60"
+            className="min-h-11 px-5 bg-transparent border border-mb-primary rounded-xl text-mb-accent font-medium text-sm hover:bg-mb-primary/10 transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             {isPending ? "Enviando…" : "Enviar de nuevo"}
           </button>

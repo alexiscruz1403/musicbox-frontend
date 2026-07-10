@@ -156,7 +156,7 @@ export default function EditProfileClient({
       <header className="md:hidden sticky top-0 z-10 bg-mb-bg/80 backdrop-blur border-b border-mb-border flex items-center gap-3 px-4 h-14">
         <button
           onClick={() => router.back()}
-          className="text-mb-muted hover:text-mb-text transition-colors"
+          className="text-mb-muted hover:text-mb-text transition-colors cursor-pointer"
           aria-label="Volver"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -165,7 +165,7 @@ export default function EditProfileClient({
         <button
           onClick={handleSave}
           disabled={!canSave}
-          className="ml-auto text-sm font-semibold text-mb-primary disabled:text-mb-dim transition-colors"
+          className="ml-auto text-sm font-semibold text-mb-primary disabled:text-mb-dim transition-colors cursor-pointer disabled:cursor-not-allowed"
         >
           {isPending ? "Guardando…" : "Guardar"}
         </button>
@@ -176,21 +176,12 @@ export default function EditProfileClient({
         <div className="hidden md:block mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm"
+            className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver
           </button>
-          <h1 className="font-serif text-3xl text-mb-text relative inline-block">
-            Editar perfil
-            <span
-              className="absolute bottom-0 left-0 w-full h-0.5 rounded-full"
-              style={{
-                background: "linear-gradient(90deg, #6B35D4, #C4A8F5, transparent)",
-              }}
-              aria-hidden
-            />
-          </h1>
+          <h1 className="font-serif text-3xl text-mb-text">Editar perfil</h1>
         </div>
 
         {saveError && (
@@ -229,7 +220,7 @@ export default function EditProfileClient({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
               aria-label="Cambiar foto de perfil"
             >
               <Camera className="w-6 h-6 text-white" />
@@ -238,7 +229,7 @@ export default function EditProfileClient({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="mt-3 text-sm text-mb-accent hover:text-mb-primary-h transition-colors"
+            className="mt-3 text-sm text-mb-accent hover:text-mb-primary-h transition-colors cursor-pointer"
           >
             Cambiar foto
           </button>
@@ -387,7 +378,7 @@ export default function EditProfileClient({
               type="button"
               onClick={handleSave}
               disabled={!canSave}
-              className="px-6 h-11 bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors disabled:opacity-70 flex items-center gap-2"
+              className="px-6 h-11 bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors disabled:opacity-70 flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
               {isPending ? (
                 <>

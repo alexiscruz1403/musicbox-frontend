@@ -194,7 +194,7 @@ export function ReviewDetailClient({
         type="button"
         onClick={() => router.back()}
         aria-label="Volver"
-        className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors"
+        className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
@@ -231,7 +231,7 @@ export function ReviewDetailClient({
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-label="Más opciones"
-                className="w-11 h-11 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors"
+                className="w-11 h-11 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
               >
                 <MoreVertical className="w-[18px] h-[18px]" />
               </button>
@@ -250,7 +250,7 @@ export function ReviewDetailClient({
                     type="button"
                     onClick={handleDelete}
                     disabled={isPending}
-                    className="flex items-center gap-2.5 w-full min-h-10 px-3 py-2 rounded-md text-mb-error text-sm text-left hover:bg-mb-border transition-colors disabled:opacity-60"
+                    className="flex items-center gap-2.5 w-full min-h-10 px-3 py-2 rounded-md text-mb-error text-sm text-left hover:bg-mb-border transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                   >
                     <Trash2 className="w-4 h-4" />
                     {isPending ? "Eliminando…" : "Eliminar"}
@@ -276,7 +276,7 @@ export function ReviewDetailClient({
                 })
               }
               aria-label="Reportar reseña"
-              className="shrink-0 w-11 h-11 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-error transition-colors"
+              className="shrink-0 w-11 h-11 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-error transition-colors cursor-pointer"
             >
               <Flag className="w-[18px] h-[18px]" />
             </button>
@@ -409,7 +409,7 @@ export function ReviewDetailClient({
             onClick={() => handleReact("LIKE")}
             aria-label="Me gusta"
             aria-pressed={reaction === "LIKE"}
-            className="inline-flex items-center gap-2 min-h-11 px-3.5 rounded-lg text-sm font-medium hover:bg-mb-input transition-colors"
+            className="inline-flex items-center gap-2 min-h-11 px-3.5 rounded-lg text-sm font-medium hover:bg-mb-input transition-colors cursor-pointer"
             style={{ color: reaction === "LIKE" ? "#8B56E8" : "#9B95B0" }}
           >
             <ThumbsUp width={18} height={18} strokeWidth={1.75} fill={reaction === "LIKE" ? "currentColor" : "none"} />
@@ -420,7 +420,7 @@ export function ReviewDetailClient({
             onClick={() => handleReact("DISLIKE")}
             aria-label="No me gusta"
             aria-pressed={reaction === "DISLIKE"}
-            className="inline-flex items-center gap-2 min-h-11 px-3.5 rounded-lg text-sm font-medium hover:bg-mb-input transition-colors"
+            className="inline-flex items-center gap-2 min-h-11 px-3.5 rounded-lg text-sm font-medium hover:bg-mb-input transition-colors cursor-pointer"
             style={{ color: reaction === "DISLIKE" ? "#8B56E8" : "#9B95B0" }}
           >
             <ThumbsDown width={18} height={18} strokeWidth={1.75} fill={reaction === "DISLIKE" ? "currentColor" : "none"} />
@@ -538,7 +538,7 @@ export function ReviewDetailClient({
                           onClick={() => handleDeleteComment(c.id)}
                           disabled={commentPending && deletingCommentId === c.id}
                           aria-label="Eliminar comentario"
-                          className="min-h-8 py-1 mt-1 bg-transparent border-none text-mb-dim text-xs font-medium cursor-pointer hover:text-mb-error transition-colors disabled:opacity-60"
+                          className="min-h-8 py-1 mt-1 bg-transparent border-none text-mb-dim text-xs font-medium cursor-pointer hover:text-mb-error transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                           {commentPending && deletingCommentId === c.id ? "Eliminando…" : "Eliminar"}
                         </button>

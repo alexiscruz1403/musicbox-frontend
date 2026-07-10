@@ -32,14 +32,7 @@ export default async function SettingsHubPage() {
   return (
     <div className="min-h-screen bg-mb-bg">
       <div className="max-w-xl mx-auto px-4 md:px-0 py-8 md:py-12">
-        <h1 className="font-serif text-3xl text-mb-text mb-2">Configuración</h1>
-        <div
-          className="w-full h-0.5 rounded-full mb-6 mt-[18px]"
-          style={{
-            background: "linear-gradient(90deg, #6B35D4, transparent)",
-          }}
-          aria-hidden
-        />
+        <h1 className="font-serif text-3xl text-mb-text mb-8">Configuración</h1>
 
         <div className="flex flex-col gap-3">
           {ITEMS.map(({ title, subtitle, icon: Icon, href }) => (

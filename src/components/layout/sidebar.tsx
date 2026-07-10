@@ -141,7 +141,7 @@ export function Sidebar({ session }: SidebarProps) {
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed((c) => !c)}
-        className="mx-3 mb-2 p-2 rounded-lg text-mb-dim hover:text-mb-muted hover:bg-mb-input transition-colors flex items-center justify-center"
+        className="mx-3 mb-2 p-2 rounded-lg text-mb-dim hover:text-mb-muted hover:bg-mb-input transition-colors flex items-center justify-center cursor-pointer"
         aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
       >
         {collapsed ? (

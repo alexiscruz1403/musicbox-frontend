@@ -154,7 +154,7 @@ export function CommunityReviewCard({
           onClick={() => handleReact("LIKE")}
           aria-label="Me gusta"
           aria-pressed={reaction === "LIKE"}
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input"
+          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input cursor-pointer"
           style={{ color: reaction === "LIKE" ? "#8B56E8" : "#9B95B0" }}
         >
           <ThumbsUp
@@ -170,7 +170,7 @@ export function CommunityReviewCard({
           onClick={() => handleReact("DISLIKE")}
           aria-label="No me gusta"
           aria-pressed={reaction === "DISLIKE"}
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input"
+          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input cursor-pointer"
           style={{ color: reaction === "DISLIKE" ? "#8B56E8" : "#9B95B0" }}
         >
           <ThumbsDown

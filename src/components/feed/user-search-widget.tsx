@@ -87,7 +87,7 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
             type="button"
             onClick={() => setQuery("")}
             aria-label="Limpiar búsqueda"
-            className="w-7 h-7 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0"
+            className="w-7 h-7 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -148,7 +148,7 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
                       disabled={isPending}
                       aria-label={following ? `Dejar de seguir a ${u.displayName}` : `Seguir a ${u.displayName}`}
                       className={cn(
-                        "shrink-0 inline-flex items-center gap-1.5 min-h-[34px] px-3.5 rounded-full font-semibold text-[13px] transition-colors disabled:opacity-60",
+                        "shrink-0 inline-flex items-center gap-1.5 min-h-[34px] px-3.5 rounded-full font-semibold text-[13px] transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed",
                         following
                           ? "bg-mb-dp border border-mb-ddp text-mb-muted hover:border-mb-error hover:text-mb-error"
                           : "bg-transparent border border-mb-primary text-mb-accent hover:bg-mb-dp",
@@ -175,7 +175,7 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
                   type="button"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="mt-1 h-9 text-sm font-medium text-mb-accent hover:underline disabled:opacity-60 disabled:no-underline"
+                  className="mt-1 h-9 text-sm font-medium text-mb-accent hover:underline disabled:opacity-60 disabled:no-underline cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isFetchingNextPage ? "Cargando…" : "Cargar más resultados"}
                 </button>

@@ -306,7 +306,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPw((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors cursor-pointer"
               aria-label={showPw ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showPw ? (
@@ -345,7 +345,7 @@ export default function RegisterPage() {
             aria-checked={terms}
             onClick={() => setTerms((v) => !v)}
             className={cn(
-              "mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all",
+              "mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer",
               terms
                 ? "bg-mb-primary border-mb-primary"
                 : "bg-mb-input border-mb-border hover:border-mb-primary/50",
@@ -386,7 +386,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={isPending || handleStatus === "taken" || handleStatus === "checking"}
-          className="w-full h-11 bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
+          className="w-full h-11 bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors disabled:opacity-70 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
         >
           {isPending ? (
             <>
@@ -430,7 +430,7 @@ export default function RegisterPage() {
         type="button"
         onClick={handleGoogleSignIn}
         disabled={isPending}
-        className="w-full flex items-center justify-center gap-3 bg-mb-input border border-mb-border rounded-xl h-11 text-mb-text text-sm font-medium hover:border-mb-primary/50 transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-3 bg-mb-input border border-mb-border rounded-xl h-11 text-mb-text text-sm font-medium hover:border-mb-primary/50 transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
       >
         <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true">
           <path

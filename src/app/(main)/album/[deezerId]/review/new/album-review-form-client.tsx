@@ -13,6 +13,8 @@ import {
 import { ratingColor, coverGradient } from "@/lib/review-format";
 import type { CatalogAlbum, ReviewDetail, TrackReviewItemDto } from "@/types/api";
 
+const MAX_CHARS = 2000;
+
 interface AlbumReviewFormClientProps {
   album: CatalogAlbum;
   accessToken: string;
@@ -79,7 +81,7 @@ export function AlbumReviewFormClient({
   const ratedCount = Object.keys(trackRatings).length;
   const sum = Object.values(trackRatings).reduce((a, b) => a + b, 0);
   const avg = ratedCount > 0 ? sum / ratedCount : 0;
-  const avgText = ratedCount > 0 ? avg.toFixed(1) : "—";
+  const avgText = ratedCount > 0 ? avg.toFixed(2) : "—";
 
   const canSubmit =
     ratedCount > 0 && description.trim().length > 0 && !isPending;
@@ -138,7 +140,7 @@ export function AlbumReviewFormClient({
         type="button"
         onClick={() => router.back()}
         aria-label="Volver"
-        className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors"
+        className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
@@ -164,16 +166,10 @@ export function AlbumReviewFormClient({
           </div>
         </div>
 
-        <h1 className="font-serif font-normal text-[32px] leading-[1.2] text-mb-text mb-2">
+        <h1 className="font-serif font-normal text-[32px] leading-[1.2] text-mb-text mb-8">
           {mode === "edit" ? "Editar tu reseña de " : "Tu reseña de "}
           <span className="text-mb-accent">{album.title}</span>
         </h1>
-        <div
-          aria-hidden
-          className="h-px w-40 mb-8"
-          style={{ background: "linear-gradient(90deg,#6B35D4,transparent)" }}
-        />
-
         {saveError && (
           <div
             role="alert"
@@ -191,13 +187,22 @@ export function AlbumReviewFormClient({
           >
             ¿Tu impresión general del álbum?
           </label>
-          <textarea
-            id="mbGeneral"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Contanos qué te dejó el disco como conjunto: su arco, su producción, qué lo hace memorable…"
-            className="w-full min-h-[120px] p-4 bg-mb-input border border-mb-border focus:border-mb-primary rounded-lg text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-y text-[15px] leading-relaxed"
-          />
+          <div className="relative">
+            <textarea
+              id="mbGeneral"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={MAX_CHARS}
+              placeholder="Contanos qué te dejó el disco como conjunto: su arco, su producción, qué lo hace memorable…"
+              className="w-full min-h-[120px] p-4 pb-8 bg-mb-input border border-mb-border focus:border-mb-primary rounded-lg text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-y text-[15px] leading-relaxed"
+            />
+            <div
+              aria-live="polite"
+              className="absolute right-3.5 bottom-2.5 font-mono text-xs text-mb-dim"
+            >
+              {description.length} / {MAX_CHARS}
+            </div>
+          </div>
         </div>
 
         {/* Songs */}
@@ -211,7 +216,7 @@ export function AlbumReviewFormClient({
         </div>
 
         <div className="flex flex-col gap-2.5">
-          {album.tracks.map((track) => {
+          {album.tracks.map((track, index) => {
             const rating = trackRatings[track.deezerId] ?? 0;
             const hasNote = (trackNotes[track.deezerId] ?? "").length > 0;
             const noteOpen = openNoteFor === track.deezerId;
@@ -221,55 +226,44 @@ export function AlbumReviewFormClient({
                 key={track.deezerId}
                 className={cn(
                   "bg-mb-card border rounded-xl px-4.5 py-4 transition-colors",
-                  rating >= 1 ? "border-mb-ddp" : "border-mb-border",
+                  rating >= 0.25 ? "border-mb-ddp" : "border-mb-border",
                 )}
               >
                 <div className="flex items-center gap-3 mb-3.5">
                   <span className="shrink-0 w-[22px] font-mono text-xs text-mb-dim">
-                    {track.trackNumber ?? ""}
+                    {track.trackNumber ?? index + 1}
                   </span>
                   <span className="min-w-0 flex-1 text-[15px] text-mb-text truncate">
                     {track.title}
                   </span>
                 </div>
-                <div className="flex items-center gap-4 pl-[34px]">
-                  <div
-                    role="group"
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min={0}
+                    max={10}
+                    step={0.25}
+                    value={rating}
+                    onChange={(e) => {
+                      const v = Math.round(parseFloat(e.target.value) * 4) / 4;
+                      setRating(track.deezerId, v);
+                    }}
                     aria-label={`Puntuación de ${track.title}`}
-                    className="flex gap-1.5 flex-1 overflow-x-auto no-scrollbar overflow-y-hidden"
-                  >
-                    {Array.from({ length: 10 }, (_, i) => i + 1).map((v) => {
-                      const filled = v <= rating;
-                      const color = ratingColor(rating || 1);
-                      return (
-                        <button
-                          key={v}
-                          type="button"
-                          onClick={() => setRating(track.deezerId, v)}
-                          aria-label={`Puntaje ${v}`}
-                          className="shrink-0 w-8 h-8 rounded-full font-mono font-bold text-xs transition-transform hover:scale-110"
-                          style={{
-                            border: `1.5px solid ${filled ? color : "#252332"}`,
-                            background: filled ? color : "transparent",
-                            color: filled ? "#0A0A0F" : "#5C5670",
-                          }}
-                        >
-                          {v}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <span className="shrink-0 flex items-baseline gap-1 min-w-[52px] justify-end">
+                    aria-valuetext={rating === 0 ? "Sin calificar" : `${rating.toFixed(2)} de 10`}
+                    className="flex-1 min-h-8 cursor-pointer"
+                    style={{ accentColor: rating === 0 ? "#5C5670" : ratingColor(rating) }}
+                  />
+                  <span className="shrink-0 flex items-baseline gap-1 justify-end">
                     <span
-                      className="font-mono font-bold text-xl leading-none"
+                      className="font-mono font-bold text-xl leading-none text-right w-[5ch]"
                       style={{ color: rating === 0 ? "#5C5670" : ratingColor(rating) }}
                     >
-                      {rating === 0 ? "—" : rating}
+                      {rating === 0 ? "—" : rating.toFixed(2)}
                     </span>
                     <span className="font-mono text-xs text-mb-dim">/10</span>
                   </span>
                 </div>
-                <div className="pl-[34px] mt-3">
+                <div className="mt-3">
                   {noteOpen ? (
                     <div>
                       <textarea
@@ -281,7 +275,7 @@ export function AlbumReviewFormClient({
                       <button
                         type="button"
                         onClick={() => setOpenNoteFor(null)}
-                        className="mt-1.5 text-xs text-mb-dim hover:text-mb-muted transition-colors"
+                        className="mt-1.5 text-xs text-mb-dim hover:text-mb-muted transition-colors cursor-pointer"
                       >
                         Ocultar nota
                       </button>
@@ -290,7 +284,7 @@ export function AlbumReviewFormClient({
                     <button
                       type="button"
                       onClick={() => setOpenNoteFor(track.deezerId)}
-                      className="inline-flex items-center gap-1.5 min-h-9 px-2.5 rounded-md text-mb-muted text-[13px] font-medium hover:text-mb-accent hover:bg-mb-input transition-colors"
+                      className="inline-flex items-center gap-1.5 min-h-9  rounded-md text-mb-muted text-[13px] font-medium hover:text-mb-accent hover:bg-mb-input transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       {hasNote ? "Editar nota" : "Agregar nota"}
@@ -324,7 +318,7 @@ export function AlbumReviewFormClient({
             <button
               type="button"
               onClick={() => router.back()}
-              className="hidden md:inline-flex min-h-11 px-4.5 rounded-lg text-mb-muted font-medium text-sm hover:text-mb-text hover:bg-mb-input transition-colors"
+              className="hidden md:inline-flex items-center justify-center min-h-11 px-4.5 rounded-lg text-mb-muted font-medium text-sm hover:text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
             >
               Cancelar
             </button>
@@ -333,7 +327,7 @@ export function AlbumReviewFormClient({
               onClick={handleSubmit}
               disabled={!canSubmit}
               className={cn(
-                "min-h-11 px-5.5 rounded-lg font-semibold text-sm transition-all",
+                "inline-flex items-center justify-center min-h-11 px-5.5 rounded-lg font-semibold text-sm transition-all",
                 canSubmit
                   ? "bg-mb-primary hover:bg-mb-primary-h text-white hover:shadow-[0_0_20px_rgba(107,53,212,0.35)] cursor-pointer"
                   : "bg-mb-border text-mb-dim cursor-not-allowed",

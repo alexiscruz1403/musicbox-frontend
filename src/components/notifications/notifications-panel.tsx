@@ -93,7 +93,7 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
   return (
     <div className="fixed inset-0 z-40">
       <div
-        className="hidden md:block absolute inset-0 bg-black/50"
+        className="hidden md:block absolute inset-0 bg-black/50 cursor-pointer"
         onClick={close}
         aria-hidden
       />
@@ -109,7 +109,7 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
               type="button"
               onClick={close}
               aria-label="Cerrar notificaciones"
-              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors"
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -121,7 +121,7 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
             type="button"
             onClick={handleMarkAllRead}
             disabled={markingAll || unreadCount === 0}
-            className="shrink-0 inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-mb-accent text-xs font-medium hover:bg-mb-dp transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="shrink-0 inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-mb-accent text-xs font-medium hover:bg-mb-dp transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <CheckCheck className="w-3.5 h-3.5" />
             Marcar todas

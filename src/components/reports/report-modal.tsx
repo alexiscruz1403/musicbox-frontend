@@ -78,7 +78,7 @@ export function ReportModal({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto cursor-pointer"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -93,7 +93,7 @@ export function ReportModal({
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -159,7 +159,7 @@ export function ReportModal({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 px-5 rounded-lg text-mb-muted font-medium text-sm hover:bg-mb-input hover:text-mb-text transition-colors"
+            className="min-h-11 px-5 rounded-lg text-mb-muted font-medium text-sm hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
           >
             Cancelar
           </button>

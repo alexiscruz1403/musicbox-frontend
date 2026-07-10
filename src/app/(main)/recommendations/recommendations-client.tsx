@@ -156,11 +156,6 @@ export function RecommendationsClient({ accessToken }: RecommendationsClientProp
                 Para vos
               </h1>
               <p className="text-sm text-mb-muted">Basado en tus reseñas recientes.</p>
-              <div
-                aria-hidden
-                className="h-px w-full mt-[18px]"
-                style={{ background: "linear-gradient(90deg, #6B35D4, transparent)" }}
-              />
             </header>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">

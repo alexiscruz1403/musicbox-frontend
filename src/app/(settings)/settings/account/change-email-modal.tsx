@@ -67,7 +67,7 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
   return (
     <div
       onClick={handleClose}
-      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6"
+      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 cursor-pointer"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -119,7 +119,7 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
               <button
                 type="button"
                 onClick={handleClose}
-                className="min-h-11 px-5 rounded-lg text-mb-muted font-medium text-sm hover:bg-mb-input hover:text-mb-text transition-colors"
+                className="min-h-11 px-5 rounded-lg text-mb-muted font-medium text-sm hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -153,7 +153,7 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
             <button
               type="button"
               onClick={handleClose}
-              className="w-full min-h-11 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-sm transition-colors"
+              className="w-full min-h-11 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-sm transition-colors cursor-pointer"
             >
               Cerrar
             </button>

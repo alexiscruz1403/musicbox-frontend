@@ -91,14 +91,9 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
   return (
     <div className="max-w-[1100px] mx-auto px-4 md:px-10 py-9 pb-24">
       <h1 className="font-serif text-[28px] text-mb-text mb-1.5">Reportes</h1>
-      <p className="text-sm text-mb-muted mb-2">
+      <p className="text-sm text-mb-muted mb-7">
         Contenido y usuarios reportados por la comunidad.
       </p>
-      <div
-        aria-hidden
-        className="h-px w-[140px] mb-7"
-        style={{ background: "linear-gradient(90deg,#6B35D4,transparent)" }}
-      />
 
       <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
         <div className="flex gap-1 border-b border-mb-border overflow-x-auto">
@@ -108,7 +103,7 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
               type="button"
               onClick={() => setStatus(t.id)}
               className={cn(
-                "shrink-0 min-h-11 px-4 -mb-px border-b-2 text-sm whitespace-nowrap transition-colors",
+                "shrink-0 min-h-11 px-4 -mb-px border-b-2 text-sm whitespace-nowrap transition-colors cursor-pointer",
                 status === t.id
                   ? "border-mb-primary text-mb-text font-semibold"
                   : "border-transparent text-mb-muted font-medium hover:text-mb-text",
@@ -125,7 +120,7 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
               type="button"
               onClick={() => setTargetType(t.id)}
               className={cn(
-                "min-h-9 px-3 rounded-lg border text-xs font-medium whitespace-nowrap transition-colors",
+                "min-h-9 px-3 rounded-lg border text-xs font-medium whitespace-nowrap transition-colors cursor-pointer",
                 targetType === t.id
                   ? "bg-mb-dp border-mb-ddp text-mb-accent"
                   : "bg-transparent border-mb-border text-mb-muted hover:text-mb-text",
@@ -173,7 +168,7 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
       {confirmState && (
         <div
           onClick={() => setConfirmState(null)}
-          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto"
+          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto cursor-pointer"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -196,7 +191,7 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
                 type="button"
                 onClick={() => setConfirmState(null)}
                 disabled={isPending}
-                className="min-h-11 px-5 rounded-lg text-mb-muted font-medium text-sm hover:bg-mb-input hover:text-mb-text transition-colors disabled:opacity-60"
+                className="min-h-11 px-5 rounded-lg text-mb-muted font-medium text-sm hover:bg-mb-input hover:text-mb-text transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
               >
                 Cancelar
               </button>
@@ -205,7 +200,7 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
                 onClick={handleConfirm}
                 disabled={isPending}
                 className={cn(
-                  "min-h-11 px-5 rounded-lg font-semibold text-sm text-white transition-colors disabled:opacity-70",
+                  "min-h-11 px-5 rounded-lg font-semibold text-sm text-white transition-colors disabled:opacity-70 cursor-pointer disabled:cursor-not-allowed",
                   isAccept ? "bg-mb-error hover:bg-mb-error/90" : "bg-mb-primary hover:bg-mb-primary-h",
                 )}
               >
