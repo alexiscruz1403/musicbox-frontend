@@ -21,7 +21,7 @@ export function NotificationBell({ accessToken, className }: NotificationBellPro
       onClick={toggle}
       aria-label="Notificaciones"
       className={cn(
-        "relative inline-flex items-center justify-center text-mb-muted hover:text-mb-text hover:bg-mb-input rounded-lg transition-colors",
+        "relative inline-flex items-center justify-center text-mb-muted hover:text-mb-text hover:bg-mb-input rounded-lg transition-colors cursor-pointer",
         className,
       )}
     >

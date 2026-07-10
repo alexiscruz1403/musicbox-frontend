@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { apiAlbumReviews } from "@/lib/api";
 import { formatMs, coverGradient } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
-import { useMeasuredWidth } from "@/hooks/use-measured-width";
 import type { CatalogAlbum } from "@/types/api";
 
 type ReviewSort = "recent" | "rating";
@@ -61,7 +60,6 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const [titleRef, titleWidth] = useMeasuredWidth<HTMLHeadingElement>([album.title]);
 
   const togglePlay = useCallback(
     (trackId: string, previewUrl: string | null) => {
@@ -126,7 +124,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
         type="button"
         onClick={() => router.back()}
         aria-label="Volver"
-        className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors"
+        className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
@@ -157,10 +155,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
             <span className="inline-block px-2.5 py-1 border border-mb-ddp rounded-full text-[11px] tracking-widest uppercase text-mb-accent font-semibold mb-3.5">
               Álbum
             </span>
-            <h1
-              ref={titleRef}
-              className="font-serif font-normal text-[32px] md:text-5xl leading-[1.05] text-mb-text mb-2.5"
-            >
+            <h1 className="font-serif font-normal text-[32px] md:text-5xl leading-[1.05] text-mb-text mb-2.5">
               {album.title}
             </h1>
             <div className="flex items-center gap-2 flex-wrap mb-5 justify-center md:justify-start">
@@ -179,16 +174,6 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                 </>
               )}
             </div>
-            {titleWidth !== null && (
-              <div
-                aria-hidden
-                className="h-px mx-auto md:mx-0 mb-5"
-                style={{
-                  width: titleWidth,
-                  background: "linear-gradient(90deg,#6B35D4,transparent)",
-                }}
-              />
-            )}
             <div className="flex items-end gap-6 flex-wrap justify-center md:justify-start">
               <div role="group" aria-label="0 reseñas">
                 <p className="text-mb-muted text-sm mt-1.5">
@@ -204,7 +189,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                       : `/login?callbackUrl=${encodeURIComponent(`/album/${album.deezerId}/review/new`)}`,
                   )
                 }
-                className="h-12 px-7 bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)]"
+                className="h-12 px-7 bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)] cursor-pointer"
               >
                 Escribir reseña
               </button>
@@ -257,7 +242,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                         : `Reproducir preview de ${track.title}`
                     }
                     disabled={!track.previewUrl}
-                    className="shrink-0 w-11 h-11 flex items-center justify-center rounded-full transition-colors hover:bg-mb-dp disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="shrink-0 w-11 h-11 flex items-center justify-center rounded-full transition-colors hover:bg-mb-dp cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                     style={{ color: isPlaying ? "#8B56E8" : "#9B95B0" }}
                   >
                     {isPlaying ? (

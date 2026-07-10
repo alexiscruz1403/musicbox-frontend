@@ -124,14 +124,14 @@ export function ReportCard({ report, onDismiss, onAccept }: ReportCardProps) {
             <button
               type="button"
               onClick={onDismiss}
-              className="min-h-10 px-4 border border-mb-border rounded-lg text-mb-muted font-medium text-[13px] hover:border-mb-dim hover:text-mb-text transition-colors"
+              className="min-h-10 px-4 border border-mb-border rounded-lg text-mb-muted font-medium text-[13px] hover:border-mb-dim hover:text-mb-text transition-colors cursor-pointer"
             >
               Descartar
             </button>
             <button
               type="button"
               onClick={onAccept}
-              className="min-h-10 px-4 border border-mb-error rounded-lg text-mb-error font-semibold text-[13px] hover:bg-mb-error/10 transition-colors"
+              className="min-h-10 px-4 border border-mb-error rounded-lg text-mb-error font-semibold text-[13px] hover:bg-mb-error/10 transition-colors cursor-pointer"
             >
               Aceptar y actuar
             </button>

@@ -121,7 +121,7 @@ export default function NotificationsClient({
       <header className="md:hidden sticky top-0 z-10 bg-mb-bg/80 backdrop-blur border-b border-mb-border flex items-center gap-3 px-4 h-14">
         <button
           onClick={() => router.back()}
-          className="text-mb-muted hover:text-mb-text transition-colors"
+          className="text-mb-muted hover:text-mb-text transition-colors cursor-pointer"
           aria-label="Volver"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -133,18 +133,13 @@ export default function NotificationsClient({
         <div className="hidden md:block mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm"
+            className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver
           </button>
           <h1 className="font-serif text-3xl text-mb-text mb-1.5">Notificaciones</h1>
-          <p className="text-sm text-mb-muted mb-2">Elegí qué querés que te avisemos.</p>
-          <span
-            className="block h-0.5 w-full rounded-full mt-[18px]"
-            style={{ background: "linear-gradient(90deg, #6B35D4, transparent)" }}
-            aria-hidden
-          />
+          <p className="text-sm text-mb-muted mb-8">Elegí qué querés que te avisemos.</p>
         </div>
 
         {saveError && (
@@ -174,7 +169,7 @@ export default function NotificationsClient({
             setSavedOk(false);
           }}
           className={cn(
-            "flex items-center justify-between gap-4 w-full min-h-16 px-4.5 py-4 bg-mb-card border rounded-xl text-left transition-colors",
+            "flex items-center justify-between gap-4 w-full min-h-16 px-4.5 py-4 bg-mb-card border rounded-xl text-left transition-colors cursor-pointer",
             master ? "border-mb-ddp" : "border-mb-border",
           )}
         >
@@ -230,7 +225,7 @@ export default function NotificationsClient({
             type="button"
             onClick={handleSave}
             disabled={isPending}
-            className="min-h-12 px-6.5 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-[15px] transition-colors disabled:opacity-70"
+            className="min-h-12 px-6.5 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-[15px] transition-colors disabled:opacity-70 cursor-pointer disabled:cursor-not-allowed"
           >
             {isPending ? "Guardando…" : "Guardar preferencias"}
           </button>
@@ -243,7 +238,7 @@ export default function NotificationsClient({
           type="button"
           onClick={handleSave}
           disabled={isPending}
-          className="w-full min-h-12 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-[15px] transition-colors disabled:opacity-70"
+          className="w-full min-h-12 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-[15px] transition-colors disabled:opacity-70 cursor-pointer disabled:cursor-not-allowed"
         >
           {isPending ? "Guardando…" : "Guardar preferencias"}
         </button>

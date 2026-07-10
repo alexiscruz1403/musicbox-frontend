@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { apiTrackReviews, apiCatalogAlbum } from "@/lib/api";
 import { formatMs, coverGradient } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
-import { useMeasuredWidth } from "@/hooks/use-measured-width";
 import type { CatalogTrack } from "@/types/api";
 
 type ReviewSort = "recent" | "rating";
@@ -78,7 +77,7 @@ function AudioPreviewPlayer({ previewUrl }: AudioPreviewProps) {
           type="button"
           onClick={toggle}
           aria-label={playing ? "Pausar preview" : "Reproducir preview de 30 segundos"}
-          className="w-12 h-12 flex items-center justify-center bg-mb-primary hover:bg-mb-primary-h rounded-full text-white transition-colors shrink-0"
+          className="w-12 h-12 flex items-center justify-center bg-mb-primary hover:bg-mb-primary-h rounded-full text-white transition-colors shrink-0 cursor-pointer"
         >
           {playing ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
         </button>
@@ -133,7 +132,7 @@ function AudioPreviewPlayer({ previewUrl }: AudioPreviewProps) {
         type="button"
         onClick={toggle}
         aria-label={playing ? "Pausar preview" : "Escuchar preview · 30s"}
-        className="md:hidden w-full h-12 flex items-center justify-center gap-2.5 bg-transparent border border-mb-primary rounded-lg text-mb-accent font-semibold text-[15px] hover:bg-mb-dp transition-colors mt-5"
+        className="md:hidden w-full h-12 flex items-center justify-center gap-2.5 bg-transparent border border-mb-primary rounded-lg text-mb-accent font-semibold text-[15px] hover:bg-mb-dp transition-colors mt-5 cursor-pointer"
       >
         {playing ? (
           <>
@@ -160,7 +159,6 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
   const router = useRouter();
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const [titleRef, titleWidth] = useMeasuredWidth<HTMLHeadingElement>([track.title]);
 
   const { data: albumData } = useQuery({
     queryKey: ["album", track.albumDeezerId],
@@ -216,7 +214,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
         type="button"
         onClick={() => router.back()}
         aria-label="Volver"
-        className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors"
+        className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
@@ -268,10 +266,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
             <span className="inline-block px-2.5 py-1 border border-mb-ddp rounded-full text-[11px] tracking-widest uppercase text-mb-accent font-semibold mb-3.5">
               Canción
             </span>
-            <h1
-              ref={titleRef}
-              className="font-serif font-normal text-[32px] md:text-5xl leading-[1.05] text-mb-text mb-2.5"
-            >
+            <h1 className="font-serif font-normal text-[32px] md:text-5xl leading-[1.05] text-mb-text mb-2.5">
               {track.title}
             </h1>
             <div className="flex items-center gap-2 flex-wrap mb-5 justify-center md:justify-start">
@@ -294,14 +289,6 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
                 </>
               )}
             </div>
-            {titleWidth !== null && (
-              <div
-                aria-hidden
-                className="h-px mx-auto md:mx-0 mb-5"
-                style={{ width: titleWidth, background: "linear-gradient(90deg,#6B35D4,transparent)" }}
-              />
-            )}
-
             {/* Audio preview */}
             {track.previewUrl && <AudioPreviewPlayer previewUrl={track.previewUrl} />}
 
@@ -313,7 +300,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
               <button
                 type="button"
                 onClick={() => router.push(newReviewHref)}
-                className="hidden md:block h-12 px-7 bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)]"
+                className="hidden md:block h-12 px-7 bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)] cursor-pointer"
               >
                 Escribir reseña
               </button>
@@ -323,7 +310,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
             <button
               type="button"
               onClick={() => router.push(newReviewHref)}
-              className="md:hidden w-full h-12 border-none bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg mt-3 transition-colors"
+              className="md:hidden w-full h-12 border-none bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg mt-3 transition-colors cursor-pointer"
             >
               Escribir reseña
             </button>

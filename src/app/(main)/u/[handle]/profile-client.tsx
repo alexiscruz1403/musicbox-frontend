@@ -176,7 +176,7 @@ export default function ProfileClient({
                 onClick={() => setReportOpen(true)}
                 aria-label="Reportar usuario"
                 title="Reportar usuario"
-                className="flex items-center justify-center w-9 h-9 bg-mb-input border border-mb-border rounded-lg text-mb-muted hover:border-mb-error hover:text-mb-error transition-colors"
+                className="flex items-center justify-center w-9 h-9 bg-mb-input border border-mb-border rounded-lg text-mb-muted hover:border-mb-error hover:text-mb-error transition-colors cursor-pointer"
               >
                 <Flag className="w-3.5 h-3.5" />
               </button>
@@ -204,7 +204,7 @@ export default function ProfileClient({
                 onClick={handleFollowToggle}
                 disabled={isPending}
                 className={cn(
-                  "flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-semibold transition-colors disabled:opacity-70",
+                  "flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-semibold transition-colors disabled:opacity-70 cursor-pointer disabled:cursor-not-allowed",
                   isFollowing
                     ? "bg-mb-input border border-mb-border text-mb-text hover:border-mb-error hover:text-mb-error"
                     : "bg-mb-primary hover:bg-mb-primary-h text-white",
@@ -270,7 +270,7 @@ export default function ProfileClient({
                 key={id}
                 onClick={() => setActiveTab(id)}
                 className={cn(
-                  "px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors",
+                  "px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors cursor-pointer",
                   activeTab === id
                     ? "border-mb-primary text-mb-accent"
                     : "border-transparent text-mb-muted hover:text-mb-text",

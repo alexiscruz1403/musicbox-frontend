@@ -438,7 +438,7 @@ export function SearchClient() {
                   inputRef.current?.focus();
                 }}
                 aria-label="Limpiar búsqueda"
-                className="w-8 h-8 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0"
+                className="w-8 h-8 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>

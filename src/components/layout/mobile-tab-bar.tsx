@@ -60,7 +60,7 @@ export function MobileTabBar({ session }: MobileTabBarProps) {
             type="button"
             onClick={toggleNotifications}
             aria-label="Notificaciones"
-            className="flex items-center justify-center flex-1 h-full text-mb-muted transition-colors"
+            className="flex items-center justify-center flex-1 h-full text-mb-muted transition-colors cursor-pointer"
           >
             <span className="relative inline-flex">
               <Bell className="w-5 h-5" />

@@ -141,7 +141,7 @@ export function ResetPasswordClient() {
             <button
               type="button"
               onClick={() => setShowPw1((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors cursor-pointer"
               aria-label={showPw1 ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showPw1 ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -189,7 +189,7 @@ export function ResetPasswordClient() {
             <button
               type="button"
               onClick={() => setShowPw2((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors cursor-pointer"
               aria-label={showPw2 ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showPw2 ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -201,7 +201,7 @@ export function ResetPasswordClient() {
         <button
           type="submit"
           disabled={isPending || !valid}
-          className="w-full h-11 bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full h-11 bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
         >
           {isPending ? (
             <>

@@ -62,7 +62,7 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
       <header className="md:hidden sticky top-0 z-10 bg-mb-bg/80 backdrop-blur border-b border-mb-border flex items-center gap-3 px-4 h-14">
         <button
           onClick={() => router.back()}
-          className="text-mb-muted hover:text-mb-text transition-colors"
+          className="text-mb-muted hover:text-mb-text transition-colors cursor-pointer"
           aria-label="Volver"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -74,19 +74,12 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
         <div className="hidden md:block mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm"
+            className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver
           </button>
           <h1 className="font-serif text-3xl text-mb-text mb-2">Cuenta</h1>
-          <div
-            className="w-full h-0.5 rounded-full mt-[18px]"
-            style={{
-              background: "linear-gradient(90deg, #6B35D4, #C4A8F5, transparent)",
-            }}
-            aria-hidden
-          />
         </div>
 
         {/* Email */}
@@ -104,7 +97,7 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
             <button
               type="button"
               onClick={() => setChangeEmailOpen(true)}
-              className="shrink-0 min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors"
+              className="shrink-0 min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors cursor-pointer"
             >
               Cambiar email
             </button>
@@ -131,7 +124,7 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
               type="button"
               onClick={handleChangePassword}
               disabled={isPwPending}
-              className="min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors disabled:opacity-60"
+              className="min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
             >
               {isPwPending ? "Enviando…" : "Cambiar contraseña"}
             </button>
@@ -153,7 +146,7 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
             type="button"
             onClick={handleExport}
             disabled={isExporting}
-            className="inline-flex items-center gap-2 min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors disabled:opacity-60"
+            className="inline-flex items-center gap-2 min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" />
             {isExporting ? "Preparando…" : "Descargar mis datos"}
@@ -169,7 +162,7 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
           <button
             type="button"
             onClick={() => setDeleteOpen(true)}
-            className="min-h-11 px-4.5 border border-mb-error rounded-lg text-mb-error font-semibold text-sm hover:bg-mb-error/10 transition-colors"
+            className="min-h-11 px-4.5 border border-mb-error rounded-lg text-mb-error font-semibold text-sm hover:bg-mb-error/10 transition-colors cursor-pointer"
           >
             Eliminar mi cuenta
           </button>

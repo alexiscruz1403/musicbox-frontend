@@ -90,7 +90,7 @@ export function FollowSuggestionsWidget({ accessToken }: FollowSuggestionsWidget
                 onClick={() => handleFollow(s)}
                 disabled={isPending}
                 aria-label={`Seguir a ${s.displayName}`}
-                className="shrink-0 min-h-[34px] px-3.5 bg-transparent border border-mb-primary rounded-full text-mb-accent font-semibold text-[13px] transition-colors hover:bg-mb-dp disabled:opacity-60"
+                className="shrink-0 min-h-[34px] px-3.5 bg-transparent border border-mb-primary rounded-full text-mb-accent font-semibold text-[13px] transition-colors hover:bg-mb-dp disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
               >
                 Seguir
               </button>
