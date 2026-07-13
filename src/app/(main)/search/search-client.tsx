@@ -8,6 +8,7 @@ import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiCatalogSearch, apiTrendingAlbums } from "@/lib/api";
 import { ratingColor, formatMs, getInitials, coverGradient } from "@/lib/review-format";
+import { dedupeById } from "@/lib/array-utils";
 import type {
   CatalogAlbum,
   CatalogTrack,
@@ -152,7 +153,10 @@ function TrackCard({
 
 function ArtistCard({ artist }: { artist: CatalogArtist }) {
   return (
-    <div className="flex flex-col items-center gap-3 bg-mb-card border border-mb-border rounded-xl p-6 hover:border-mb-ddp transition-colors cursor-pointer">
+    <Link
+      href={`/catalog/artists/${artist.deezerId}`}
+      className="flex flex-col items-center gap-3 bg-mb-card border border-mb-border rounded-xl p-6 hover:border-mb-ddp transition-colors"
+    >
       {artist.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -172,7 +176,7 @@ function ArtistCard({ artist }: { artist: CatalogArtist }) {
       <p className="font-semibold text-mb-text text-sm text-center">
         {artist.name}
       </p>
-    </div>
+    </Link>
   );
 }
 
@@ -326,15 +330,23 @@ export function SearchClient() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Flatten pages into item arrays
-  const albums = (albumPages?.pages ?? []).flatMap((page) =>
-    (page.data.items ?? []).filter((r) => r.type === "album").map((r) => r.item as CatalogAlbum),
+  // Flatten pages into item arrays. Deduped by deezerId — paginated cursor
+  // results from the external catalog can repeat an id across pages, which
+  // would otherwise produce duplicate React keys and break rendering.
+  const albums = dedupeById(
+    (albumPages?.pages ?? []).flatMap((page) =>
+      (page.data.items ?? []).filter((r) => r.type === "album").map((r) => r.item as CatalogAlbum),
+    ),
   );
-  const tracks = (trackPages?.pages ?? []).flatMap((page) =>
-    (page.data.items ?? []).filter((r) => r.type === "track").map((r) => r.item as CatalogTrack),
+  const tracks = dedupeById(
+    (trackPages?.pages ?? []).flatMap((page) =>
+      (page.data.items ?? []).filter((r) => r.type === "track").map((r) => r.item as CatalogTrack),
+    ),
   );
-  const artists = (artistPages?.pages ?? []).flatMap((page) =>
-    (page.data.items ?? []).filter((r) => r.type === "artist").map((r) => r.item as CatalogArtist),
+  const artists = dedupeById(
+    (artistPages?.pages ?? []).flatMap((page) =>
+      (page.data.items ?? []).filter((r) => r.type === "artist").map((r) => r.item as CatalogArtist),
+    ),
   );
 
   // Total counts from first page of each query (API-reported, not loaded count)
