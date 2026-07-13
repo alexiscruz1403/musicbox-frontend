@@ -16,6 +16,7 @@ export interface AuthUser {
   displayName: string;
   email: string;
   avatarUrl?: string | null;
+  coverUrl?: string | null;
   status: "ACTIVE" | "SUSPENDED" | "DELETED";
   role: "USER" | "ADMIN";
 }
@@ -54,6 +55,7 @@ export interface PublicUser {
   handle: string;
   displayName: string;
   avatarUrl?: string | null;
+  coverUrl?: string | null;
   bio?: string | null;
   status: "ACTIVE" | "DELETED";
   createdAt: string;
@@ -76,6 +78,10 @@ export interface RefreshResponse {
 
 export interface AvatarUploadResponse {
   avatarUrl: string;
+}
+
+export interface CoverUploadResponse {
+  coverUrl: string;
 }
 
 export interface FollowerItem {

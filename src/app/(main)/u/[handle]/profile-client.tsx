@@ -140,14 +140,25 @@ export default function ProfileClient({
   return (
     <div className="min-h-screen bg-mb-bg">
       {/* Cover */}
-      <div
-        className="h-[120px] w-full"
-        style={{
-          background:
-            "linear-gradient(135deg, #1E0A3C 0%, #0A0A0F 100%), radial-gradient(ellipse at 50% 100%, #6B35D4 0%, transparent 60%)",
-        }}
-        aria-hidden
-      />
+      <div className="h-[160px] md:h-[240px] w-full overflow-hidden border-b border-mb-border">
+        {user.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={user.coverUrl}
+            alt={`Portada de ${user.displayName}`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div
+            className="w-full h-full"
+            style={{
+              background:
+                "linear-gradient(135deg, #1E0A3C 0%, #0A0A0F 100%), radial-gradient(ellipse at 50% 100%, #6B35D4 0%, transparent 60%)",
+            }}
+            aria-hidden
+          />
+        )}
+      </div>
 
       <div className="px-4 md:px-8 max-w-3xl mx-auto">
         {/* Avatar + actions row */}
