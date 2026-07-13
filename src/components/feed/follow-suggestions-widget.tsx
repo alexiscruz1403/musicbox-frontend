@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { apiFollow, apiFollowSuggestions } from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
+import { cn } from "@/lib/utils";
 import type { FollowSuggestion } from "@/types/api";
 
 interface FollowSuggestionsWidgetProps {
@@ -18,21 +19,25 @@ export function FollowSuggestionsWidget({ accessToken }: FollowSuggestionsWidget
     staleTime: 5 * 60 * 1000,
   });
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
 
   const suggestions = (data?.data ?? []).filter((s) => !dismissed.has(s.id));
 
   function handleFollow(s: FollowSuggestion) {
-    setDismissed((prev) => new Set(prev).add(s.id));
     startTransition(async () => {
       try {
-        await apiFollow(s.handle, accessToken);
+        const result = await apiFollow(s.handle, accessToken);
+        if (result?.data.status === "PENDING") {
+          // Private account — request sent but not yet approved, keep the
+          // row visible with a "Solicitud enviada" state instead of
+          // dismissing it as if the follow had gone through directly.
+          setPendingIds((prev) => new Set(prev).add(s.id));
+        } else {
+          setDismissed((prev) => new Set(prev).add(s.id));
+        }
       } catch {
-        setDismissed((prev) => {
-          const next = new Set(prev);
-          next.delete(s.id);
-          return next;
-        });
+        // No optimistic state was set yet — nothing to revert.
       }
     });
   }
@@ -88,11 +93,18 @@ export function FollowSuggestionsWidget({ accessToken }: FollowSuggestionsWidget
               <button
                 type="button"
                 onClick={() => handleFollow(s)}
-                disabled={isPending}
-                aria-label={`Seguir a ${s.displayName}`}
-                className="shrink-0 min-h-[34px] px-3.5 bg-transparent border border-mb-primary rounded-full text-mb-accent font-semibold text-[13px] transition-colors hover:bg-mb-dp disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+                disabled={isPending || pendingIds.has(s.id)}
+                aria-label={
+                  pendingIds.has(s.id) ? `Solicitud enviada a ${s.displayName}` : `Seguir a ${s.displayName}`
+                }
+                className={cn(
+                  "shrink-0 min-h-[34px] px-3.5 rounded-full font-semibold text-[13px] transition-colors disabled:cursor-not-allowed cursor-pointer",
+                  pendingIds.has(s.id)
+                    ? "bg-mb-input border border-mb-border text-mb-muted disabled:opacity-100"
+                    : "bg-transparent border border-mb-primary text-mb-accent hover:bg-mb-dp disabled:opacity-60",
+                )}
               >
-                Seguir
+                {pendingIds.has(s.id) ? "Solicitud enviada" : "Seguir"}
               </button>
             </div>
           ))}

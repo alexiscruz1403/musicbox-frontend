@@ -46,6 +46,7 @@ export interface MeResponse {
   user: AuthUser & {
     bio?: string | null;
     createdAt: string;
+    isPrivate: boolean;
   };
   stats: UserStats;
 }
@@ -59,12 +60,23 @@ export interface PublicUser {
   bio?: string | null;
   status: "ACTIVE" | "DELETED";
   createdAt: string;
+  isPrivate: boolean;
 }
 
 export interface PublicProfileResponse {
   user: PublicUser;
   stats: UserStats;
   isFollowing?: boolean;
+  // True when the viewer has an outgoing PENDING FollowRequest to this user
+  // and isn't following yet — only meaningful when user.isPrivate is true.
+  followRequestPending?: boolean;
+}
+
+// Result body of POST /users/:handle/follow (201) when the target is
+// private — a direct follow (204, no body) is represented as `undefined`.
+export interface FollowPendingResult {
+  status: "PENDING";
+  followRequestId: string;
 }
 
 export interface HandleCheckResponse {
@@ -313,7 +325,14 @@ export interface TrendingTrack {
 
 // ─── Notifications (Fase 5) ──────────────────────────────────────────────────
 
-export type NotificationType = "LIKE" | "DISLIKE" | "COMMENT" | "FOLLOW" | "MODERATION";
+export type NotificationType =
+  | "LIKE"
+  | "DISLIKE"
+  | "COMMENT"
+  | "FOLLOW"
+  | "MODERATION"
+  | "FOLLOW_REQUEST"
+  | "FOLLOW_REQUEST_ACCEPTED";
 
 export interface NotificationActor {
   handle: string;
@@ -405,6 +424,26 @@ export interface UserSearchResponse {
   nextCursor: string | null;
 }
 
+// ─── Private profiles — follow requests (post-Fase 7) ─────────────────────
+
+export interface FollowRequestItem {
+  id: string;
+  createdAt: string;
+  requester: {
+    id: string;
+    handle: string;
+    displayName: string;
+    avatarUrl: string | null;
+  };
+}
+
+export interface FollowRequestsResponse {
+  items: FollowRequestItem[];
+  nextCursor: string | null;
+}
+
+export type FollowRequestResolution = "ACCEPTED" | "REJECTED";
+
 // ─── Moderation (Fase 7) ───────────────────────────────────────────────────
 
 export type ReportTargetType = "REVIEW" | "COMMENT" | "USER";
@@ -482,7 +521,12 @@ export interface NotificationPreferences {
   commentsEnabled: boolean;
   // Named `followsEnabled` by the live backend — docs/fase-1-features.md
   // documents it as `followersEnabled`, but that 400s in practice.
-  followsEnabled: boolean;
+  // Post-Fase 7: the backend returns exactly one of `followsEnabled` /
+  // `followRequestsEnabled`, never both — which one depends on the current
+  // user's `isPrivate` (public accounts get `followsEnabled`, private
+  // accounts get `followRequestsEnabled`). See docs/fase-7-features.md.
+  followsEnabled?: boolean;
+  followRequestsEnabled?: boolean;
   // Documented in docs/fase-1-features.md but has no UI in the design —
   // read on GET, never written back by this app. See NotificationPrefsUpdate.
   reviewsEnabled: boolean;
@@ -491,6 +535,10 @@ export interface NotificationPreferences {
 export type NotificationPrefsUpdate = Partial<
   Pick<
     NotificationPreferences,
-    "likesEnabled" | "dislikesEnabled" | "commentsEnabled" | "followsEnabled"
+    | "likesEnabled"
+    | "dislikesEnabled"
+    | "commentsEnabled"
+    | "followsEnabled"
+    | "followRequestsEnabled"
   >
 >;

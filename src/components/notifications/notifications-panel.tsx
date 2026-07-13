@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { X, CheckCheck } from "lucide-react";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { apiMarkAllNotificationsRead, apiNotifications } from "@/lib/api";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiMarkAllNotificationsRead, apiNotifications, apiListFollowRequests } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useNotificationsPanelStore } from "@/stores/notifications-panel-store";
 import { useUnreadNotifications, UNREAD_PEEK_LIMIT } from "@/hooks/use-unread-notifications";
@@ -30,6 +30,19 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
 
   const { data: unreadData } = useUnreadNotifications(accessToken);
   const unreadCount = unreadData?.data.items.length ?? 0;
+
+  // Notification rows only carry `actorId`, not a followRequestId — cross
+  // reference the pending requests list (requester.id === actorId) so
+  // FOLLOW_REQUEST rows can Accept/Reject inline.
+  const { data: followRequestsData } = useQuery({
+    queryKey: ["follow-requests"],
+    queryFn: () => apiListFollowRequests(accessToken as string),
+    enabled: isOpen && !!accessToken,
+    staleTime: 10 * 1000,
+  });
+  const followRequestIdByActor = new Map(
+    (followRequestsData?.data.items ?? []).map((r) => [r.requester.id, r.id]),
+  );
 
   const {
     data: pages,
@@ -182,6 +195,7 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
                     notification={n}
                     forceRead={markingAll}
                     onClose={close}
+                    followRequestId={n.actorId ? followRequestIdByActor.get(n.actorId) : undefined}
                   />
                 ))}
               </div>

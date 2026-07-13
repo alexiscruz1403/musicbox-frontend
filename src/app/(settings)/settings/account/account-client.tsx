@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
-import { apiExportUserData, apiForgotPassword, ApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
+import { apiExportUserData, apiForgotPassword, apiPatchMe, ApiError } from "@/lib/api";
 import { DeleteAccountModal } from "./delete-account-modal";
 import { ChangeEmailModal } from "./change-email-modal";
 
@@ -11,9 +12,15 @@ interface AccountClientProps {
   email: string;
   handle: string;
   accessToken: string;
+  initialIsPrivate: boolean;
 }
 
-export default function AccountClient({ email, handle, accessToken }: AccountClientProps) {
+export default function AccountClient({
+  email,
+  handle,
+  accessToken,
+  initialIsPrivate,
+}: AccountClientProps) {
   const [exportError, setExportError] = useState<string | null>(null);
   const [isExporting, startExportTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -21,7 +28,26 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
   const [pwSent, setPwSent] = useState(false);
   const [pwError, setPwError] = useState<string | null>(null);
   const [isPwPending, startPwTransition] = useTransition();
+  const [isPrivate, setIsPrivate] = useState(initialIsPrivate);
+  const [privacyError, setPrivacyError] = useState<string | null>(null);
+  const [, startPrivacyTransition] = useTransition();
   const router = useRouter();
+
+  function handleSetPrivacy(next: boolean) {
+    if (next === isPrivate) return;
+    const previous = isPrivate;
+    setIsPrivate(next);
+    setPrivacyError(null);
+    startPrivacyTransition(async () => {
+      try {
+        await apiPatchMe(accessToken, { isPrivate: next });
+      } catch (err) {
+        setIsPrivate(previous);
+        const apiErr = err as ApiError;
+        setPrivacyError(apiErr.message || "No se pudo actualizar la privacidad de tu cuenta.");
+      }
+    });
+  }
 
   function handleChangePassword() {
     setPwError(null);
@@ -151,6 +177,75 @@ export default function AccountClient({ email, handle, accessToken }: AccountCli
             <Download className="w-4 h-4" />
             {isExporting ? "Preparando…" : "Descargar mis datos"}
           </button>
+        </section>
+
+        {/* Privacy */}
+        <section className="py-7 border-b border-mb-border">
+          <h2 className="text-sm font-semibold text-mb-text mb-1.5">Privacidad de la cuenta</h2>
+          <p className="text-[13px] text-mb-muted leading-relaxed mb-4">
+            Los perfiles públicos muestran tu historial de reseñas a cualquier usuario. Los
+            perfiles privados requieren aprobar cada solicitud de seguimiento.
+          </p>
+          {privacyError && (
+            <p role="alert" className="text-mb-error text-xs mb-3">
+              {privacyError}
+            </p>
+          )}
+          <div role="group" aria-label="Visibilidad del perfil" className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => handleSetPrivacy(false)}
+              role="radio"
+              aria-checked={!isPrivate}
+              className={cn(
+                "flex items-start gap-3 min-h-11 px-3.5 py-3 rounded-lg border text-left transition-colors cursor-pointer",
+                !isPrivate ? "bg-mb-dp border-mb-primary" : "bg-transparent border-mb-border",
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "shrink-0 mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center",
+                  !isPrivate ? "border-mb-accent" : "border-mb-dim",
+                )}
+              >
+                {!isPrivate && <span className="w-2 h-2 rounded-full bg-mb-accent" />}
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-mb-text">Público</span>
+                <span className="block text-xs text-mb-muted mt-0.5">
+                  Cualquiera puede ver tus reseñas y seguirte sin aprobación.
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetPrivacy(true)}
+              role="radio"
+              aria-checked={isPrivate}
+              className={cn(
+                "flex items-start gap-3 min-h-11 px-3.5 py-3 rounded-lg border text-left transition-colors cursor-pointer",
+                isPrivate ? "bg-mb-dp border-mb-primary" : "bg-transparent border-mb-border",
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "shrink-0 mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center",
+                  isPrivate ? "border-mb-accent" : "border-mb-dim",
+                )}
+              >
+                {isPrivate && <span className="w-2 h-2 rounded-full bg-mb-accent" />}
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-mb-text">Privado</span>
+                <span className="block text-xs text-mb-muted mt-0.5">
+                  Solo tus seguidores aprobados ven tu historial. Cada nuevo seguidor requiere tu
+                  aprobación.
+                </span>
+              </span>
+            </button>
+          </div>
         </section>
 
         {/* Danger zone */}

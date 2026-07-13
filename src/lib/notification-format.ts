@@ -30,11 +30,17 @@ export function getNotificationText(row: NotificationRow): string {
       return row.reviewId
         ? "Tu reseña fue ocultada por moderación."
         : "Tu contenido fue ocultado por moderación.";
+    case "FOLLOW_REQUEST":
+      return "quiere seguirte";
+    case "FOLLOW_REQUEST_ACCEPTED":
+      return "aceptó tu solicitud de seguimiento";
   }
 }
 
 export function notificationHref(row: NotificationRow): string {
   if (row.type === "FOLLOW" && row.actor) return `/u/${row.actor.handle}`;
+  if (row.type === "FOLLOW_REQUEST" && row.actor) return `/u/${row.actor.handle}`;
+  if (row.type === "FOLLOW_REQUEST_ACCEPTED" && row.actor) return `/u/${row.actor.handle}`;
   if (row.review) return `/reviews/${row.review.id}`;
   if (row.actor) return `/u/${row.actor.handle}`;
   return "/feed";

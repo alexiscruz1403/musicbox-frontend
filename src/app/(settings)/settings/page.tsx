@@ -3,6 +3,7 @@ import Link from "next/link";
 import { User, Bell, FileText, ChevronRight } from "lucide-react";
 import { auth } from "@/auth";
 import { LogoutButton } from "./logout-button";
+import { BackButton } from "./back-button";
 
 const ITEMS = [
   {
@@ -32,6 +33,7 @@ export default async function SettingsHubPage() {
   return (
     <div className="min-h-screen bg-mb-bg">
       <div className="max-w-xl mx-auto px-4 md:px-0 py-8 md:py-12">
+        <BackButton />
         <h1 className="font-serif text-3xl text-mb-text mb-8">Configuración</h1>
 
         <div className="flex flex-col gap-3">

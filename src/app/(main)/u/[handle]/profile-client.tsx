@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { UserCheck, UserPlus, Pencil, Flag, Settings } from "lucide-react";
+import { UserCheck, UserPlus, Clock, Pencil, Flag, Settings, Lock } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiFollow, apiUnfollow, apiUserReviews } from "@/lib/api";
@@ -38,6 +38,9 @@ export default function ProfileClient({
   const [isFollowing, setIsFollowing] = useState(
     profile.isFollowing ?? false,
   );
+  const [requestSent, setRequestSent] = useState(
+    profile.followRequestPending ?? false,
+  );
   const [followerCount, setFollowerCount] = useState(
     profile.stats.followersCount,
   );
@@ -47,6 +50,7 @@ export default function ProfileClient({
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { user, stats } = profile;
+  const locked = !isOwnProfile && user.isPrivate && !isFollowing;
 
   const {
     data: reviewPages,
@@ -60,6 +64,7 @@ export default function ProfileClient({
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
     staleTime: 60 * 1000,
+    enabled: !locked,
   });
 
   const reviewItems = (reviewPages?.pages ?? []).flatMap((p) => p.data.items);
@@ -120,19 +125,43 @@ export default function ProfileClient({
 
   function handleFollowToggle() {
     if (!accessToken) return;
-    const willFollow = !isFollowing;
-    setIsFollowing(willFollow);
-    setFollowerCount((c) => c + (willFollow ? 1 : -1));
+
+    // Already following, or already have a pending request out — either way
+    // the click cancels (DELETE handles both: unfollow, or cancel a pending
+    // outgoing FollowRequest).
+    if (isFollowing || requestSent) {
+      const wasFollowing = isFollowing;
+      setIsFollowing(false);
+      setRequestSent(false);
+      if (wasFollowing) setFollowerCount((c) => c - 1);
+      startTransition(async () => {
+        try {
+          await apiUnfollow(user.handle, accessToken);
+        } catch {
+          if (wasFollowing) {
+            setIsFollowing(true);
+            setFollowerCount((c) => c + 1);
+          } else {
+            setRequestSent(true);
+          }
+        }
+      });
+      return;
+    }
+
+    // Not following, no pending request — attempt to follow. A private
+    // target responds 201 { status: "PENDING" } instead of a direct 204.
     startTransition(async () => {
       try {
-        if (willFollow) {
-          await apiFollow(user.handle, accessToken);
+        const result = await apiFollow(user.handle, accessToken);
+        if (result?.data.status === "PENDING") {
+          setRequestSent(true);
         } else {
-          await apiUnfollow(user.handle, accessToken);
+          setIsFollowing(true);
+          setFollowerCount((c) => c + 1);
         }
       } catch {
-        setIsFollowing(!willFollow);
-        setFollowerCount((c) => c + (willFollow ? -1 : 1));
+        // no optimistic state was set — nothing to revert
       }
     });
   }
@@ -216,7 +245,7 @@ export default function ProfileClient({
                 disabled={isPending}
                 className={cn(
                   "flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-semibold transition-colors disabled:opacity-70 cursor-pointer disabled:cursor-not-allowed",
-                  isFollowing
+                  isFollowing || requestSent
                     ? "bg-mb-input border border-mb-border text-mb-text hover:border-mb-error hover:text-mb-error"
                     : "bg-mb-primary hover:bg-mb-primary-h text-white",
                 )}
@@ -225,6 +254,16 @@ export default function ProfileClient({
                   <>
                     <UserCheck className="w-3.5 h-3.5" />
                     Siguiendo
+                  </>
+                ) : requestSent ? (
+                  <>
+                    <Clock className="w-3.5 h-3.5" />
+                    Solicitud enviada
+                  </>
+                ) : user.isPrivate ? (
+                  <>
+                    <UserPlus className="w-3.5 h-3.5" />
+                    Solicitar seguir
                   </>
                 ) : (
                   <>
@@ -267,39 +306,55 @@ export default function ProfileClient({
           <StatItem value={stats.followingCount} label="siguiendo" />
         </div>
 
-        {/* Tabs */}
-        <div className="border-b border-mb-border mb-6">
-          <div className="flex gap-0">
-            {(
-              [
-                { id: "todo" as Tab, label: "Todo" },
-                { id: "albums" as Tab, label: "Álbumes" },
-                { id: "songs" as Tab, label: "Canciones" },
-              ] as const
-            ).map(({ id, label }) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={cn(
-                  "px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors cursor-pointer",
-                  activeTab === id
-                    ? "border-mb-primary text-mb-accent"
-                    : "border-transparent text-mb-muted hover:text-mb-text",
-                )}
-              >
-                {label}
-              </button>
-            ))}
+        {locked ? (
+          /* Perfil privado, viewer aún no aprobado */
+          <div className="flex flex-col items-center text-center px-6 py-16 bg-mb-card border border-mb-border rounded-xl mb-24">
+            <div className="w-14 h-14 rounded-full bg-mb-input border border-mb-border flex items-center justify-center mb-5">
+              <Lock className="w-6 h-6 text-mb-dim" />
+            </div>
+            <h2 className="font-serif text-xl text-mb-text mb-2">Esta cuenta es privada</h2>
+            <p className="text-sm text-mb-muted leading-relaxed max-w-xs">
+              Seguí a <span className="font-mono text-mb-accent">@{user.handle}</span> para ver
+              sus reseñas, álbumes y canciones.
+            </p>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Tabs */}
+            <div className="border-b border-mb-border mb-6">
+              <div className="flex gap-0">
+                {(
+                  [
+                    { id: "todo" as Tab, label: "Todo" },
+                    { id: "albums" as Tab, label: "Álbumes" },
+                    { id: "songs" as Tab, label: "Canciones" },
+                  ] as const
+                ).map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    className={cn(
+                      "px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors cursor-pointer",
+                      activeTab === id
+                        ? "border-mb-primary text-mb-accent"
+                        : "border-transparent text-mb-muted hover:text-mb-text",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {/* Tab content */}
-        {activeTab === "todo" &&
-          renderReviewList(reviewItems, "Todavía no hay reseñas. ¡Sé el primero en compartir!")}
-        {activeTab === "albums" &&
-          renderReviewList(albumItems, "Todavía no hay reseñas de álbumes.")}
-        {activeTab === "songs" &&
-          renderReviewList(songItems, "Todavía no hay reseñas de canciones.")}
+            {/* Tab content */}
+            {activeTab === "todo" &&
+              renderReviewList(reviewItems, "Todavía no hay reseñas. ¡Sé el primero en compartir!")}
+            {activeTab === "albums" &&
+              renderReviewList(albumItems, "Todavía no hay reseñas de álbumes.")}
+            {activeTab === "songs" &&
+              renderReviewList(songItems, "Todavía no hay reseñas de canciones.")}
+          </>
+        )}
       </div>
 
       {reportOpen && accessToken && (
