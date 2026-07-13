@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   apiPatchMe,
   apiUploadAvatar,
+  apiUploadCover,
   apiCheckHandle,
   ApiError,
 } from "@/lib/api";
@@ -45,12 +46,19 @@ export default function EditProfileClient({
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(
     null,
   );
+  const [coverPreview, setCoverPreview] = useState<string | null>(
+    initialUser.coverUrl ?? null,
+  );
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(
+    null,
+  );
   const [handleStatus, setHandleStatus] = useState<HandleStatus>("unchanged");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedOk, setSavedOk] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const originalHandle = initialUser.handle;
@@ -101,17 +109,36 @@ export default function EditProfileClient({
     setAvatarPreview(URL.createObjectURL(file));
   }
 
+  function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveError("La imagen no puede superar los 5MB.");
+      return;
+    }
+    setPendingCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  }
+
   function handleSave() {
     if (handleStatus === "taken" || handleStatus === "invalid") return;
     setSaveError(null);
     setSavedOk(false);
     startTransition(async () => {
       try {
-        // Upload avatar first if changed
-        if (pendingAvatarFile) {
-          await apiUploadAvatar(accessToken, pendingAvatarFile);
-          setPendingAvatarFile(null);
-        }
+        // Upload avatar/cover first if changed
+        await Promise.all([
+          pendingAvatarFile
+            ? apiUploadAvatar(accessToken, pendingAvatarFile).then(() =>
+                setPendingAvatarFile(null),
+              )
+            : Promise.resolve(),
+          pendingCoverFile
+            ? apiUploadCover(accessToken, pendingCoverFile).then(() =>
+                setPendingCoverFile(null),
+              )
+            : Promise.resolve(),
+        ]);
 
         // Build updates (only send changed fields)
         const updates: { handle?: string; displayName?: string; bio?: string } =
@@ -171,39 +198,60 @@ export default function EditProfileClient({
         </button>
       </header>
 
-      <div className="max-w-xl mx-auto px-4 py-8 md:py-12">
-        {/* Desktop heading */}
-        <div className="hidden md:block mb-8">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Volver
-          </button>
-          <h1 className="font-serif text-3xl text-mb-text">Editar perfil</h1>
-        </div>
+      {/* Desktop heading */}
+      <div className="hidden md:block max-w-xl mx-auto px-4 pt-12">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Volver
+        </button>
+        <h1 className="font-serif text-3xl text-mb-text">Editar perfil</h1>
+      </div>
 
-        {saveError && (
+      {/* Cover upload — capped to the width the cover actually renders at on
+          the public profile (viewport minus the 240px desktop sidebar),
+          since this page has no sidebar of its own. */}
+      <div className="relative h-[160px] md:h-[240px] w-full md:max-w-[calc(100vw-240px)] md:mx-auto overflow-hidden border-b border-mb-border mt-6 md:mt-8">
+        {coverPreview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={coverPreview}
+            alt="Vista previa de la portada"
+            className="w-full h-full object-cover"
+          />
+        ) : (
           <div
-            role="alert"
-            className="mb-6 bg-mb-error/10 border border-mb-error rounded-lg px-4 py-3 text-mb-error text-sm"
-          >
-            {saveError}
-          </div>
+            className="w-full h-full"
+            style={{
+              background:
+                "linear-gradient(135deg, #1E0A3C 0%, #0A0A0F 100%), radial-gradient(ellipse at 50% 100%, #6B35D4 0%, transparent 60%)",
+            }}
+            aria-hidden
+          />
         )}
+        <button
+          type="button"
+          onClick={() => coverFileInputRef.current?.click()}
+          className="absolute right-4 bottom-4 flex items-center gap-2 h-10 px-3.5 bg-mb-bg/60 backdrop-blur border border-mb-border rounded-lg text-sm font-medium text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
+        >
+          <Camera className="w-4 h-4" />
+          Cambiar portada
+        </button>
+        <input
+          ref={coverFileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleCoverChange}
+          aria-label="Seleccionar imagen de portada"
+        />
+      </div>
 
-        {savedOk && (
-          <div
-            role="status"
-            className="mb-6 bg-mb-success/10 border border-mb-success rounded-lg px-4 py-3 text-mb-success text-sm"
-          >
-            ¡Perfil actualizado!
-          </div>
-        )}
-
+      <div className="max-w-xl mx-auto px-4 pb-8 md:pb-12">
         {/* Avatar upload */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center -mt-10 mb-8">
           <div className="relative group">
             {avatarPreview ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -242,6 +290,24 @@ export default function EditProfileClient({
             aria-label="Seleccionar imagen de perfil"
           />
         </div>
+
+        {saveError && (
+          <div
+            role="alert"
+            className="mb-6 bg-mb-error/10 border border-mb-error rounded-lg px-4 py-3 text-mb-error text-sm"
+          >
+            {saveError}
+          </div>
+        )}
+
+        {savedOk && (
+          <div
+            role="status"
+            className="mb-6 bg-mb-success/10 border border-mb-success rounded-lg px-4 py-3 text-mb-success text-sm"
+          >
+            ¡Perfil actualizado!
+          </div>
+        )}
 
         <div className="space-y-5">
           {/* Display name */}

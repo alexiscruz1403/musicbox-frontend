@@ -6,6 +6,7 @@ import type {
   PublicProfileResponse,
   HandleCheckResponse,
   AvatarUploadResponse,
+  CoverUploadResponse,
   RefreshResponse,
   CatalogAlbum,
   CatalogTrack,
@@ -261,6 +262,22 @@ export async function apiUploadAvatar(
   form.append("file", file);
   return apiFetch<ApiSuccessResponse<AvatarUploadResponse>>(
     "/users/me/avatar",
+    {
+      method: "POST",
+      accessToken,
+      body: form,
+    },
+  );
+}
+
+export async function apiUploadCover(
+  accessToken: string,
+  file: File,
+): Promise<ApiSuccessResponse<CoverUploadResponse>> {
+  const form = new FormData();
+  form.append("file", file);
+  return apiFetch<ApiSuccessResponse<CoverUploadResponse>>(
+    "/users/me/cover",
     {
       method: "POST",
       accessToken,
