@@ -37,6 +37,10 @@ import type {
   UserSearchResponse,
   NotificationRow,
   NotificationsResponse,
+  FollowPendingResult,
+  FollowRequestItem,
+  FollowRequestsResponse,
+  FollowRequestResolution,
   ReportTargetType,
   ReportStatus,
   AdminReportRow,
@@ -242,7 +246,7 @@ export async function apiGetMe(
 
 export async function apiPatchMe(
   accessToken: string,
-  updates: { handle?: string; displayName?: string; bio?: string },
+  updates: { handle?: string; displayName?: string; bio?: string; isPrivate?: boolean },
 ): Promise<ApiSuccessResponse<{ user: MeResponse["user"] }>> {
   return apiFetch<ApiSuccessResponse<{ user: MeResponse["user"] }>>(
     "/users/me",
@@ -306,14 +310,19 @@ export async function apiCheckHandle(
   );
 }
 
+// Target público: 204 (Follow directo, respuesta undefined). Target
+// privado: 201 con { status: "PENDING", followRequestId }.
 export async function apiFollow(
   handle: string,
   accessToken: string,
-): Promise<void> {
-  return apiFetch<void>(`/users/${handle}/follow`, {
-    method: "POST",
-    accessToken,
-  });
+): Promise<ApiSuccessResponse<FollowPendingResult> | undefined> {
+  return apiFetch<ApiSuccessResponse<FollowPendingResult> | undefined>(
+    `/users/${handle}/follow`,
+    {
+      method: "POST",
+      accessToken,
+    },
+  );
 }
 
 export async function apiUnfollow(
@@ -323,6 +332,34 @@ export async function apiUnfollow(
   return apiFetch<void>(`/users/${handle}/follow`, {
     method: "DELETE",
     accessToken,
+  });
+}
+
+// Private profiles — follow requests (post-Fase 7)
+
+export async function apiListFollowRequests(
+  accessToken: string,
+  cursor?: string,
+): Promise<ApiSuccessResponse<FollowRequestsResponse>> {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  const qs = params.toString();
+  const raw = await apiFetch<RawListEnvelope<FollowRequestItem>>(
+    `/users/me/follow-requests${qs ? `?${qs}` : ""}`,
+    { accessToken },
+  );
+  return { data: { items: raw.data, nextCursor: raw.meta.cursor } };
+}
+
+export async function apiRespondFollowRequest(
+  accessToken: string,
+  id: string,
+  status: FollowRequestResolution,
+): Promise<void> {
+  return apiFetch<void>(`/users/me/follow-requests/${id}`, {
+    method: "PATCH",
+    accessToken,
+    body: JSON.stringify({ status }),
   });
 }
 

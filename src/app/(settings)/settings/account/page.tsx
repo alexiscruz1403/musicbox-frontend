@@ -14,6 +14,7 @@ export default async function SettingsAccountPage() {
       email={data.user.email}
       handle={session.user.handle}
       accessToken={session.accessToken}
+      initialIsPrivate={data.user.isPrivate}
     />
   );
 }

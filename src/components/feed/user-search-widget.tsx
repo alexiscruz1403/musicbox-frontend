@@ -2,12 +2,14 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { Search, X, UserCheck, UserPlus } from "lucide-react";
+import { Search, X, UserCheck, UserPlus, Clock } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiFollow, apiUnfollow, apiSearchUsers } from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
 import type { UserSearchResult } from "@/types/api";
+
+type FollowStatus = "following" | "not_following" | "pending";
 
 interface UserSearchWidgetProps {
   accessToken: string;
@@ -16,7 +18,7 @@ interface UserSearchWidgetProps {
 export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [followOverrides, setFollowOverrides] = useState<Record<string, boolean>>({});
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, FollowStatus>>({});
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -45,22 +47,36 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
   const results = (data?.pages ?? []).flatMap((p) => p.data.items);
   const isLoading = isFetching && results.length === 0;
 
-  function isFollowing(item: UserSearchResult) {
-    return followOverrides[item.id] ?? item.isFollowing;
+  function getStatus(item: UserSearchResult): FollowStatus {
+    return statusOverrides[item.id] ?? (item.isFollowing ? "following" : "not_following");
   }
 
   function handleToggleFollow(item: UserSearchResult) {
-    const next = !isFollowing(item);
-    setFollowOverrides((prev) => ({ ...prev, [item.id]: next }));
+    const current = getStatus(item);
+
+    // Already following, or a request is already pending — either way the
+    // click cancels (DELETE handles both cases).
+    if (current === "following" || current === "pending") {
+      setStatusOverrides((prev) => ({ ...prev, [item.id]: "not_following" }));
+      startTransition(async () => {
+        try {
+          await apiUnfollow(item.handle, accessToken);
+        } catch {
+          setStatusOverrides((prev) => ({ ...prev, [item.id]: current }));
+        }
+      });
+      return;
+    }
+
     startTransition(async () => {
       try {
-        if (next) {
-          await apiFollow(item.handle, accessToken);
-        } else {
-          await apiUnfollow(item.handle, accessToken);
-        }
+        const result = await apiFollow(item.handle, accessToken);
+        setStatusOverrides((prev) => ({
+          ...prev,
+          [item.id]: result?.data.status === "PENDING" ? "pending" : "following",
+        }));
       } catch {
-        setFollowOverrides((prev) => ({ ...prev, [item.id]: !next }));
+        // No optimistic state was set yet — nothing to revert.
       }
     });
   }
@@ -115,7 +131,13 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
           ) : (
             <div className="flex flex-col gap-3.5">
               {results.map((u) => {
-                const following = isFollowing(u);
+                const status = getStatus(u);
+                const label =
+                  status === "following"
+                    ? `Dejar de seguir a ${u.displayName}`
+                    : status === "pending"
+                      ? `Solicitud enviada a ${u.displayName}`
+                      : `Seguir a ${u.displayName}`;
                 return (
                   <div key={u.id} className="flex items-center gap-2.5">
                     <Link href={`/u/${u.handle}`} className="contents">
@@ -146,18 +168,23 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
                       type="button"
                       onClick={() => handleToggleFollow(u)}
                       disabled={isPending}
-                      aria-label={following ? `Dejar de seguir a ${u.displayName}` : `Seguir a ${u.displayName}`}
+                      aria-label={label}
                       className={cn(
                         "shrink-0 inline-flex items-center gap-1.5 min-h-[34px] px-3.5 rounded-full font-semibold text-[13px] transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed",
-                        following
-                          ? "bg-mb-dp border border-mb-ddp text-mb-muted hover:border-mb-error hover:text-mb-error"
-                          : "bg-transparent border border-mb-primary text-mb-accent hover:bg-mb-dp",
+                        status === "not_following"
+                          ? "bg-transparent border border-mb-primary text-mb-accent hover:bg-mb-dp"
+                          : "bg-mb-dp border border-mb-ddp text-mb-muted hover:border-mb-error hover:text-mb-error",
                       )}
                     >
-                      {following ? (
+                      {status === "following" ? (
                         <>
                           <UserCheck className="w-3.5 h-3.5" />
                           Siguiendo
+                        </>
+                      ) : status === "pending" ? (
+                        <>
+                          <Clock className="w-3.5 h-3.5" />
+                          Solicitud enviada
                         </>
                       ) : (
                         <>

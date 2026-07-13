@@ -52,11 +52,19 @@ export default function NotificationsClient({
   initialPrefs,
   accessToken,
 }: NotificationsClientProps) {
+  // The backend returns exactly one of these two fields, never both — which
+  // one depends on the account's current isPrivate setting.
+  const isPrivateAccount = initialPrefs.followRequestsEnabled !== undefined;
+
   const [master, setMaster] = useState(true);
   const [likes, setLikes] = useState(initialPrefs.likesEnabled);
   const [dislikes, setDislikes] = useState(initialPrefs.dislikesEnabled);
   const [comments, setComments] = useState(initialPrefs.commentsEnabled);
-  const [followers, setFollowers] = useState(initialPrefs.followsEnabled);
+  const [followToggle, setFollowToggle] = useState(
+    isPrivateAccount
+      ? (initialPrefs.followRequestsEnabled ?? true)
+      : (initialPrefs.followsEnabled ?? true),
+  );
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedOk, setSavedOk] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -73,18 +81,19 @@ export default function NotificationsClient({
     setSavedOk(false);
     startTransition(async () => {
       try {
+        const followField = isPrivateAccount ? "followRequestsEnabled" : "followsEnabled";
         await apiUpdateNotificationPrefs(accessToken, master
           ? {
               likesEnabled: likes,
               dislikesEnabled: dislikes,
               commentsEnabled: comments,
-              followsEnabled: followers,
+              [followField]: followToggle,
             }
           : {
               likesEnabled: false,
               dislikesEnabled: false,
               commentsEnabled: false,
-              followsEnabled: false,
+              [followField]: false,
             });
         setSavedOk(true);
       } catch (err) {
@@ -109,10 +118,10 @@ export default function NotificationsClient({
       onToggle: () => toggle(setComments),
     },
     {
-      key: "followers",
-      label: "Nuevos seguidores",
-      on: followers,
-      onToggle: () => toggle(setFollowers),
+      key: "follow",
+      label: isPrivateAccount ? "Solicitudes de seguimiento" : "Nuevos seguidores",
+      on: followToggle,
+      onToggle: () => toggle(setFollowToggle),
     },
   ];
 
