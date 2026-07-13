@@ -133,6 +133,33 @@ export type CatalogSearchResult =
   | { type: "album"; item: CatalogAlbum }
   | { type: "track"; item: CatalogTrack };
 
+// ─── Catalog: Artist detail ──────────────────────────────────────────────────
+
+export type ArtistTopAlbum = CatalogAlbum & {
+  reviewCount: number;
+  avgRating: number | null;
+};
+
+export type ArtistTopTrack = CatalogTrack & {
+  reviewCount: number;
+  avgRating: number | null;
+};
+
+// Item shape returned by GET /catalog/artists/:deezerId/tracks — adds the
+// parent album's title, which isn't part of the base CatalogTrack shape
+// returned by getAlbum/getTrack/getArtistAlbums.
+export type ArtistTrackItem = CatalogTrack & {
+  albumTitle: string | null;
+};
+
+export interface ArtistDetail {
+  artist: CatalogArtist;
+  topReviewedAlbums: ArtistTopAlbum[];
+  topReviewedTracks: ArtistTopTrack[];
+  trendingAlbums: ArtistTopAlbum[];
+  trendingTracks: ArtistTopTrack[];
+}
+
 // ─── Reviews (Fase 3) ────────────────────────────────────────────────────────
 
 export type ReactionType = "LIKE" | "DISLIKE";

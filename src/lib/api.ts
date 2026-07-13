@@ -9,9 +9,12 @@ import type {
   RefreshResponse,
   CatalogAlbum,
   CatalogTrack,
+  CatalogArtist,
   CatalogPage,
   CatalogSearchResult,
   CatalogSearchType,
+  ArtistDetail,
+  ArtistTrackItem,
   ReviewsResponse,
   CatalogReview,
   TrendingAlbum,
@@ -334,6 +337,46 @@ export async function apiCatalogTrack(
 ): Promise<ApiSuccessResponse<CatalogTrack>> {
   return apiFetch<ApiSuccessResponse<CatalogTrack>>(
     `/catalog/tracks/${deezerId}`,
+  );
+}
+
+export async function apiCatalogArtist(
+  deezerId: string,
+): Promise<ApiSuccessResponse<CatalogArtist>> {
+  return apiFetch<ApiSuccessResponse<CatalogArtist>>(
+    `/catalog/artists/${deezerId}`,
+  );
+}
+
+export async function apiCatalogArtistDetail(
+  deezerId: string,
+): Promise<ApiSuccessResponse<ArtistDetail>> {
+  return apiFetch<ApiSuccessResponse<ArtistDetail>>(
+    `/catalog/artists/${deezerId}/detail`,
+  );
+}
+
+export async function apiCatalogArtistAlbums(
+  deezerId: string,
+  limit = 20,
+  cursor?: string,
+): Promise<ApiSuccessResponse<CatalogPage<CatalogAlbum>>> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set("cursor", cursor);
+  return apiFetch<ApiSuccessResponse<CatalogPage<CatalogAlbum>>>(
+    `/catalog/artists/${deezerId}/albums?${params}`,
+  );
+}
+
+export async function apiCatalogArtistTracks(
+  deezerId: string,
+  limit = 20,
+  cursor?: string,
+): Promise<ApiSuccessResponse<CatalogPage<ArtistTrackItem>>> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set("cursor", cursor);
+  return apiFetch<ApiSuccessResponse<CatalogPage<ArtistTrackItem>>>(
+    `/catalog/artists/${deezerId}/tracks?${params}`,
   );
 }
 
