@@ -1,18 +1,14 @@
-import Link from "next/link";
+import { ErrorState } from "@/components/errors/error-state";
 
 export default function TrackNotFound() {
   return (
-    <div className="min-h-screen bg-mb-bg flex flex-col items-center justify-center gap-4 text-center px-6">
-      <p className="font-serif text-2xl text-mb-text">Canción no encontrada</p>
-      <p className="text-mb-muted text-sm">
-        Esta canción no existe o aún no está disponible.
-      </p>
-      <Link
-        href="/search"
-        className="text-mb-accent text-sm underline underline-offset-2 hover:no-underline"
-      >
-        Volver a búsqueda
-      </Link>
+    <div className="min-h-screen bg-mb-bg flex items-center justify-center px-6">
+      <ErrorState
+        code="404"
+        title="Canción no encontrada"
+        description="Esta canción no existe o aún no está disponible."
+        action={{ type: "link", href: "/search", label: "Volver a búsqueda" }}
+      />
     </div>
   );
 }
