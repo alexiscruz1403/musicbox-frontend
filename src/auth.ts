@@ -69,22 +69,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       if (account?.provider === "google" && account.id_token) {
-        const res = await fetch(`${API_BASE}/auth/google`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken: account.id_token }),
-        });
-        if (res.ok) {
-          const { data } = (await res.json()) as { data: AuthResponse };
-          token.id = data.user.id;
-          token.handle = data.user.handle;
-          token.displayName = data.user.displayName;
-          token.avatarUrl = data.user.avatarUrl ?? null;
-          token.status = data.user.status;
-          token.role = data.user.role;
-          token.accessToken = data.accessToken;
-          token.refreshToken = data.refreshToken;
-        } else {
+        try {
+          const res = await fetch(`${API_BASE}/auth/google`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken: account.id_token }),
+          });
+          if (res.ok) {
+            const { data } = (await res.json()) as { data: AuthResponse };
+            token.id = data.user.id;
+            token.handle = data.user.handle;
+            token.displayName = data.user.displayName;
+            token.avatarUrl = data.user.avatarUrl ?? null;
+            token.status = data.user.status;
+            token.role = data.user.role;
+            token.accessToken = data.accessToken;
+            token.refreshToken = data.refreshToken;
+          } else {
+            token.error = "GoogleAuthError";
+          }
+        } catch {
+          // Backend unreachable — don't let a network hiccup crash auth()
+          // for every request (proxy.ts and every layout/page call it).
           token.error = "GoogleAuthError";
         }
       }
@@ -94,17 +100,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const exp = decodeJwtExp(token.accessToken as string);
         const nowSecs = Math.floor(Date.now() / 1000);
         if (exp && exp - nowSecs < 300 && token.refreshToken) {
-          const res = await fetch(`${API_BASE}/auth/refresh`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refreshToken: token.refreshToken }),
-          });
-          if (res.ok) {
-            const { data } = (await res.json()) as { data: RefreshResponse };
-            token.accessToken = data.accessToken;
-            token.refreshToken = data.refreshToken;
-            delete token.error;
-          } else {
+          try {
+            const res = await fetch(`${API_BASE}/auth/refresh`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refreshToken: token.refreshToken }),
+            });
+            if (res.ok) {
+              const { data } = (await res.json()) as { data: RefreshResponse };
+              token.accessToken = data.accessToken;
+              token.refreshToken = data.refreshToken;
+              delete token.error;
+            } else {
+              token.error = "RefreshTokenError";
+            }
+          } catch {
+            // Backend unreachable — same reasoning as above: degrade to an
+            // errored token instead of throwing out of the jwt callback.
             token.error = "RefreshTokenError";
           }
         }
