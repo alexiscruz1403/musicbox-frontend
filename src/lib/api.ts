@@ -14,6 +14,9 @@ import type {
   CatalogPage,
   CatalogSearchResult,
   CatalogSearchType,
+  CatalogQuickSearchItem,
+  CatalogSearchHistoryItem,
+  RecentlyViewedItem,
   ArtistDetail,
   ArtistTrackItem,
   ReviewsResponse,
@@ -35,6 +38,9 @@ import type {
   FeedType,
   UserSearchResult,
   UserSearchResponse,
+  UserQuickSearchItem,
+  UserSearchHistoryItem,
+  FollowListResponse,
   NotificationRow,
   NotificationsResponse,
   FollowPendingResult,
@@ -300,6 +306,34 @@ export async function apiGetProfile(
   );
 }
 
+export async function apiGetFollowers(
+  handle: string,
+  cursor?: string,
+  limit = 20,
+  accessToken?: string,
+): Promise<ApiSuccessResponse<FollowListResponse>> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set("cursor", cursor);
+  return apiFetch<ApiSuccessResponse<FollowListResponse>>(
+    `/users/${handle}/followers?${params}`,
+    { accessToken },
+  );
+}
+
+export async function apiGetFollowing(
+  handle: string,
+  cursor?: string,
+  limit = 20,
+  accessToken?: string,
+): Promise<ApiSuccessResponse<FollowListResponse>> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set("cursor", cursor);
+  return apiFetch<ApiSuccessResponse<FollowListResponse>>(
+    `/users/${handle}/following?${params}`,
+    { accessToken },
+  );
+}
+
 export async function apiCheckHandle(
   handle: string,
   accessToken?: string,
@@ -370,35 +404,88 @@ export async function apiCatalogSearch(
   type: CatalogSearchType,
   limit = 20,
   cursor?: string,
+  accessToken?: string,
 ): Promise<ApiSuccessResponse<CatalogPage<CatalogSearchResult>>> {
   const params = new URLSearchParams({ q, type, limit: String(limit) });
   if (cursor) params.set("cursor", cursor);
   return apiFetch<ApiSuccessResponse<CatalogPage<CatalogSearchResult>>>(
     `/catalog/search?${params}`,
+    { accessToken },
+  );
+}
+
+export async function apiCatalogQuickSearch(
+  q: string,
+): Promise<ApiSuccessResponse<CatalogQuickSearchItem[]>> {
+  return apiFetch<ApiSuccessResponse<CatalogQuickSearchItem[]>>(
+    `/catalog/quick-search?q=${encodeURIComponent(q)}`,
+  );
+}
+
+export async function apiCatalogSearchHistory(
+  accessToken: string,
+): Promise<ApiSuccessResponse<CatalogSearchHistoryItem[]>> {
+  return apiFetch<ApiSuccessResponse<CatalogSearchHistoryItem[]>>(
+    "/catalog/search-history",
+    { accessToken },
+  );
+}
+
+export async function apiDeleteCatalogSearchHistoryItem(
+  accessToken: string,
+  id: string,
+): Promise<void> {
+  return apiFetch<void>(`/catalog/search-history/${id}`, {
+    method: "DELETE",
+    accessToken,
+  });
+}
+
+export async function apiDeleteCatalogSearchHistory(
+  accessToken: string,
+): Promise<void> {
+  return apiFetch<void>("/catalog/search-history", {
+    method: "DELETE",
+    accessToken,
+  });
+}
+
+export async function apiCatalogRecentlyViewed(
+  accessToken: string,
+): Promise<ApiSuccessResponse<RecentlyViewedItem[]>> {
+  return apiFetch<ApiSuccessResponse<RecentlyViewedItem[]>>(
+    "/catalog/recently-viewed",
+    { accessToken },
   );
 }
 
 export async function apiCatalogAlbum(
   deezerId: string,
+  accessToken?: string,
 ): Promise<ApiSuccessResponse<CatalogAlbum>> {
   return apiFetch<ApiSuccessResponse<CatalogAlbum>>(
     `/catalog/albums/${deezerId}`,
+    { accessToken },
   );
 }
 
 export async function apiCatalogTrack(
   deezerId: string,
+  accessToken?: string,
 ): Promise<ApiSuccessResponse<CatalogTrack>> {
   return apiFetch<ApiSuccessResponse<CatalogTrack>>(
     `/catalog/tracks/${deezerId}`,
+    { accessToken },
   );
 }
 
 export async function apiCatalogArtist(
   deezerId: string,
+  accessToken?: string,
 ): Promise<ApiSuccessResponse<CatalogArtist>> {
   return apiFetch<ApiSuccessResponse<CatalogArtist>>(
     `/catalog/artists/${deezerId}`,
+    { accessToken },
   );
 }
 
@@ -835,6 +922,42 @@ export async function apiSearchUsers(
     { accessToken },
   );
   return { data: { items: raw.data, nextCursor: raw.meta.cursor } };
+}
+
+export async function apiUserQuickSearch(
+  q: string,
+): Promise<ApiSuccessResponse<UserQuickSearchItem[]>> {
+  return apiFetch<ApiSuccessResponse<UserQuickSearchItem[]>>(
+    `/users/quick-search?q=${encodeURIComponent(q)}`,
+  );
+}
+
+export async function apiUserSearchHistory(
+  accessToken: string,
+): Promise<ApiSuccessResponse<UserSearchHistoryItem[]>> {
+  return apiFetch<ApiSuccessResponse<UserSearchHistoryItem[]>>(
+    "/users/search-history",
+    { accessToken },
+  );
+}
+
+export async function apiDeleteUserSearchHistoryItem(
+  accessToken: string,
+  id: string,
+): Promise<void> {
+  return apiFetch<void>(`/users/search-history/${id}`, {
+    method: "DELETE",
+    accessToken,
+  });
+}
+
+export async function apiDeleteUserSearchHistory(
+  accessToken: string,
+): Promise<void> {
+  return apiFetch<void>("/users/search-history", {
+    method: "DELETE",
+    accessToken,
+  });
 }
 
 // Trending (Fase 5)

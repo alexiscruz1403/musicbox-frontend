@@ -4,9 +4,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Play, Pause, Disc3 } from "lucide-react";
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { apiTrackReviews, apiCatalogAlbum } from "@/lib/api";
+import { apiTrackReviews } from "@/lib/api";
 import { formatMs, coverGradient } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import type { CatalogTrack } from "@/types/api";
@@ -160,15 +160,6 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const { data: albumData } = useQuery({
-    queryKey: ["album", track.albumDeezerId],
-    queryFn: () => apiCatalogAlbum(track.albumDeezerId!),
-    enabled: !!track.albumDeezerId,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const albumTitle = albumData?.data?.title ?? null;
-
   const {
     data: reviewPages,
     fetchNextPage,
@@ -254,7 +245,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
                 <span className="whitespace-nowrap">
                   del álbum{" "}
                   <span className="text-mb-text font-medium">
-                    {albumTitle ?? "…"}
+                    {track.albumTitle ?? "…"}
                   </span>
                 </span>
               </Link>
@@ -271,7 +262,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
             </h1>
             <div className="flex items-center gap-2 flex-wrap mb-5 justify-center md:justify-start">
               <Link
-                href={`/catalog/artists/${track.artist.deezerId}`}
+                href={`/artist/${track.artist.deezerId}`}
                 className="text-[18px] font-semibold text-mb-text hover:text-mb-accent"
               >
                 {track.artist.name}
