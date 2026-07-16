@@ -10,7 +10,8 @@ export async function generateMetadata({
 }: PageProps<"/album/[deezerId]">): Promise<Metadata> {
   try {
     const { deezerId } = await params;
-    const { data } = await apiCatalogAlbum(deezerId);
+    const session = await auth();
+    const { data } = await apiCatalogAlbum(deezerId, session?.accessToken);
     return {
       title: `${data.title} — ${data.artist.name} | MusicBox`,
     };
@@ -27,7 +28,7 @@ export default async function AlbumPage({
 
   let album;
   try {
-    const { data } = await apiCatalogAlbum(deezerId);
+    const { data } = await apiCatalogAlbum(deezerId, session?.accessToken);
     album = data;
   } catch (err) {
     if (err instanceof ApiError && err.statusCode === 404) {

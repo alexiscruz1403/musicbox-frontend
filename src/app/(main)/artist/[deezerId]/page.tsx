@@ -1,15 +1,17 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { auth } from "@/auth";
 import { apiCatalogArtist, apiCatalogArtistAlbums, apiCatalogArtistTracks } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { ArtistClient } from "./artist-client";
 
 export async function generateMetadata({
   params,
-}: PageProps<"/catalog/artists/[deezerId]">): Promise<Metadata> {
+}: PageProps<"/artist/[deezerId]">): Promise<Metadata> {
   try {
     const { deezerId } = await params;
-    const { data } = await apiCatalogArtist(deezerId);
+    const session = await auth();
+    const { data } = await apiCatalogArtist(deezerId, session?.accessToken);
     return {
       title: `${data.name} | MusicBox`,
     };
@@ -20,15 +22,16 @@ export async function generateMetadata({
 
 export default async function ArtistPage({
   params,
-}: PageProps<"/catalog/artists/[deezerId]">) {
+}: PageProps<"/artist/[deezerId]">) {
   const { deezerId } = await params;
+  const session = await auth();
 
   let artist;
   let albumsTotal;
   let tracksTotal;
   try {
     const [artistRes, albumsRes, tracksRes] = await Promise.all([
-      apiCatalogArtist(deezerId),
+      apiCatalogArtist(deezerId, session?.accessToken),
       apiCatalogArtistAlbums(deezerId, 1),
       apiCatalogArtistTracks(deezerId, 1),
     ]);

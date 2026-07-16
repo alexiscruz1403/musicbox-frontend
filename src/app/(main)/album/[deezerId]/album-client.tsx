@@ -160,7 +160,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
             </h1>
             <div className="flex items-center gap-2 flex-wrap mb-5 justify-center md:justify-start">
               <Link
-                href={`/catalog/artists/${album.artist.deezerId}`}
+                href={`/artist/${album.artist.deezerId}`}
                 className="text-[18px] font-semibold text-mb-text hover:text-mb-accent"
               >
                 {album.artist.name}

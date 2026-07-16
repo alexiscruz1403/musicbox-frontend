@@ -9,6 +9,7 @@ import { apiFollow, apiUnfollow, apiUserReviews } from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
 import { ProfileReviewCard } from "@/components/reviews/profile-review-card";
 import { ReportModal } from "@/components/reports/report-modal";
+import { FollowListDrawer } from "@/components/profile/follow-list-drawer";
 import type { PublicProfileResponse, UserReviewHistoryItem } from "@/types/api";
 
 type Tab = "todo" | "albums" | "songs";
@@ -20,19 +21,41 @@ interface ProfileClientProps {
   accessToken?: string;
 }
 
-function StatItem({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="text-center">
+function StatItem({
+  value,
+  label,
+  onClick,
+}: {
+  value: number;
+  label: string;
+  onClick?: () => void;
+}) {
+  const content = (
+    <>
       <span className="block text-lg font-bold text-mb-text">{value}</span>
       <span className="block text-xs text-mb-muted">{label}</span>
-    </div>
+    </>
   );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="text-center bg-transparent border-none p-0 cursor-pointer hover:opacity-80 transition-opacity"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <div className="text-center">{content}</div>;
 }
 
 export default function ProfileClient({
   profile,
   isOwnProfile,
-  currentUserHandle: _currentUserHandle,
+  currentUserHandle,
   accessToken,
 }: ProfileClientProps) {
   const [isFollowing, setIsFollowing] = useState(
@@ -46,6 +69,7 @@ export default function ProfileClient({
   );
   const [activeTab, setActiveTab] = useState<Tab>("todo");
   const [reportOpen, setReportOpen] = useState(false);
+  const [followListKind, setFollowListKind] = useState<"followers" | "following" | null>(null);
   const [isPending, startTransition] = useTransition();
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -301,9 +325,17 @@ export default function ProfileClient({
         <div className="flex items-center gap-6 mb-6">
           <StatItem value={stats.reviewCount} label="reseñas" />
           <div className="w-px h-8 bg-mb-border" />
-          <StatItem value={followerCount} label="seguidores" />
+          <StatItem
+            value={followerCount}
+            label="seguidores"
+            onClick={!locked ? () => setFollowListKind("followers") : undefined}
+          />
           <div className="w-px h-8 bg-mb-border" />
-          <StatItem value={stats.followingCount} label="siguiendo" />
+          <StatItem
+            value={stats.followingCount}
+            label="siguiendo"
+            onClick={!locked ? () => setFollowListKind("following") : undefined}
+          />
         </div>
 
         {locked ? (
@@ -365,6 +397,17 @@ export default function ProfileClient({
           targetType="USER"
           targetId={user.id}
           previewTitle={`@${user.handle}`}
+        />
+      )}
+
+      {followListKind && (
+        <FollowListDrawer
+          open
+          kind={followListKind}
+          handle={user.handle}
+          currentUserHandle={currentUserHandle}
+          accessToken={accessToken}
+          onClose={() => setFollowListKind(null)}
         />
       )}
     </div>

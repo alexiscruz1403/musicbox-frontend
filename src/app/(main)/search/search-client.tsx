@@ -4,16 +4,26 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { apiCatalogSearch, apiTrendingAlbums } from "@/lib/api";
+import {
+  apiCatalogSearch,
+  apiTrendingAlbums,
+  apiCatalogRecentlyViewed,
+  apiCatalogSearchHistory,
+} from "@/lib/api";
 import { ratingColor, formatMs, getInitials, coverGradient } from "@/lib/review-format";
 import { dedupeById } from "@/lib/array-utils";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useOutsideClose } from "@/hooks/use-outside-close";
+import { CatalogSearchDropdown } from "@/components/search/catalog-search-dropdown";
 import type {
   CatalogAlbum,
   CatalogTrack,
   CatalogArtist,
   TrendingAlbum,
+  CatalogSearchHistoryItem,
+  RecentlyViewedItem,
 } from "@/types/api";
 
 type SearchTab = "todo" | "albums" | "songs" | "artists";
@@ -154,7 +164,7 @@ function TrackCard({
 function ArtistCard({ artist }: { artist: CatalogArtist }) {
   return (
     <Link
-      href={`/catalog/artists/${artist.deezerId}`}
+      href={`/artist/${artist.deezerId}`}
       className="flex flex-col items-center gap-3 bg-mb-card border border-mb-border rounded-xl p-6 hover:border-mb-ddp transition-colors"
     >
       {artist.imageUrl ? (
@@ -180,9 +190,74 @@ function ArtistCard({ artist }: { artist: CatalogArtist }) {
   );
 }
 
+function RecentlyViewedCard({ item }: { item: RecentlyViewedItem }) {
+  const type = item.resourceType.toUpperCase();
+  const isAlbum = type === "ALBUM";
+  const isTrack = type === "TRACK";
+  const isArtist = !isAlbum && !isTrack;
+
+  const href = isAlbum
+    ? `/album/${item.deezerId}`
+    : isTrack
+      ? `/track/${item.deezerId}`
+      : `/artist/${item.deezerId}`;
+
+  const subtitle = isArtist
+    ? item.albumsCount != null
+      ? `${item.albumsCount} álbum${item.albumsCount !== 1 ? "es" : ""}`
+      : "Artista"
+    : item.artistName;
+
+  const typeLabel = isAlbum ? "Álbum" : isTrack ? "Canción" : null;
+
+  return (
+    <Link href={href} className="group block">
+      <div
+        className={cn(
+          "relative overflow-hidden",
+          isArtist ? "rounded-full aspect-square" : "rounded-xl aspect-square",
+        )}
+      >
+        {item.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.coverUrl}
+            alt={`Cover de ${item.title}`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div
+            className="w-full h-full flex items-center justify-center font-serif text-xl text-mb-accent"
+            style={{ background: coverGradient(item.deezerId) }}
+            role="img"
+            aria-label={`Cover de ${item.title}`}
+          >
+            {isArtist ? getInitials(item.title) : ""}
+          </div>
+        )}
+        {typeLabel && (
+          <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-mb-bg/70 text-[9px] font-semibold uppercase tracking-wide text-mb-accent">
+            {typeLabel}
+          </span>
+        )}
+      </div>
+      <div className="mt-2.5">
+        <p className="font-serif text-mb-text text-base leading-tight truncate">
+          {item.title}
+        </p>
+        <p className="text-mb-muted text-xs mt-0.5 truncate">{subtitle}</p>
+      </div>
+    </Link>
+  );
+}
+
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function SearchClient() {
+interface SearchClientProps {
+  accessToken?: string;
+}
+
+export function SearchClient({ accessToken }: SearchClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialQuery = searchParams.get("q") ?? "";
@@ -194,10 +269,17 @@ export function SearchClient() {
   })();
 
   const [query, setQuery] = useState(initialQuery);
-  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
+  const [committedQuery, setCommittedQuery] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState<SearchTab>(initialTab);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const searchBarWrapRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  useOutsideClose(searchBarWrapRef, dropdownOpen, () => setDropdownOpen(false));
+
+  const debouncedQuery = useDebouncedValue(query.trim(), 350);
 
   // Track scroll position continuously — Next.js resets scroll to 0 during
   // navigation before unmount, so window.scrollY in cleanup is always 0.
@@ -209,39 +291,42 @@ export function SearchClient() {
   }, []);
 
   // Ref to avoid stale closure in cleanup effects
-  const scrollMetaRef = useRef({ q: debouncedQuery });
-  useEffect(() => { scrollMetaRef.current.q = debouncedQuery; });
+  const scrollMetaRef = useRef({ q: committedQuery });
+  useEffect(() => { scrollMetaRef.current.q = committedQuery; });
 
   // Only reset tab on real query changes, not on the initial mount render
   const queryChangedRef = useRef(false);
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const next = query.trim();
-      setDebouncedQuery(next);
-      if (queryChangedRef.current) setActiveTab("todo");
-      queryChangedRef.current = true;
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [query]);
+    if (queryChangedRef.current) setActiveTab("todo");
+    queryChangedRef.current = true;
+  }, [committedQuery]);
 
-  // Sync debounced query → URL
+  // Record catalog search history server-side (backend auto-writes it when a
+  // valid JWT is attached to /catalog/search) — refresh the dropdown's cache
+  // whenever a logged-in commit happens so the recent-searches panel is fresh.
+  useEffect(() => {
+    if (!accessToken || !committedQuery) return;
+    queryClient.invalidateQueries({ queryKey: ["catalog-search-history"] });
+  }, [accessToken, committedQuery, queryClient]);
+
+  // Sync committed query → URL
   useEffect(() => {
     const current = searchParams.get("q") ?? "";
-    if (current === debouncedQuery) return;
+    if (current === committedQuery) return;
     const params = new URLSearchParams();
-    if (debouncedQuery) params.set("q", debouncedQuery);
-    router.replace(`/search${debouncedQuery ? `?${params}` : ""}`, { scroll: false });
-  }, [debouncedQuery, router, searchParams]);
+    if (committedQuery) params.set("q", committedQuery);
+    router.replace(`/search${committedQuery ? `?${params}` : ""}`, { scroll: false });
+  }, [committedQuery, router, searchParams]);
 
   // Sync active tab → URL
   useEffect(() => {
-    if (!debouncedQuery) return;
+    if (!committedQuery) return;
     const current = searchParams.get("tab") ?? "todo";
     if (current === activeTab) return;
     const params = new URLSearchParams(searchParams.toString());
     activeTab === "todo" ? params.delete("tab") : params.set("tab", activeTab);
     router.replace(`/search?${params}`, { scroll: false });
-  }, [activeTab, debouncedQuery, router, searchParams]);
+  }, [activeTab, committedQuery, router, searchParams]);
 
   // Save scroll position on unmount (back-navigation will restore URL and this scroll)
   useEffect(() => {
@@ -275,10 +360,33 @@ export function SearchClient() {
     queryKey: ["trending-albums", 6],
     queryFn: () => apiTrendingAlbums(6),
     staleTime: 4 * 60 * 60 * 1000,
-    enabled: !debouncedQuery,
+    enabled: !committedQuery,
   });
 
   const trendingAlbums: TrendingAlbum[] = trendingData?.data ?? [];
+
+  // Recently viewed (catalog) — logged-in users only, initial state only.
+  // staleTime 0 + refetchOnMount "always" so every navigation back into
+  // /search (e.g. from an album/track/artist detail page) fetches fresh data
+  // instead of serving a cached list that's missing the resource just visited.
+  const { data: recentlyViewedData } = useQuery({
+    queryKey: ["catalog-recently-viewed"],
+    queryFn: () => apiCatalogRecentlyViewed(accessToken as string),
+    enabled: !!accessToken && !committedQuery,
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+  const recentlyViewed: RecentlyViewedItem[] = recentlyViewedData?.data ?? [];
+
+  // Catalog search history — fetched as soon as the page mounts (not gated on
+  // dropdown focus) so it's instantly ready the first time the dropdown opens.
+  const { data: searchHistoryData, isLoading: searchHistoryLoading } = useQuery({
+    queryKey: ["catalog-search-history"],
+    queryFn: () => apiCatalogSearchHistory(accessToken as string),
+    enabled: !!accessToken,
+    staleTime: 30 * 1000,
+  });
+  const searchHistory: CatalogSearchHistoryItem[] = searchHistoryData?.data ?? [];
 
   // ── Infinite search queries ───────────────────────────────────────────────
 
@@ -289,12 +397,12 @@ export function SearchClient() {
     isFetchingNextPage: fetchingMoreAlbums,
     isFetching: albumFetching,
   } = useInfiniteQuery({
-    queryKey: ["catalog-search", debouncedQuery, "album"],
+    queryKey: ["catalog-search", committedQuery, "album"],
     queryFn: ({ pageParam }) =>
-      apiCatalogSearch(debouncedQuery, "album", 20, pageParam as string | undefined),
+      apiCatalogSearch(committedQuery, "album", 20, pageParam as string | undefined, accessToken),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
-    enabled: !!debouncedQuery && (activeTab === "todo" || activeTab === "albums"),
+    enabled: !!committedQuery && (activeTab === "todo" || activeTab === "albums"),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -305,12 +413,12 @@ export function SearchClient() {
     isFetchingNextPage: fetchingMoreTracks,
     isFetching: trackFetching,
   } = useInfiniteQuery({
-    queryKey: ["catalog-search", debouncedQuery, "track"],
+    queryKey: ["catalog-search", committedQuery, "track"],
     queryFn: ({ pageParam }) =>
-      apiCatalogSearch(debouncedQuery, "track", 20, pageParam as string | undefined),
+      apiCatalogSearch(committedQuery, "track", 20, pageParam as string | undefined, accessToken),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
-    enabled: !!debouncedQuery && (activeTab === "todo" || activeTab === "songs"),
+    enabled: !!committedQuery && (activeTab === "todo" || activeTab === "songs"),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -321,12 +429,12 @@ export function SearchClient() {
     isFetchingNextPage: fetchingMoreArtists,
     isFetching: artistFetching,
   } = useInfiniteQuery({
-    queryKey: ["catalog-search", debouncedQuery, "artist"],
+    queryKey: ["catalog-search", committedQuery, "artist"],
     queryFn: ({ pageParam }) =>
-      apiCatalogSearch(debouncedQuery, "artist", 20, pageParam as string | undefined),
+      apiCatalogSearch(committedQuery, "artist", 20, pageParam as string | undefined, accessToken),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
-    enabled: !!debouncedQuery && (activeTab === "todo" || activeTab === "artists"),
+    enabled: !!committedQuery && (activeTab === "todo" || activeTab === "artists"),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -365,7 +473,7 @@ export function SearchClient() {
     (activeTab === "songs" && hasMoreTracks) ||
     (activeTab === "artists" && hasMoreArtists);
 
-  const hasQuery = debouncedQuery.length > 0;
+  const hasQuery = committedQuery.length > 0;
 
   const visibleAlbums = activeTab === "todo" || activeTab === "albums" ? albums : [];
   const visibleTracks = activeTab === "todo" || activeTab === "songs" ? tracks : [];
@@ -413,6 +521,15 @@ export function SearchClient() {
     { id: "artists", label: "Artistas" },
   ];
 
+  function handleSelectRecent(item: CatalogSearchHistoryItem) {
+    setQuery(item.query);
+    setCommittedQuery(item.query);
+    setActiveTab(
+      item.type === "artist" ? "artists" : item.type === "album" ? "albums" : "songs",
+    );
+    setDropdownOpen(false);
+  }
+
   // Derive artists list for initial state from trending
   const trendingArtists = Array.from(
     new Map(
@@ -426,34 +543,56 @@ export function SearchClient() {
 
         {/* ── Search bar ── */}
         <div className="sticky top-0 z-20 bg-mb-bg pb-3.5 pt-4 mb-2">
-          <div
-            className={cn(
-              "flex items-center gap-3 bg-mb-input border border-mb-border rounded-lg px-4 transition-all",
-              "focus-within:border-mb-primary focus-within:shadow-[0_0_0_1px_var(--color-mb-primary)]",
-            )}
-          >
-            <Search className="w-5 h-5 text-mb-muted shrink-0" aria-hidden />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label="Buscar catálogo"
-              placeholder="Buscá un álbum, canción o artista…"
-              className="flex-1 min-w-0 h-[54px] bg-transparent border-none outline-none text-mb-text text-[17px] placeholder:text-mb-dim"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery("");
-                  inputRef.current?.focus();
+          <div ref={searchBarWrapRef} className="relative">
+            <div
+              className={cn(
+                "flex items-center gap-3 bg-mb-input border border-mb-border rounded-lg px-4 transition-all",
+                "focus-within:border-mb-primary focus-within:shadow-[0_0_0_1px_var(--color-mb-primary)]",
+              )}
+            >
+              <Search className="w-5 h-5 text-mb-muted shrink-0" aria-hidden />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setDropdownOpen(true)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setCommittedQuery(query.trim());
+                    setDropdownOpen(false);
+                  }
                 }}
-                aria-label="Limpiar búsqueda"
-                className="w-8 h-8 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+                aria-label="Buscar catálogo"
+                placeholder="Buscá un álbum, canción o artista…"
+                className="flex-1 min-w-0 h-[54px] bg-transparent border-none outline-none text-mb-text text-[17px] placeholder:text-mb-dim"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setCommittedQuery("");
+                    inputRef.current?.focus();
+                  }}
+                  aria-label="Limpiar búsqueda"
+                  className="w-8 h-8 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {dropdownOpen && (
+              <CatalogSearchDropdown
+                query={query}
+                debouncedQuery={debouncedQuery}
+                accessToken={accessToken}
+                history={searchHistory}
+                isHistoryLoading={searchHistoryLoading}
+                onSelectRecent={handleSelectRecent}
+                onClose={() => setDropdownOpen(false)}
+              />
             )}
           </div>
 
@@ -482,6 +621,22 @@ export function SearchClient() {
         {/* ── Initial state ── */}
         {!hasQuery && (
           <>
+            {recentlyViewed.length > 0 && (
+              <section className="mb-12">
+                <h2 className="font-serif font-normal text-2xl text-mb-text mb-5">
+                  Visto recientemente
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+                  {recentlyViewed.map((item) => (
+                    <RecentlyViewedCard
+                      key={`${item.resourceType}-${item.deezerId}`}
+                      item={item}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section className="mb-12">
               <h2 className="font-serif font-normal text-2xl text-mb-text mb-5">
                 Álbumes populares esta semana
@@ -548,12 +703,12 @@ export function SearchClient() {
             {!isFetchingFirstPage && (
               <p className="text-mb-dim text-sm mt-4 mb-5">
                 {activeTab === "artists"
-                  ? `${totalArtists} artista${totalArtists !== 1 ? "s" : ""} encontrado${totalArtists !== 1 ? "s" : ""} para "${debouncedQuery}"`
+                  ? `${totalArtists} artista${totalArtists !== 1 ? "s" : ""} encontrado${totalArtists !== 1 ? "s" : ""} para "${committedQuery}"`
                   : activeTab === "songs"
-                    ? `${totalTracks} canción${totalTracks !== 1 ? "es" : ""} encontrada${totalTracks !== 1 ? "s" : ""} para "${debouncedQuery}"`
+                    ? `${totalTracks} canción${totalTracks !== 1 ? "es" : ""} encontrada${totalTracks !== 1 ? "s" : ""} para "${committedQuery}"`
                     : activeTab === "albums"
-                      ? `${totalAlbums} álbum${totalAlbums !== 1 ? "es" : ""} encontrado${totalAlbums !== 1 ? "s" : ""} para "${debouncedQuery}"`
-                      : `${totalAlbums + totalTracks} resultado${totalAlbums + totalTracks !== 1 ? "s" : ""} para "${debouncedQuery}"`}
+                      ? `${totalAlbums} álbum${totalAlbums !== 1 ? "es" : ""} encontrado${totalAlbums !== 1 ? "s" : ""} para "${committedQuery}"`
+                      : `${totalAlbums + totalTracks} resultado${totalAlbums + totalTracks !== 1 ? "s" : ""} para "${committedQuery}"`}
               </p>
             )}
 
@@ -616,7 +771,7 @@ export function SearchClient() {
               <Search className="w-7 h-7 text-mb-dim" />
             </div>
             <h2 className="font-serif font-normal text-[22px] text-mb-text mb-2.5">
-              No encontramos resultados para &ldquo;{debouncedQuery}&rdquo;
+              No encontramos resultados para &ldquo;{committedQuery}&rdquo;
             </h2>
             <p className="text-mb-muted text-sm leading-relaxed max-w-sm">
               Probá con otro nombre o revisá la ortografía.

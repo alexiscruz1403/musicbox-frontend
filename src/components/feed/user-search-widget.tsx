@@ -1,15 +1,23 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { Search, X, UserCheck, UserPlus, Clock } from "lucide-react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { Search, X } from "lucide-react";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { apiFollow, apiUnfollow, apiSearchUsers } from "@/lib/api";
+import {
+  apiFollow,
+  apiUnfollow,
+  apiSearchUsers,
+  apiUserSearchHistory,
+} from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
-import type { UserSearchResult } from "@/types/api";
-
-type FollowStatus = "following" | "not_following" | "pending";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useOutsideClose } from "@/hooks/use-outside-close";
+import { UserSearchDropdown } from "./user-search-dropdown";
+import { FollowButton } from "./follow-button";
+import type { FollowStatus } from "@/lib/follow-status";
+import type { UserSearchResult, UserQuickSearchItem } from "@/types/api";
 
 interface UserSearchWidgetProps {
   accessToken: string;
@@ -17,16 +25,39 @@ interface UserSearchWidgetProps {
 
 export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [committedQuery, setCommittedQuery] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [statusOverrides, setStatusOverrides] = useState<Record<string, FollowStatus>>({});
+  const [quickStatusOverrides, setQuickStatusOverrides] = useState<Record<string, FollowStatus>>({});
   const [isPending, startTransition] = useTransition();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
+  const debouncedQuery = useDebouncedValue(query.trim(), 350);
+  useOutsideClose(containerRef, dropdownOpen, () => setDropdownOpen(false));
+
+  const searchEnabled = committedQuery.length >= 2;
+
+  // Committing a search (Enter, or picking a recent-search chip) is what
+  // records server-side history via /users/search — refresh the dropdown's
+  // cache so the recent-searches panel reflects it next time it opens.
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedQuery(query.trim()), 350);
-    return () => clearTimeout(timer);
-  }, [query]);
+    if (!committedQuery) return;
+    queryClient.invalidateQueries({ queryKey: ["user-search-history"] });
+  }, [committedQuery, queryClient]);
 
-  const searchEnabled = debouncedQuery.length >= 2;
+  // User search history — fetched as soon as the page mounts (not gated on
+  // dropdown focus) so it's instantly ready the first time the dropdown
+  // opens; staleTime 0 + refetchOnMount "always" so every entry/redirect
+  // into /feed fetches fresh data instead of a cached list.
+  const { data: searchHistoryData, isLoading: searchHistoryLoading } = useQuery({
+    queryKey: ["user-search-history"],
+    queryFn: () => apiUserSearchHistory(accessToken),
+    enabled: !!accessToken,
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+  const searchHistory = searchHistoryData?.data ?? [];
 
   const {
     data,
@@ -35,9 +66,9 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
     isFetchingNextPage,
     isFetching,
   } = useInfiniteQuery({
-    queryKey: ["user-search", debouncedQuery],
+    queryKey: ["user-search", committedQuery],
     queryFn: ({ pageParam }) =>
-      apiSearchUsers(debouncedQuery, pageParam as string | undefined, 10, accessToken),
+      apiSearchUsers(committedQuery, pageParam as string | undefined, 10, accessToken),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
     enabled: searchEnabled,
@@ -81,32 +112,104 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
     });
   }
 
+  function getQuickStatus(item: UserQuickSearchItem): FollowStatus {
+    return quickStatusOverrides[item.handle] ?? (item.isFollowing ? "following" : "not_following");
+  }
+
+  function handleToggleQuickFollow(item: UserQuickSearchItem) {
+    const current = getQuickStatus(item);
+
+    if (current === "following" || current === "pending") {
+      setQuickStatusOverrides((prev) => ({ ...prev, [item.handle]: "not_following" }));
+      startTransition(async () => {
+        try {
+          await apiUnfollow(item.handle, accessToken);
+        } catch {
+          setQuickStatusOverrides((prev) => ({ ...prev, [item.handle]: current }));
+        }
+      });
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await apiFollow(item.handle, accessToken);
+        setQuickStatusOverrides((prev) => ({
+          ...prev,
+          [item.handle]: result?.data.status === "PENDING" ? "pending" : "following",
+        }));
+      } catch {
+        // No optimistic state was set yet — nothing to revert.
+      }
+    });
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const trimmed = query.trim();
+      if (trimmed.length >= 2) {
+        setCommittedQuery(trimmed);
+        setDropdownOpen(false);
+      }
+    }
+  }
+
+  function handleSelectRecent(recentQuery: string) {
+    setQuery(recentQuery);
+    setCommittedQuery(recentQuery);
+    setDropdownOpen(false);
+  }
+
   return (
     <section className="mb-7">
-      <div
-        className={cn(
-          "flex items-center gap-3 bg-mb-input border border-mb-border rounded-lg px-4 transition-all",
-          "focus-within:border-mb-primary focus-within:shadow-[0_0_0_1px_var(--color-mb-primary)]",
-        )}
-      >
-        <Search className="w-5 h-5 text-mb-muted shrink-0" aria-hidden />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Buscar usuarios"
-          placeholder="Buscá usuarios por nombre o @handle…"
-          className="flex-1 min-w-0 h-12 bg-transparent border-none outline-none text-mb-text text-[15px] placeholder:text-mb-dim"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            aria-label="Limpiar búsqueda"
-            className="w-7 h-7 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0 cursor-pointer"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+      <div ref={containerRef} className="relative">
+        <div
+          className={cn(
+            "flex items-center gap-3 bg-mb-input border border-mb-border rounded-lg px-4 transition-all",
+            "focus-within:border-mb-primary focus-within:shadow-[0_0_0_1px_var(--color-mb-primary)]",
+          )}
+        >
+          <Search className="w-5 h-5 text-mb-muted shrink-0" aria-hidden />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setDropdownOpen(true)}
+            onKeyDown={handleKeyDown}
+            aria-label="Buscar usuarios"
+            placeholder="Buscá usuarios por nombre o @handle…"
+            className="flex-1 min-w-0 h-12 bg-transparent border-none outline-none text-mb-text text-[15px] placeholder:text-mb-dim"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setCommittedQuery("");
+                setDropdownOpen(true);
+              }}
+              aria-label="Limpiar búsqueda"
+              className="w-7 h-7 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {dropdownOpen && (
+          <UserSearchDropdown
+            query={query}
+            debouncedQuery={debouncedQuery}
+            accessToken={accessToken}
+            history={searchHistory}
+            isHistoryLoading={searchHistoryLoading}
+            getQuickStatus={getQuickStatus}
+            isFollowActionPending={isPending}
+            onToggleQuickFollow={handleToggleQuickFollow}
+            onSelectRecent={handleSelectRecent}
+            onClose={() => setDropdownOpen(false)}
+          />
         )}
       </div>
 
@@ -126,18 +229,12 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
             </div>
           ) : results.length === 0 ? (
             <p className="text-mb-muted text-sm text-center py-2">
-              No encontramos usuarios para &ldquo;{debouncedQuery}&rdquo;.
+              No encontramos usuarios para &ldquo;{committedQuery}&rdquo;.
             </p>
           ) : (
             <div className="flex flex-col gap-3.5">
               {results.map((u) => {
                 const status = getStatus(u);
-                const label =
-                  status === "following"
-                    ? `Dejar de seguir a ${u.displayName}`
-                    : status === "pending"
-                      ? `Solicitud enviada a ${u.displayName}`
-                      : `Seguir a ${u.displayName}`;
                 return (
                   <div key={u.id} className="flex items-center gap-2.5">
                     <Link href={`/u/${u.handle}`} className="contents">
@@ -164,35 +261,12 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
                         <div className="font-mono text-xs text-mb-muted truncate">@{u.handle}</div>
                       </div>
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleToggleFollow(u)}
+                    <FollowButton
+                      status={status}
+                      displayName={u.displayName}
                       disabled={isPending}
-                      aria-label={label}
-                      className={cn(
-                        "shrink-0 inline-flex items-center gap-1.5 min-h-[34px] px-3.5 rounded-full font-semibold text-[13px] transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed",
-                        status === "not_following"
-                          ? "bg-transparent border border-mb-primary text-mb-accent hover:bg-mb-dp"
-                          : "bg-mb-dp border border-mb-ddp text-mb-muted hover:border-mb-error hover:text-mb-error",
-                      )}
-                    >
-                      {status === "following" ? (
-                        <>
-                          <UserCheck className="w-3.5 h-3.5" />
-                          Siguiendo
-                        </>
-                      ) : status === "pending" ? (
-                        <>
-                          <Clock className="w-3.5 h-3.5" />
-                          Solicitud enviada
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="w-3.5 h-3.5" />
-                          Seguir
-                        </>
-                      )}
-                    </button>
+                      onClick={() => handleToggleFollow(u)}
+                    />
                   </div>
                 );
               })}

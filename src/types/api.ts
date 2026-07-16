@@ -121,6 +121,7 @@ export interface CatalogTrack {
   title: string;
   artist: CatalogArtist;
   albumDeezerId: string | null;
+  albumTitle: string | null;
   coverUrl: string | null;
   releaseDate: string | null;
   durationMs: number | null;
@@ -150,6 +151,34 @@ export type CatalogSearchResult =
   | { type: "artist"; item: CatalogArtist }
   | { type: "album"; item: CatalogAlbum }
   | { type: "track"; item: CatalogTrack };
+
+export interface CatalogQuickSearchItem {
+  type: CatalogSearchType;
+  deezerId: string;
+  coverUrl: string | null;
+  title: string;
+  artist: string | null;
+  albumsCount?: number;
+}
+
+export interface CatalogSearchHistoryItem {
+  id: string;
+  query: string;
+  type: CatalogSearchType;
+  searchedAt: string;
+}
+
+export type CatalogResourceType = "ARTIST" | "ALBUM" | "TRACK";
+
+export interface RecentlyViewedItem {
+  resourceType: CatalogResourceType;
+  deezerId: string;
+  title: string;
+  artistName: string;
+  coverUrl: string | null;
+  albumsCount: number | null;
+  viewedAt: string;
+}
 
 // ─── Catalog: Artist detail ──────────────────────────────────────────────────
 
@@ -419,9 +448,37 @@ export interface UserSearchResult {
   isFollowing: boolean;
 }
 
+export interface FollowListItem {
+  id: string;
+  handle: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isPrivate: boolean;
+  isFollowing: boolean;
+}
+
+export interface FollowListResponse {
+  items: FollowListItem[];
+  nextCursor: string | null;
+}
+
 export interface UserSearchResponse {
   items: UserSearchResult[];
   nextCursor: string | null;
+}
+
+export interface UserQuickSearchItem {
+  handle: string;
+  displayName: string;
+  avatarUrl: string | null;
+  isPrivate: boolean;
+  isFollowing: boolean;
+}
+
+export interface UserSearchHistoryItem {
+  id: string;
+  query: string;
+  searchedAt: string;
 }
 
 // ─── Private profiles — follow requests (post-Fase 7) ─────────────────────

@@ -10,7 +10,8 @@ export async function generateMetadata({
 }: PageProps<"/track/[deezerId]">): Promise<Metadata> {
   try {
     const { deezerId } = await params;
-    const { data } = await apiCatalogTrack(deezerId);
+    const session = await auth();
+    const { data } = await apiCatalogTrack(deezerId, session?.accessToken);
     return {
       title: `${data.title} — ${data.artist.name} | MusicBox`,
     };
@@ -27,7 +28,7 @@ export default async function TrackPage({
 
   let track;
   try {
-    const { data } = await apiCatalogTrack(deezerId);
+    const { data } = await apiCatalogTrack(deezerId, session?.accessToken);
     track = data;
   } catch (err) {
     if (err instanceof ApiError && err.statusCode === 404) {
