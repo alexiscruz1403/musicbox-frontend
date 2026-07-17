@@ -3,17 +3,17 @@ import { LegalPageShell } from "@/components/legal/legal-page-shell";
 import { legalStyles as s } from "@/components/legal/legal-styles";
 
 export const metadata = {
-  title: "Política de Privacidad — MusicBox",
+  title: "Política de Privacidad — Vinlyst",
 };
 
 export default function PrivacyPage() {
   return (
     <LegalPageShell
-      title="Política de Privacidad de MusicBox"
+      title="Política de Privacidad de Vinlyst"
       lastUpdated="Última actualización: 10 de julio de 2026 · Vigente desde su publicación"
     >
       <p className={s.p} style={{ marginTop: "20px" }}>
-        Esta Política de Privacidad describe qué datos personales recolecta MusicBox, con qué
+        Esta Política de Privacidad describe qué datos personales recolecta Vinlyst, con qué
         finalidad los trata, con quién los compartimos y qué derechos tenés sobre ellos, conforme
         a la Ley N.º 25.326 de Protección de Datos Personales de la República Argentina. Se
         complementa con nuestros{" "}
@@ -25,11 +25,11 @@ export default function PrivacyPage() {
 
       <h2 className={s.h2}>1. Responsable del tratamiento</h2>
       <p className={s.p}>
-        MusicBox es responsable del tratamiento de los datos personales que recolecta a través de
+        Vinlyst es responsable del tratamiento de los datos personales que recolecta a través de
         la aplicación web. Ante cualquier consulta sobre esta política o para ejercer tus
         derechos, podés escribirnos a{" "}
-        <a href="mailto:privacidad@musicbox.app" className={s.a}>
-          privacidad@musicbox.app
+        <a href="mailto:privacidad@vinlyst.app" className={s.a}>
+          privacidad@vinlyst.app
         </a>
         .
       </p>
@@ -121,7 +121,7 @@ export default function PrivacyPage() {
 
       <h2 className={s.h2}>5. Con quién compartimos datos</h2>
       <p className={s.p}>
-        MusicBox no vende tus datos personales a terceros. Compartimos información limitada con
+        Vinlyst no vende tus datos personales a terceros. Compartimos información limitada con
         los siguientes proveedores, estrictamente para operar el Servicio:
       </p>
       <table className={s.table}>
@@ -210,8 +210,8 @@ export default function PrivacyPage() {
       <p className={s.p}>
         Como titular de tus datos personales, en cualquier momento podés ejercer los siguientes
         derechos desde la configuración de tu cuenta, o escribiéndonos a{" "}
-        <a href="mailto:privacidad@musicbox.app" className={s.a}>
-          privacidad@musicbox.app
+        <a href="mailto:privacidad@vinlyst.app" className={s.a}>
+          privacidad@vinlyst.app
         </a>
         :
       </p>
@@ -246,7 +246,7 @@ export default function PrivacyPage() {
 
       <h2 className={s.h2}>9. Menores de edad</h2>
       <p className={s.p}>
-        MusicBox no está dirigido a menores de 13 años, y su uso por menores de 18 años requiere
+        Vinlyst no está dirigido a menores de 13 años, y su uso por menores de 18 años requiere
         la supervisión de sus padres o tutores legales. No recolectamos deliberadamente datos de
         menores de 13 años; si tomamos conocimiento de que esto ha ocurrido, eliminaremos esa
         cuenta y sus datos asociados.
@@ -254,7 +254,7 @@ export default function PrivacyPage() {
 
       <h2 className={s.h2}>10. Cookies y almacenamiento local</h2>
       <p className={s.p}>
-        MusicBox utiliza almacenamiento local del navegador estrictamente necesario para mantener
+        Vinlyst utiliza almacenamiento local del navegador estrictamente necesario para mantener
         tu sesión iniciada y recordar preferencias de interfaz (como el estado de la barra de
         navegación). No utilizamos cookies de publicidad ni de rastreo de terceros con fines
         comerciales.
@@ -286,8 +286,8 @@ export default function PrivacyPage() {
       <p className={s.p}>
         Para consultas sobre esta Política de Privacidad o para ejercer cualquiera de tus
         derechos, escribinos a{" "}
-        <a href="mailto:privacidad@musicbox.app" className={s.a}>
-          privacidad@musicbox.app
+        <a href="mailto:privacidad@vinlyst.app" className={s.a}>
+          privacidad@vinlyst.app
         </a>
         .
       </p>

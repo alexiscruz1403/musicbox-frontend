@@ -45,10 +45,11 @@ export function LoginClient() {
     <div className="w-full max-w-[400px] bg-mb-card border border-mb-border rounded-2xl p-8 space-y-6">
       {/* Logo */}
       <div className="text-center space-y-1">
-        <div className="text-3xl" aria-hidden>
-          🎵
+        <div aria-hidden className="flex justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/vinlyst.png" alt="" className="w-8 h-8" />
         </div>
-        <h1 className="font-serif text-2xl text-mb-text">MusicBox</h1>
+        <h1 className="font-serif text-2xl text-mb-text">Vinlyst</h1>
       </div>
 
       <div className="text-center space-y-1">

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { SessionProvider, useSession, signOut } from "next-auth/react";
 import { QueryProvider } from "@/lib/query-client";
 import { tokenStore } from "@/lib/token-store";
+import { SwRegister } from "@/components/pwa/sw-register";
 
 function SessionSync() {
   const { data: session } = useSession();
@@ -34,6 +35,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <QueryProvider>
         <SessionSync />
+        <SwRegister />
         {children}
       </QueryProvider>
     </SessionProvider>

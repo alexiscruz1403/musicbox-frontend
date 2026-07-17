@@ -4,7 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { apiExportUserData, apiForgotPassword, apiPatchMe, ApiError } from "@/lib/api";
+import {
+  apiExportUserData,
+  apiForgotPassword,
+  apiPatchMe,
+  generateIdempotencyKey,
+  ApiError,
+} from "@/lib/api";
 import { DeleteAccountModal } from "./delete-account-modal";
 import { ChangeEmailModal } from "./change-email-modal";
 
@@ -40,7 +46,7 @@ export default function AccountClient({
     setPrivacyError(null);
     startPrivacyTransition(async () => {
       try {
-        await apiPatchMe(accessToken, { isPrivate: next });
+        await apiPatchMe(accessToken, { isPrivate: next }, generateIdempotencyKey());
       } catch (err) {
         setIsPrivate(previous);
         const apiErr = err as ApiError;
@@ -73,7 +79,7 @@ export default function AccountClient({
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `musicbox-export-${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `vinlyst-export-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         URL.revokeObjectURL(url);
       } catch (err) {

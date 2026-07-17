@@ -17,6 +17,7 @@ import type {
   CatalogQuickSearchItem,
   CatalogSearchHistoryItem,
   RecentlyViewedItem,
+  RecentlyViewedDetailItem,
   ArtistDetail,
   ArtistTrackItem,
   ReviewsResponse,
@@ -56,6 +57,8 @@ import type {
   ExportDataResponse,
   NotificationPreferences,
   NotificationPrefsUpdate,
+  VapidPublicKeyResponse,
+  PushSubscriptionPayload,
 } from "@/types/api";
 import { tokenStore } from "@/lib/token-store";
 
@@ -142,11 +145,16 @@ async function apiFetch<T>(
     return handleError(res);
   }
 
-  if (res.status === 204) {
+  // No alcanza con chequear `res.status === 204` — en la práctica algunos
+  // endpoints devuelven 2xx con body vacío sin ser literalmente 204 (ej.
+  // POST /push/subscriptions), y `res.json()` sobre un body vacío tira
+  // "Unexpected end of JSON input". Leer como texto primero es válido para
+  // cualquier body vacío, sin importar el status code exacto.
+  const text = await res.text();
+  if (!text) {
     return undefined as T;
   }
-
-  return res.json() as Promise<T>;
+  return JSON.parse(text) as T;
 }
 
 export function generateIdempotencyKey(): string {
@@ -253,12 +261,14 @@ export async function apiGetMe(
 export async function apiPatchMe(
   accessToken: string,
   updates: { handle?: string; displayName?: string; bio?: string; isPrivate?: boolean },
+  idempotencyKey: string,
 ): Promise<ApiSuccessResponse<{ user: MeResponse["user"] }>> {
   return apiFetch<ApiSuccessResponse<{ user: MeResponse["user"] }>>(
     "/users/me",
     {
       method: "PATCH",
       accessToken,
+      headers: { "Idempotency-Key": idempotencyKey },
       body: JSON.stringify(updates),
     },
   );
@@ -267,6 +277,7 @@ export async function apiPatchMe(
 export async function apiUploadAvatar(
   accessToken: string,
   file: File,
+  idempotencyKey: string,
 ): Promise<ApiSuccessResponse<AvatarUploadResponse>> {
   const form = new FormData();
   form.append("file", file);
@@ -275,6 +286,7 @@ export async function apiUploadAvatar(
     {
       method: "POST",
       accessToken,
+      headers: { "Idempotency-Key": idempotencyKey },
       body: form,
     },
   );
@@ -283,6 +295,7 @@ export async function apiUploadAvatar(
 export async function apiUploadCover(
   accessToken: string,
   file: File,
+  idempotencyKey: string,
 ): Promise<ApiSuccessResponse<CoverUploadResponse>> {
   const form = new FormData();
   form.append("file", file);
@@ -291,6 +304,7 @@ export async function apiUploadCover(
     {
       method: "POST",
       accessToken,
+      headers: { "Idempotency-Key": idempotencyKey },
       body: form,
     },
   );
@@ -459,6 +473,17 @@ export async function apiCatalogRecentlyViewed(
   );
 }
 
+// Bundle de detalle completo (≤10 recursos) para prefetch offline — Fase 8.
+// No vuelve a registrar la visita (mismo orden que /recently-viewed).
+export async function apiCatalogRecentlyViewedDetails(
+  accessToken: string,
+): Promise<ApiSuccessResponse<RecentlyViewedDetailItem[]>> {
+  return apiFetch<ApiSuccessResponse<RecentlyViewedDetailItem[]>>(
+    "/catalog/recently-viewed/details",
+    { accessToken },
+  );
+}
+
 export async function apiCatalogAlbum(
   deezerId: string,
   accessToken?: string,
@@ -529,7 +554,7 @@ export async function apiCatalogArtistTracks(
 // shape used by the Catalog module. The functions below fetch that raw envelope
 // and normalize it into the { items, nextCursor } shape the rest of the frontend
 // expects. Raw row shapes come from ReviewsRepository/ReviewsController in
-// musicbox-api (not fully documented in fase-3-features.md).
+// vinlyst-api (not fully documented in fase-3-features.md).
 
 interface RawListEnvelope<T> {
   data: T[];
@@ -678,10 +703,12 @@ export async function apiUpdateReview(
   accessToken: string,
   id: string,
   payload: UpdateReviewDto,
+  idempotencyKey: string,
 ): Promise<ApiSuccessResponse<Review>> {
   return apiFetch<ApiSuccessResponse<Review>>(`/reviews/${id}`, {
     method: "PATCH",
     accessToken,
+    headers: { "Idempotency-Key": idempotencyKey },
     body: JSON.stringify(payload),
   });
 }
@@ -689,10 +716,12 @@ export async function apiUpdateReview(
 export async function apiDeleteReview(
   accessToken: string,
   id: string,
+  idempotencyKey: string,
 ): Promise<void> {
   return apiFetch<void>(`/reviews/${id}`, {
     method: "DELETE",
     accessToken,
+    headers: { "Idempotency-Key": idempotencyKey },
   });
 }
 
@@ -1103,13 +1132,49 @@ export async function apiGetNotificationPrefs(
 export async function apiUpdateNotificationPrefs(
   accessToken: string,
   updates: NotificationPrefsUpdate,
+  idempotencyKey: string,
 ): Promise<ApiSuccessResponse<NotificationPreferences>> {
   return apiFetch<ApiSuccessResponse<NotificationPreferences>>(
     "/users/me/notifications-prefs",
     {
       method: "PATCH",
       accessToken,
+      headers: { "Idempotency-Key": idempotencyKey },
       body: JSON.stringify(updates),
+    },
+  );
+}
+
+// Web Push (Fase 8)
+
+export async function apiGetVapidPublicKey(): Promise<
+  ApiSuccessResponse<VapidPublicKeyResponse>
+> {
+  return apiFetch<ApiSuccessResponse<VapidPublicKeyResponse>>(
+    "/push/vapid-public-key",
+  );
+}
+
+export async function apiSubscribePush(
+  accessToken: string,
+  subscription: PushSubscriptionPayload,
+): Promise<void> {
+  return apiFetch<void>("/push/subscriptions", {
+    method: "POST",
+    accessToken,
+    body: JSON.stringify(subscription),
+  });
+}
+
+export async function apiUnsubscribePush(
+  accessToken: string,
+  endpoint: string,
+): Promise<void> {
+  return apiFetch<void>(
+    `/push/subscriptions?endpoint=${encodeURIComponent(endpoint)}`,
+    {
+      method: "DELETE",
+      accessToken,
     },
   );
 }

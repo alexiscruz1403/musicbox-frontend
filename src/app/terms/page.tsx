@@ -3,29 +3,29 @@ import { LegalPageShell } from "@/components/legal/legal-page-shell";
 import { legalStyles as s } from "@/components/legal/legal-styles";
 
 export const metadata = {
-  title: "Términos y Condiciones — MusicBox",
+  title: "Términos y Condiciones — Vinlyst",
 };
 
 export default function TermsPage() {
   return (
     <LegalPageShell
-      title="Términos y Condiciones de MusicBox"
+      title="Términos y Condiciones de Vinlyst"
       lastUpdated="Última actualización: 10 de julio de 2026 · Vigentes desde su publicación"
     >
       <p className={s.p} style={{ marginTop: "20px" }}>
-        Bienvenido/a a MusicBox. Estos Términos y Condiciones (&quot;Términos&quot;) rigen el
-        acceso y uso de la aplicación web MusicBox (el &quot;Servicio&quot;), operada desde la
+        Bienvenido/a a Vinlyst. Estos Términos y Condiciones (&quot;Términos&quot;) rigen el
+        acceso y uso de la aplicación web Vinlyst (el &quot;Servicio&quot;), operada desde la
         República Argentina. Al crear una cuenta o utilizar el Servicio, aceptás estos Términos y
         nuestra{" "}
         <Link href="/privacy" className={s.a}>
           Política de Privacidad
         </Link>{" "}
-        en su totalidad. Si no estás de acuerdo, no debés utilizar MusicBox.
+        en su totalidad. Si no estás de acuerdo, no debés utilizar Vinlyst.
       </p>
 
       <h2 className={s.h2}>1. Descripción del servicio</h2>
       <p className={s.p}>
-        MusicBox es una red social de reseñas musicales. Permite a los usuarios buscar álbumes y
+        Vinlyst es una red social de reseñas musicales. Permite a los usuarios buscar álbumes y
         canciones de un catálogo provisto por proveedores externos, publicar reseñas con un
         puntaje de 1 a 10, calificar canciones individuales dentro de un álbum, seguir a otros
         usuarios, comentar y reaccionar a reseñas, y descubrir música mediante secciones de
@@ -33,7 +33,7 @@ export default function TermsPage() {
       </p>
       <div className={s.callout}>
         <p className={s.calloutText}>
-          <strong>MusicBox no aloja ni distribuye archivos de audio.</strong> Los previews de 30
+          <strong>Vinlyst no aloja ni distribuye archivos de audio.</strong> Los previews de 30
           segundos y la metadata de catálogo (portadas, títulos, artistas, duración) provienen de
           proveedores externos y se muestran únicamente con fines de identificación del contenido
           reseñado.
@@ -42,7 +42,7 @@ export default function TermsPage() {
 
       <h2 className={s.h2}>2. Elegibilidad y creación de cuenta</h2>
       <p className={s.p}>
-        Para usar MusicBox necesitás crear una cuenta con un correo electrónico y contraseña, o
+        Para usar Vinlyst necesitás crear una cuenta con un correo electrónico y contraseña, o
         mediante autenticación con tu cuenta de Google. Sos responsable de mantener la
         confidencialidad de tus credenciales y de toda actividad que ocurra bajo tu cuenta.
       </p>
@@ -59,7 +59,7 @@ export default function TermsPage() {
           en tu cuenta.
         </li>
         <li>
-          MusicBox se reserva el derecho de suspender o eliminar cuentas que incumplan estos
+          Vinlyst se reserva el derecho de suspender o eliminar cuentas que incumplan estos
           Términos.
         </li>
       </ul>
@@ -76,7 +76,7 @@ export default function TermsPage() {
           solicitada, ni información falsa presentada como hecho.
         </li>
         <li>
-          Otorgás a MusicBox una licencia no exclusiva, mundial y libre de regalías para
+          Otorgás a Vinlyst una licencia no exclusiva, mundial y libre de regalías para
           almacenar, mostrar y distribuir ese contenido dentro del Servicio, mientras tu cuenta y
           el contenido permanezcan activos.
         </li>
@@ -98,7 +98,7 @@ export default function TermsPage() {
 
       <h2 className={s.h2}>4. Normas de la comunidad y moderación</h2>
       <p className={s.p}>
-        MusicBox es un espacio para el intercambio de opiniones sobre música. No se tolera
+        Vinlyst es un espacio para el intercambio de opiniones sobre música. No se tolera
         contenido que constituya acoso, discurso de odio, spam o publicidad no autorizada,
         desinformación deliberada, o suplantación de identidad.
       </p>
@@ -107,7 +107,7 @@ export default function TermsPage() {
       <p className={s.p}>
         Cualquier usuario puede reportar una reseña, un comentario o una cuenta que considere en
         infracción de estas normas, indicando un motivo. Los reportes son revisados por el equipo
-        de moderación de MusicBox, que puede aceptarlos (confirmando la infracción) o
+        de moderación de Vinlyst, que puede aceptarlos (confirmando la infracción) o
         descartarlos.
       </p>
       <p className={s.p}>
@@ -119,7 +119,7 @@ export default function TermsPage() {
 
       <h3 className={s.h3}>4.2 Penalizaciones escalonadas por reportes aceptados</h3>
       <p className={s.p}>
-        MusicBox aplica un sistema automático de penalización creciente sobre las cuentas cuyo
+        Vinlyst aplica un sistema automático de penalización creciente sobre las cuentas cuyo
         contenido o comportamiento acumula reportes aceptados por moderación. Cada reporte
         aceptado sobre contenido o la cuenta de un usuario suma 1 a su contador acumulado, incluso
         si varios reportes distintos se refieren al mismo contenido.
@@ -167,31 +167,31 @@ export default function TermsPage() {
         acumulan entre sí. Mientras una penalización esté activa, la cuenta conserva acceso de
         lectura, reacciones y seguimiento de otros usuarios, pero no puede crear reseñas ni
         comentarios nuevos. Una cuenta suspendida —ya sea automáticamente por este sistema o
-        manualmente por el equipo de MusicBox— no puede iniciar sesión ni continuar usando el
+        manualmente por el equipo de Vinlyst— no puede iniciar sesión ni continuar usando el
         Servicio.
       </p>
       <p className={s.p}>
-        MusicBox se reserva la facultad de suspender o eliminar cualquier cuenta de forma manual,
+        Vinlyst se reserva la facultad de suspender o eliminar cualquier cuenta de forma manual,
         sin necesidad de agotar esta escala, ante infracciones graves.
       </p>
 
       <h2 className={s.h2}>5. Catálogo musical y proveedores externos</h2>
       <p className={s.p}>
         La información de álbumes, canciones, artistas y los previews de audio de 30 segundos que
-        se muestran en MusicBox son obtenidos de bases de datos musicales de terceros. MusicBox no
+        se muestran en Vinlyst son obtenidos de bases de datos musicales de terceros. Vinlyst no
         es propietario de esa metadata, no garantiza su exactitud o disponibilidad continua, y no
         está afiliado, patrocinado ni respaldado por dichos proveedores ni por los artistas,
         sellos discográficos o titulares de derechos de las obras referenciadas.
       </p>
       <p className={s.p}>
-        Al momento de publicar una reseña, MusicBox conserva una copia del título, artista y
+        Al momento de publicar una reseña, Vinlyst conserva una copia del título, artista y
         portada del álbum o canción reseñada, de forma que tu reseña siga siendo legible aun si
         esa información cambia o deja de estar disponible en el proveedor externo.
       </p>
 
       <h2 className={s.h2}>6. Notificaciones</h2>
       <p className={s.p}>
-        MusicBox te notifica dentro de la plataforma cuando otro usuario da &quot;me gusta&quot; o
+        Vinlyst te notifica dentro de la plataforma cuando otro usuario da &quot;me gusta&quot; o
         &quot;no me gusta&quot; a tu reseña, la comenta, o comienza a seguirte, así como ante
         decisiones de moderación que afecten tu contenido o cuenta. Podés desactivar cada tipo de
         notificación social de forma individual, o todas en conjunto, desde la configuración de tu
@@ -203,7 +203,7 @@ export default function TermsPage() {
         7. Privacidad y protección de datos personales
       </h2>
       <p className={s.p}>
-        MusicBox trata tus datos personales conforme a la Ley N.º 25.326 de Protección de Datos
+        Vinlyst trata tus datos personales conforme a la Ley N.º 25.326 de Protección de Datos
         Personales de la República Argentina. Recolectamos únicamente los datos necesarios para
         operar el Servicio: correo electrónico, contraseña (almacenada de forma irreversible
         mediante hashing criptográfico), nombre de usuario, handle, y opcionalmente biografía y
@@ -229,7 +229,7 @@ export default function TermsPage() {
       </ul>
       <p className={s.p}>
         Tus contraseñas se almacenan mediante funciones de hashing criptográfico de un solo
-        sentido; MusicBox nunca tiene acceso a tu contraseña en texto plano. Todas las
+        sentido; Vinlyst nunca tiene acceso a tu contraseña en texto plano. Todas las
         comunicaciones con el Servicio están cifradas mediante HTTPS. Para el detalle completo
         sobre qué datos recolectamos, con quién los compartimos y cómo ejercer tus derechos,
         consultá nuestra{" "}
@@ -241,20 +241,20 @@ export default function TermsPage() {
 
       <h2 className={s.h2}>8. Propiedad intelectual</h2>
       <p className={s.p}>
-        El nombre &quot;MusicBox&quot;, su logo, diseño de interfaz y el software subyacente son
-        propiedad de MusicBox o sus licenciantes. Los títulos, portadas y grabaciones referenciados
+        El nombre &quot;Vinlyst&quot;, su logo, diseño de interfaz y el software subyacente son
+        propiedad de Vinlyst o sus licenciantes. Los títulos, portadas y grabaciones referenciados
         en el catálogo pertenecen a sus respectivos titulares de derechos; su exhibición en
-        MusicBox se realiza a título informativo, en el marco de las reseñas y comentarios de los
+        Vinlyst se realiza a título informativo, en el marco de las reseñas y comentarios de los
         usuarios sobre esas obras.
       </p>
 
       <h2 className={s.h2}>9. Limitación de responsabilidad</h2>
       <p className={s.p}>
-        El Servicio se provee &quot;tal cual&quot; y &quot;según disponibilidad&quot;. MusicBox no
+        El Servicio se provee &quot;tal cual&quot; y &quot;según disponibilidad&quot;. Vinlyst no
         garantiza que el Servicio esté libre de interrupciones, errores, o que el catálogo musical
         de terceros esté siempre disponible o actualizado. Las opiniones expresadas en las reseñas
-        y comentarios son exclusivamente de sus autores y no representan la posición de MusicBox.
-        En la máxima medida permitida por la ley aplicable, MusicBox no será responsable por daños
+        y comentarios son exclusivamente de sus autores y no representan la posición de Vinlyst.
+        En la máxima medida permitida por la ley aplicable, Vinlyst no será responsable por daños
         indirectos, incidentales o consecuentes derivados del uso del Servicio.
       </p>
 
@@ -279,8 +279,8 @@ export default function TermsPage() {
         Para consultas sobre estos Términos, ejercicio de derechos sobre tus datos personales, o
         para reportar una inquietud que no pueda resolverse mediante el sistema de reportes dentro
         de la plataforma, podés escribirnos a{" "}
-        <a href="mailto:legal@musicbox.app" className={s.a}>
-          legal@musicbox.app
+        <a href="mailto:legal@vinlyst.app" className={s.a}>
+          legal@vinlyst.app
         </a>
         .
       </p>

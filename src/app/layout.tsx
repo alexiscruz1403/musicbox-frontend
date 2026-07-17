@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { DM_Serif_Display, Inter, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
@@ -23,8 +23,17 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MusicBox",
+  title: "Vinlyst",
   description: "A social network for music reviews",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0A0A0F",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

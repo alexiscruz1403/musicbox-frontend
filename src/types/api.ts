@@ -207,6 +207,18 @@ export interface ArtistDetail {
   trendingTracks: ArtistTopTrack[];
 }
 
+// ─── Catalog: recently-viewed detail bundle (Fase 8 — offline prefetch) ──────
+
+export type CatalogResourceDetail = CatalogAlbum | CatalogTrack | ArtistDetail;
+
+export interface RecentlyViewedDetailItem {
+  resourceType: CatalogResourceType;
+  deezerId: string;
+  viewedAt: string;
+  detail: CatalogResourceDetail | null;
+  error: { code: string; message: string } | null;
+}
+
 // ─── Reviews (Fase 3) ────────────────────────────────────────────────────────
 
 export type ReactionType = "LIKE" | "DISLIKE";
@@ -599,3 +611,17 @@ export type NotificationPrefsUpdate = Partial<
     | "followRequestsEnabled"
   >
 >;
+
+// ─── Web Push (Fase 8) ──────────────────────────────────────────────────────
+
+export interface VapidPublicKeyResponse {
+  publicKey: string;
+}
+
+export interface PushSubscriptionPayload {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+}

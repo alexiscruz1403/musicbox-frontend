@@ -4,9 +4,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Play, Pause, Disc3 } from "lucide-react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiTrackReviews } from "@/lib/api";
+import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
 import { formatMs, coverGradient } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import type { CatalogTrack } from "@/types/api";
@@ -161,20 +161,19 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const {
-    data: reviewPages,
+    items: reviews,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isFetching: reviewsFetching,
-  } = useInfiniteQuery({
+    isLoading: reviewsLoading,
+  } = useOfflineListQuery({
     queryKey: ["track-reviews", track.deezerId, reviewSort],
-    queryFn: ({ pageParam }) => apiTrackReviews(track.deezerId, reviewSort, pageParam as string | undefined),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
-    staleTime: 60 * 1000,
+    cacheKey: `track-reviews:${track.deezerId}:${reviewSort}`,
+    fetchPage: async (cursor) => {
+      const { data } = await apiTrackReviews(track.deezerId, reviewSort, cursor);
+      return data;
+    },
   });
-
-  const reviews = (reviewPages?.pages ?? []).flatMap((p) => p.data.items);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -338,7 +337,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
           {/* Review list */}
           <CommunityReviewList
             reviews={reviews}
-            isLoading={reviewsFetching && reviews.length === 0}
+            isLoading={reviewsLoading}
             isFetchingNextPage={isFetchingNextPage}
             sentinelRef={sentinelRef}
             emptyMessage="Todavía no hay reseñas de esta canción."

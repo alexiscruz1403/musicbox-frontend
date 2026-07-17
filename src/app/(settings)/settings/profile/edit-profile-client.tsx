@@ -9,6 +9,7 @@ import {
   apiUploadAvatar,
   apiUploadCover,
   apiCheckHandle,
+  generateIdempotencyKey,
   ApiError,
 } from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
@@ -129,14 +130,18 @@ export default function EditProfileClient({
         // Upload avatar/cover first if changed
         await Promise.all([
           pendingAvatarFile
-            ? apiUploadAvatar(accessToken, pendingAvatarFile).then(() =>
-                setPendingAvatarFile(null),
-              )
+            ? apiUploadAvatar(
+                accessToken,
+                pendingAvatarFile,
+                generateIdempotencyKey(),
+              ).then(() => setPendingAvatarFile(null))
             : Promise.resolve(),
           pendingCoverFile
-            ? apiUploadCover(accessToken, pendingCoverFile).then(() =>
-                setPendingCoverFile(null),
-              )
+            ? apiUploadCover(
+                accessToken,
+                pendingCoverFile,
+                generateIdempotencyKey(),
+              ).then(() => setPendingCoverFile(null))
             : Promise.resolve(),
         ]);
 
@@ -149,7 +154,7 @@ export default function EditProfileClient({
         if (bio !== (initialUser.bio ?? "")) updates.bio = bio;
 
         if (Object.keys(updates).length > 0) {
-          await apiPatchMe(accessToken, updates);
+          await apiPatchMe(accessToken, updates, generateIdempotencyKey());
         }
 
         setSavedOk(true);

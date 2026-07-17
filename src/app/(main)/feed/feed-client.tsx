@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { apiFeed } from "@/lib/api";
+import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
 import { cn } from "@/lib/utils";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import { FollowSuggestionsWidget } from "@/components/feed/follow-suggestions-widget";
@@ -54,21 +54,19 @@ export function FeedClient({ accessToken }: FeedClientProps) {
   const [feedType, setFeedType] = useState<FeedType>("FOLLOWED");
 
   const {
-    data: feedPages,
+    items: reviews,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isFetching: feedFetching,
-  } = useInfiniteQuery({
+    isLoading,
+  } = useOfflineListQuery({
     queryKey: ["feed", feedType],
-    queryFn: ({ pageParam }) => apiFeed(accessToken, feedType, pageParam as string | undefined),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
-    staleTime: 30 * 1000,
+    cacheKey: `feed:${feedType}`,
+    fetchPage: async (cursor) => {
+      const { data } = await apiFeed(accessToken, feedType, cursor);
+      return data;
+    },
   });
-
-  const reviews = (feedPages?.pages ?? []).flatMap((p) => p.data.items);
-  const isLoading = feedFetching && reviews.length === 0;
 
   useEffect(() => {
     const el = sentinelRef.current;

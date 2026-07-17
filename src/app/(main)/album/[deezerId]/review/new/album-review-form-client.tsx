@@ -109,10 +109,15 @@ export function AlbumReviewFormClient({
     startTransition(async () => {
       try {
         if (mode === "edit" && existingReview) {
-          await apiUpdateReview(accessToken, existingReview.id, {
-            description: description.trim(),
-            trackItems,
-          });
+          await apiUpdateReview(
+            accessToken,
+            existingReview.id,
+            {
+              description: description.trim(),
+              trackItems,
+            },
+            idempotencyKey.current,
+          );
           router.push(`/reviews/${existingReview.id}`);
         } else {
           const { data } = await apiCreateReview(

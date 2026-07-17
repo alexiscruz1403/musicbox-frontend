@@ -15,10 +15,10 @@ export async function generateMetadata({
     const title = data.externalTitle ?? "reseña";
     const byline = data.user.handle ? ` por @${data.user.handle}` : "";
     return {
-      title: `Reseña de ${title}${byline} | MusicBox`,
+      title: `Reseña de ${title}${byline} | Vinlyst`,
     };
   } catch {
-    return { title: "Reseña | MusicBox" };
+    return { title: "Reseña | Vinlyst" };
   }
 }
 

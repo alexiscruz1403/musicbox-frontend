@@ -169,7 +169,7 @@ export function ReviewDetailClient({
     const afterDelete = currentUserHandle ? `/u/${currentUserHandle}` : "/";
     startTransition(async () => {
       try {
-        await apiDeleteReview(accessToken, review.id);
+        await apiDeleteReview(accessToken, review.id, generateIdempotencyKey());
         router.push(afterDelete);
         router.refresh();
       } catch (err) {

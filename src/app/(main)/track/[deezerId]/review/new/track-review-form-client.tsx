@@ -64,10 +64,15 @@ export function TrackReviewFormClient({
     startTransition(async () => {
       try {
         if (mode === "edit" && existingReview) {
-          await apiUpdateReview(accessToken, existingReview.id, {
-            description: body.trim(),
-            rating: score,
-          });
+          await apiUpdateReview(
+            accessToken,
+            existingReview.id,
+            {
+              description: body.trim(),
+              rating: score,
+            },
+            idempotencyKey.current,
+          );
           router.push(`/reviews/${existingReview.id}`);
         } else {
           const { data } = await apiCreateReview(

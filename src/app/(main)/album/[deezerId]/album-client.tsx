@@ -4,9 +4,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Play } from "lucide-react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiAlbumReviews } from "@/lib/api";
+import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
 import { formatMs, coverGradient } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import type { CatalogAlbum } from "@/types/api";
@@ -84,20 +84,19 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
   );
 
   const {
-    data: reviewPages,
+    items: reviews,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isFetching: reviewsFetching,
-  } = useInfiniteQuery({
+    isLoading: reviewsLoading,
+  } = useOfflineListQuery({
     queryKey: ["album-reviews", album.deezerId, reviewSort],
-    queryFn: ({ pageParam }) => apiAlbumReviews(album.deezerId, reviewSort, pageParam as string | undefined),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
-    staleTime: 60 * 1000,
+    cacheKey: `album-reviews:${album.deezerId}:${reviewSort}`,
+    fetchPage: async (cursor) => {
+      const { data } = await apiAlbumReviews(album.deezerId, reviewSort, cursor);
+      return data;
+    },
   });
-
-  const reviews = (reviewPages?.pages ?? []).flatMap((p) => p.data.items);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -285,7 +284,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
           {/* Review list */}
           <CommunityReviewList
             reviews={reviews}
-            isLoading={reviewsFetching && reviews.length === 0}
+            isLoading={reviewsLoading}
             isFetchingNextPage={isFetchingNextPage}
             sentinelRef={sentinelRef}
             emptyMessage="Todavía no hay reseñas de este álbum."

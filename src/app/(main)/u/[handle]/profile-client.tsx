@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { UserCheck, UserPlus, Clock, Pencil, Flag, Settings, Lock } from "lucide-react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiFollow, apiUnfollow, apiUserReviews } from "@/lib/api";
+import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
 import { getInitials } from "@/lib/review-format";
 import { ProfileReviewCard } from "@/components/reviews/profile-review-card";
 import { ReportModal } from "@/components/reports/report-modal";
@@ -77,21 +77,20 @@ export default function ProfileClient({
   const locked = !isOwnProfile && user.isPrivate && !isFollowing;
 
   const {
-    data: reviewPages,
+    items: reviewItems,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isFetching: reviewsFetching,
-  } = useInfiniteQuery({
+    isLoading: reviewsLoading,
+  } = useOfflineListQuery({
     queryKey: ["user-reviews", user.handle],
-    queryFn: ({ pageParam }) => apiUserReviews(user.handle, pageParam as string | undefined),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
-    staleTime: 60 * 1000,
+    cacheKey: `user-reviews:${user.handle}`,
+    fetchPage: async (cursor) => {
+      const { data } = await apiUserReviews(user.handle, cursor);
+      return data;
+    },
     enabled: !locked,
   });
-
-  const reviewItems = (reviewPages?.pages ?? []).flatMap((p) => p.data.items);
   const albumItems = reviewItems.filter((item) => item.type === "ALBUM");
   const songItems = reviewItems.filter((item) => item.type === "TRACK");
 
@@ -109,7 +108,7 @@ export default function ProfileClient({
   }, [activeTab, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   function renderReviewList(items: UserReviewHistoryItem[], emptyMessage: string) {
-    if (reviewsFetching && reviewItems.length === 0) {
+    if (reviewsLoading && reviewItems.length === 0) {
       return (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (

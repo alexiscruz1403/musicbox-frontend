@@ -1,9 +1,9 @@
-import { Suspense } from "react";
+﻿import { Suspense } from "react";
 import { auth } from "@/auth";
 import { SearchClient } from "./search-client";
 
 export const metadata = {
-  title: "Buscar — MusicBox",
+  title: "Buscar — Vinlyst",
 };
 
 export default async function SearchPage() {

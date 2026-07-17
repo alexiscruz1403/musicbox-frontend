@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { apiUpdateNotificationPrefs, ApiError } from "@/lib/api";
+import { apiUpdateNotificationPrefs, generateIdempotencyKey, ApiError } from "@/lib/api";
+import {
+  isPushSupported,
+  getCurrentPushPermission,
+  requestPushPermissionAndSubscribe,
+  unsubscribeFromPush,
+} from "@/lib/push";
 import type { NotificationPreferences } from "@/types/api";
 
 interface NotificationsClientProps {
@@ -70,6 +76,41 @@ export default function NotificationsClient({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
+  const [pushPending, startPushTransition] = useTransition();
+
+  useEffect(() => {
+    if (!isPushSupported()) return;
+    navigator.serviceWorker.ready
+      .then((registration) => registration.pushManager.getSubscription())
+      .then((sub) => setPushEnabled(!!sub))
+      .catch(() => {});
+  }, []);
+
+  function togglePush() {
+    setPushError(null);
+    startPushTransition(async () => {
+      try {
+        if (pushEnabled) {
+          await unsubscribeFromPush(accessToken);
+          setPushEnabled(false);
+        } else {
+          const granted = await requestPushPermissionAndSubscribe(accessToken);
+          if (!granted) {
+            setPushError(
+              "No se concedió el permiso de notificaciones del navegador.",
+            );
+            return;
+          }
+          setPushEnabled(true);
+        }
+      } catch {
+        setPushError("No se pudo actualizar las notificaciones push.");
+      }
+    });
+  }
+
   function toggle(setter: (fn: (v: boolean) => boolean) => void) {
     if (!master) return;
     setter((v) => !v);
@@ -82,19 +123,23 @@ export default function NotificationsClient({
     startTransition(async () => {
       try {
         const followField = isPrivateAccount ? "followRequestsEnabled" : "followsEnabled";
-        await apiUpdateNotificationPrefs(accessToken, master
-          ? {
-              likesEnabled: likes,
-              dislikesEnabled: dislikes,
-              commentsEnabled: comments,
-              [followField]: followToggle,
-            }
-          : {
-              likesEnabled: false,
-              dislikesEnabled: false,
-              commentsEnabled: false,
-              [followField]: false,
-            });
+        await apiUpdateNotificationPrefs(
+          accessToken,
+          master
+            ? {
+                likesEnabled: likes,
+                dislikesEnabled: dislikes,
+                commentsEnabled: comments,
+                [followField]: followToggle,
+              }
+            : {
+                likesEnabled: false,
+                dislikesEnabled: false,
+                commentsEnabled: false,
+                [followField]: false,
+              },
+          generateIdempotencyKey(),
+        );
         setSavedOk(true);
       } catch (err) {
         const apiErr = err as ApiError;
@@ -227,6 +272,33 @@ export default function NotificationsClient({
             />
           ))}
         </div>
+
+        {isPushSupported() && getCurrentPushPermission() !== "denied" && (
+          <>
+            <div className="h-px w-full bg-mb-border my-7" />
+            <div>
+              <h2 className="text-sm font-semibold text-mb-text mb-1">
+                Notificaciones push en este dispositivo
+              </h2>
+              <p className="text-[13px] text-mb-muted mb-3">
+                Recibí notificaciones aunque no tengas Vinlyst abierto. Usa
+                los mismos toggles de arriba para decidir qué tipos de aviso
+                llegan.
+              </p>
+              {pushError && (
+                <p role="alert" className="text-xs text-mb-error mb-2">
+                  {pushError}
+                </p>
+              )}
+              <ToggleRow
+                label="Activar push en este navegador"
+                on={pushEnabled}
+                disabled={pushPending}
+                onToggle={togglePush}
+              />
+            </div>
+          </>
+        )}
 
         {/* Save (desktop inline) */}
         <div className="hidden md:block mt-9">

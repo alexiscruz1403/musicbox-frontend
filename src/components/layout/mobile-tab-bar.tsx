@@ -6,6 +6,8 @@ import { Home, Search, User, TrendingUp, Bell, Sparkles, Shield } from "lucide-r
 import { cn } from "@/lib/utils";
 import { useNotificationsPanelStore } from "@/stores/notifications-panel-store";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
+import { PendingSyncBadge } from "@/components/offline/pending-sync-badge";
+import { usePendingMutationCount } from "@/hooks/use-pending-mutation-count";
 import type { Session } from "next-auth";
 
 interface MobileTabBarProps {
@@ -17,6 +19,7 @@ export function MobileTabBar({ session }: MobileTabBarProps) {
   const toggleNotifications = useNotificationsPanelStore((s) => s.toggle);
   const { data: unreadData } = useUnreadNotifications(session?.accessToken ?? null);
   const hasUnread = (unreadData?.data.items.length ?? 0) > 0;
+  const pendingSyncCount = usePendingMutationCount();
 
   const tabs = [
     { href: "/feed", icon: Home, label: "Feed" },
@@ -35,6 +38,11 @@ export function MobileTabBar({ session }: MobileTabBarProps) {
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 bg-mb-card border-t border-mb-border z-50 safe-b">
+      {session && pendingSyncCount > 0 && (
+        <div className="flex justify-center py-1 border-b border-mb-border">
+          <PendingSyncBadge />
+        </div>
+      )}
       <div className="flex items-center justify-around h-16">
         {tabs.map(({ href, icon: Icon, label }) => {
           const active =

@@ -20,7 +20,7 @@ const ITEMS = [
   },
   {
     title: "Términos y condiciones",
-    subtitle: "Cómo funciona MusicBox y tus derechos",
+    subtitle: "Cómo funciona Vinlyst y tus derechos",
     icon: FileText,
     href: "/terms",
   },

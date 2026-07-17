@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { PendingSyncBadge } from "@/components/offline/pending-sync-badge";
+import { usePendingMutationCount } from "@/hooks/use-pending-mutation-count";
 import type { Session } from "next-auth";
 
 const NAV_ITEMS = [
@@ -32,6 +34,7 @@ interface SidebarProps {
 export function Sidebar({ session }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const pendingSyncCount = usePendingMutationCount();
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(href + "/");
@@ -46,12 +49,11 @@ export function Sidebar({ session }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-mb-border overflow-hidden">
-        <span className="text-xl shrink-0" aria-hidden>
-          🎵
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/vinlyst.png" alt="" aria-hidden className="w-5 h-5 shrink-0" />
         {!collapsed && (
           <span className="font-serif text-lg text-mb-text font-semibold whitespace-nowrap">
-            MusicBox
+            Vinlyst
           </span>
         )}
         {session && (
@@ -137,6 +139,12 @@ export function Sidebar({ session }: SidebarProps) {
           </Link>
         )}
       </nav>
+
+      {session && !collapsed && pendingSyncCount > 0 && (
+        <div className="mx-3 mb-2">
+          <PendingSyncBadge />
+        </div>
+      )}
 
       {/* Collapse toggle */}
       <button

@@ -13,10 +13,10 @@ export async function generateMetadata({
     const session = await auth();
     const { data } = await apiCatalogTrack(deezerId, session?.accessToken);
     return {
-      title: `${data.title} — ${data.artist.name} | MusicBox`,
+      title: `${data.title} — ${data.artist.name} | Vinlyst`,
     };
   } catch {
-    return { title: "Canción | MusicBox" };
+    return { title: "Canción | Vinlyst" };
   }
 }
 
