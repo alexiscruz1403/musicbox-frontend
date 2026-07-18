@@ -323,7 +323,7 @@ export function ReviewDetailClient({
               className="shrink-0 font-mono font-bold text-[15px] rounded-md px-2.5 py-1.5"
               style={{ color: "#0A0A0F", background: ratingColor(rating) }}
             >
-              {rating.toFixed(1)}
+              {rating.toFixed(2)}
             </span>
           </Link>
         ) : (
@@ -352,14 +352,16 @@ export function ReviewDetailClient({
             className="font-mono font-bold text-7xl leading-[0.9]"
             style={{ color: ratingColor(rating) }}
           >
-            {rating.toFixed(1)}
+            {rating.toFixed(2)}
           </span>
           <span className="font-mono text-lg text-mb-dim">/10</span>
         </div>
 
-        <div className="text-[15px] leading-[1.75] text-mb-text mb-10 whitespace-pre-wrap">
-          {review.description}
-        </div>
+        {review.description && (
+          <div className="text-[15px] leading-[1.75] text-mb-text mb-10 whitespace-pre-wrap">
+            {review.description}
+          </div>
+        )}
 
         {/* Per-track ratings */}
         {review.type === "ALBUM" && review.trackReviewItems && review.trackReviewItems.length > 0 && (
@@ -378,12 +380,12 @@ export function ReviewDetailClient({
                       className="shrink-0 font-mono font-bold text-sm"
                       style={{ color: ratingColor(item.rating) }}
                     >
-                      {item.rating.toFixed(1)}
+                      {item.rating.toFixed(2)}
                     </span>
                   </div>
                   <div
                     role="img"
-                    aria-label={`Puntuación ${item.rating.toFixed(1)} de 10`}
+                    aria-label={`Puntuación ${item.rating.toFixed(2)} de 10`}
                     className="h-1.5 rounded-full bg-mb-input overflow-hidden"
                   >
                     <div

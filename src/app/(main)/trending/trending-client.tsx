@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiTrendingAlbums, apiTrendingTracks } from "@/lib/api";
-import { ratingColor, coverGradient } from "@/lib/review-format";
+import { ratingColor, coverGradient, rankDeltaMeta } from "@/lib/review-format";
 import type { TrendingAlbum, TrendingTrack } from "@/types/api";
 
 type TrendingTab = "albums" | "tracks";
@@ -22,6 +22,7 @@ interface TrendingItem {
   coverUrl: string | null;
   avgRating: number | null;
   reviewCount: number;
+  rankChange: number | null;
   href: string;
 }
 
@@ -33,8 +34,23 @@ function toItem(row: TrendingAlbum | TrendingTrack, tab: TrendingTab): TrendingI
     coverUrl: row.coverUrl,
     avgRating: row.avgRating,
     reviewCount: row.reviewCount,
+    rankChange: row.rankChange,
     href: tab === "albums" ? `/album/${row.deezerId}` : `/track/${row.deezerId}`,
   };
+}
+
+function RankDelta({ rankChange }: { rankChange: number | null }) {
+  const delta = rankDeltaMeta(rankChange);
+  return (
+    <span
+      aria-label={delta.ariaLabel}
+      className="inline-flex items-center gap-0.5 font-mono font-semibold text-xs"
+      style={{ color: delta.color }}
+    >
+      {delta.icon && <span aria-hidden>{delta.icon}</span>}
+      {delta.text}
+    </span>
+  );
 }
 
 function TopRow({ item, rank }: { item: TrendingItem; rank: number }) {
@@ -73,7 +89,7 @@ function TopRow({ item, rank }: { item: TrendingItem; rank: number }) {
               className="font-mono font-bold text-[13px]"
               style={{ color: ratingColor(rating) }}
             >
-              {rating.toFixed(1)}
+              {rating.toFixed(2)}
             </span>
           )}
           {rating != null && <span className="text-mb-border">·</span>}
@@ -81,6 +97,7 @@ function TopRow({ item, rank }: { item: TrendingItem; rank: number }) {
             {item.reviewCount} reseñas esta semana
           </span>
         </span>
+        <RankDelta rankChange={item.rankChange} />
       </span>
     </Link>
   );
@@ -107,9 +124,12 @@ function RestRow({ item, rank }: { item: TrendingItem; rank: number }) {
           className="shrink-0 font-mono font-bold text-[13px]"
           style={{ color: ratingColor(rating) }}
         >
-          {rating.toFixed(1)}
+          {rating.toFixed(2)}
         </span>
       )}
+      <span className="shrink-0 min-w-[52px] text-right">
+        <RankDelta rankChange={item.rankChange} />
+      </span>
     </Link>
   );
 }

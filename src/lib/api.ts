@@ -666,7 +666,7 @@ function toReviewDetail(row: RawReviewDetail): ReviewDetail {
       deezerId: item.track?.deezerId,
       title: item.track?.title,
       trackNumber: item.track?.trackNumber ?? item.position,
-      rating: item.rating,
+      rating: Number(item.rating),
       description: item.description,
     })),
     likesCount: row.likesCount,
@@ -729,12 +729,14 @@ export async function apiUserReviews(
   handle: string,
   cursor?: string,
   accessToken?: string,
+  sort: "recent" | "oldest" | "best" | "worst" = "recent",
+  q?: string,
 ): Promise<ApiSuccessResponse<UserReviewHistoryResponse>> {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({ sort });
   if (cursor) params.set("cursor", cursor);
-  const qs = params.toString();
+  if (q) params.set("q", q);
   const raw = await apiFetch<RawListEnvelope<RawUserReviewRow>>(
-    `/users/${handle}/reviews${qs ? `?${qs}` : ""}`,
+    `/users/${handle}/reviews?${params}`,
     { accessToken },
   );
   return {

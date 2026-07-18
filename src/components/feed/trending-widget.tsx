@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { apiTrendingAlbums } from "@/lib/api";
-import { ratingColor, coverGradient } from "@/lib/review-format";
+import { ratingColor, coverGradient, rankDeltaMeta } from "@/lib/review-format";
 
 export function TrendingWidget() {
   const { data, isLoading } = useQuery({
@@ -44,41 +44,52 @@ export function TrendingWidget() {
         <p className="text-sm text-mb-dim">Todavía no hay suficientes reseñas.</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {items.map((album, i) => (
-            <Link
-              key={album.deezerId}
-              href={`/album/${album.deezerId}`}
-              className="flex items-center gap-2.5 rounded-lg -mx-1 px-1 py-0.5 transition-colors hover:bg-mb-input"
-            >
-              <span className="shrink-0 w-4 text-center font-mono text-xs text-mb-dim">
-                {i + 1}
-              </span>
-              <span
-                className="shrink-0 w-10 h-10 rounded-md"
-                style={
-                  album.coverUrl
-                    ? { backgroundImage: `url(${album.coverUrl})`, backgroundSize: "cover" }
-                    : { background: coverGradient(album.deezerId) }
-                }
-                role="img"
-                aria-label={`Cover de ${album.title}`}
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm text-mb-text truncate">{album.title}</span>
-                <span className="block text-xs text-mb-muted truncate">
-                  {album.artist.name}
+          {items.map((album, i) => {
+            const delta = rankDeltaMeta(album.rankChange);
+            return (
+              <Link
+                key={album.deezerId}
+                href={`/album/${album.deezerId}`}
+                className="flex items-center gap-2.5 rounded-lg -mx-1 px-1 py-0.5 transition-colors hover:bg-mb-input"
+              >
+                <span className="shrink-0 w-4 text-center font-mono text-xs text-mb-dim">
+                  {i + 1}
                 </span>
-              </span>
-              {album.avgRating != null && (
                 <span
-                  className="shrink-0 font-mono font-bold text-xs"
-                  style={{ color: ratingColor(album.avgRating) }}
-                >
-                  {album.avgRating.toFixed(1)}
+                  className="shrink-0 w-10 h-10 rounded-md"
+                  style={
+                    album.coverUrl
+                      ? { backgroundImage: `url(${album.coverUrl})`, backgroundSize: "cover" }
+                      : { background: coverGradient(album.deezerId) }
+                  }
+                  role="img"
+                  aria-label={`Cover de ${album.title}`}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm text-mb-text truncate">{album.title}</span>
+                  <span className="block text-xs text-mb-muted truncate">
+                    {album.artist.name}
+                  </span>
                 </span>
-              )}
-            </Link>
-          ))}
+                {album.avgRating != null && (
+                  <span
+                    className="shrink-0 font-mono font-bold text-xs"
+                    style={{ color: ratingColor(album.avgRating) }}
+                  >
+                    {album.avgRating.toFixed(2)}
+                  </span>
+                )}
+                <span
+                  aria-label={delta.ariaLabel}
+                  className="shrink-0 inline-flex items-center gap-0.5 font-mono font-semibold text-[11px]"
+                  style={{ color: delta.color }}
+                >
+                  {delta.icon && <span aria-hidden>{delta.icon}</span>}
+                  {delta.text}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       )}
     </section>

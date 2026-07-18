@@ -30,6 +30,36 @@ export function coverGradient(seed: string): string {
   return `linear-gradient(135deg, hsl(${hue},60%,20%) 0%, hsl(${hue + 20},40%,12%) 100%)`;
 }
 
+export interface RankDeltaMeta {
+  text: string;
+  color: string;
+  icon: string;
+  ariaLabel: string;
+}
+
+export function rankDeltaMeta(rankChange: number | null): RankDeltaMeta {
+  if (rankChange == null) {
+    return { text: "Nuevo", color: "#8B56E8", icon: "✦", ariaLabel: "Nuevo ingreso al ranking" };
+  }
+  if (rankChange === 0) {
+    return { text: "=", color: "#5C5670", icon: "", ariaLabel: "Se mantuvo en el mismo puesto" };
+  }
+  if (rankChange > 0) {
+    return {
+      text: `+${rankChange}`,
+      color: "#4ADE80",
+      icon: "▲",
+      ariaLabel: `Subió ${rankChange} puesto${rankChange !== 1 ? "s" : ""}`,
+    };
+  }
+  return {
+    text: String(rankChange),
+    color: "#F87171",
+    icon: "▼",
+    ariaLabel: `Bajó ${Math.abs(rankChange)} puesto${Math.abs(rankChange) !== 1 ? "s" : ""}`,
+  };
+}
+
 export function formatMs(ms: number): string {
   const total = Math.round(ms / 1000);
   const m = Math.floor(total / 60);

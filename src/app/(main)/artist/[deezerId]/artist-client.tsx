@@ -72,7 +72,7 @@ function ArtistTopItemCard({
                 className="font-mono font-bold text-xs"
                 style={{ color: ratingColor(avgRating) }}
               >
-                {avgRating.toFixed(1)}
+                {avgRating.toFixed(2)}
               </span>
               <span className="text-mb-dim text-[11px]">
                 · {reviewCount} reseña{reviewCount !== 1 ? "s" : ""}
@@ -279,7 +279,8 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
             </h1>
             <p className="text-sm text-mb-muted">
               {albumsTotal} álbum{albumsTotal !== 1 ? "es" : ""} · {tracksTotal} canci
-              {tracksTotal !== 1 ? "ones" : "ón"}
+              {tracksTotal !== 1 ? "ones" : "ón"} · {artist.reviewCount ?? 0} reseña
+              {(artist.reviewCount ?? 0) !== 1 ? "s" : ""} totales
             </p>
           </div>
         </div>

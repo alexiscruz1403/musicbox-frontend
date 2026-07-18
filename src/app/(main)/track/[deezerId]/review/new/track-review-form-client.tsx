@@ -55,7 +55,7 @@ export function TrackReviewFormClient({
   const idempotencyKey = useRef(generateIdempotencyKey());
 
   const len = body.length;
-  const canSubmit = score > 0 && body.trim().length > 0 && !isPending;
+  const canSubmit = score > 0 && !isPending;
 
   function handleSubmit() {
     if (!canSubmit) return;
@@ -68,7 +68,7 @@ export function TrackReviewFormClient({
             accessToken,
             existingReview.id,
             {
-              description: body.trim(),
+              description: body.trim() || undefined,
               rating: score,
             },
             idempotencyKey.current,
@@ -80,7 +80,7 @@ export function TrackReviewFormClient({
             {
               type: "TRACK",
               deezerId: track.deezerId,
-              description: body.trim(),
+              description: body.trim() || undefined,
               rating: score,
             },
             idempotencyKey.current,
@@ -195,7 +195,7 @@ export function TrackReviewFormClient({
             htmlFor="mbReview"
             className="block text-[13px] font-semibold text-mb-muted uppercase tracking-wider mb-4"
           >
-            Tu reseña
+            Tu reseña <span className="normal-case font-normal text-mb-dim">(opcional)</span>
           </label>
           <div className="relative">
             <textarea

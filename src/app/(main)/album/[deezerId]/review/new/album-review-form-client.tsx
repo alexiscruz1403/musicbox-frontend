@@ -83,8 +83,7 @@ export function AlbumReviewFormClient({
   const avg = ratedCount > 0 ? sum / ratedCount : 0;
   const avgText = ratedCount > 0 ? avg.toFixed(2) : "—";
 
-  const canSubmit =
-    ratedCount > 0 && description.trim().length > 0 && !isPending;
+  const canSubmit = ratedCount > 0 && !isPending;
 
   function setRating(deezerId: string, value: number) {
     setTrackRatings((prev) => ({ ...prev, [deezerId]: value }));
@@ -113,7 +112,7 @@ export function AlbumReviewFormClient({
             accessToken,
             existingReview.id,
             {
-              description: description.trim(),
+              description: description.trim() || undefined,
               trackItems,
             },
             idempotencyKey.current,
@@ -125,7 +124,7 @@ export function AlbumReviewFormClient({
             {
               type: "ALBUM",
               deezerId: album.deezerId,
-              description: description.trim(),
+              description: description.trim() || undefined,
               trackItems,
             },
             idempotencyKey.current,
@@ -140,7 +139,7 @@ export function AlbumReviewFormClient({
   }
 
   return (
-    <div className="relative min-h-screen bg-mb-bg text-mb-text font-sans pb-28">
+    <div className="relative min-h-screen bg-mb-bg text-mb-text font-sans pb-44 md:pb-28">
       <button
         type="button"
         onClick={() => router.back()}
@@ -190,7 +189,8 @@ export function AlbumReviewFormClient({
             htmlFor="mbGeneral"
             className="block text-[13px] font-semibold text-mb-muted uppercase tracking-wider mb-3.5"
           >
-            ¿Tu impresión general del álbum?
+            ¿Tu impresión general del álbum?{" "}
+            <span className="normal-case font-normal text-mb-dim">(opcional)</span>
           </label>
           <div className="relative">
             <textarea
@@ -303,7 +303,7 @@ export function AlbumReviewFormClient({
       </div>
 
       {/* Sticky bottom bar */}
-      <div className="fixed left-0 right-0 bottom-0 z-30 bg-mb-card border-t border-mb-border">
+      <div className="fixed left-0 right-0 bottom-16 md:bottom-0 z-30 bg-mb-card border-t border-mb-border">
         <div className="max-w-[780px] mx-auto px-4 md:px-[clamp(16px,5vw,40px)] py-3.5 flex items-center justify-between gap-4">
           <div className="flex flex-col gap-0.5">
             <span className="text-[11px] text-mb-dim uppercase tracking-wider">

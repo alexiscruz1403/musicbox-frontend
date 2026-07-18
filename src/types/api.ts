@@ -114,6 +114,9 @@ export interface CatalogArtist {
   deezerId: string;
   name: string;
   imageUrl: string | null;
+  // Present on GET /catalog/artists/:deezerId and artist search-result items —
+  // absent when this artist appears nested inside a CatalogAlbum/CatalogTrack.
+  reviewCount?: number;
 }
 
 export interface CatalogTrack {
@@ -127,6 +130,12 @@ export interface CatalogTrack {
   durationMs: number | null;
   trackNumber: number | null;
   previewUrl: string | null;
+  // Present on GET /catalog/tracks/:deezerId, track search-result items, and
+  // tracks nested in a GET /catalog/albums/:deezerId tracklist (userRating
+  // only, sourced from the album review's per-track item there — see
+  // docs/fase-2-features.md). Absent from artist album/track listings.
+  reviewCount?: number;
+  userRating?: number | null;
 }
 
 export interface CatalogAlbum {
@@ -137,6 +146,10 @@ export interface CatalogAlbum {
   releaseDate: string | null;
   genreLabel: string | null;
   tracks: CatalogTrack[];
+  // Present on GET /catalog/albums/:deezerId and album search-result items —
+  // absent from GET /catalog/artists/:deezerId/albums listings.
+  reviewCount?: number;
+  userRating?: number | null;
 }
 
 export interface CatalogPage<T> {
@@ -272,7 +285,7 @@ export interface TrackReviewItemDto {
 export interface CreateReviewDto {
   type: ReviewType;
   deezerId: string;
-  description: string;
+  description?: string;
   rating?: number;
   trackItems?: TrackReviewItemDto[];
 }
@@ -352,6 +365,8 @@ export interface TrendingAlbum {
   coverUrl: string | null;
   avgRating: number | null;
   reviewCount: number;
+  rank: number;
+  rankChange: number | null;
 }
 
 export interface TrendingTrack {
@@ -362,6 +377,8 @@ export interface TrendingTrack {
   avgRating: number | null;
   reviewCount: number;
   albumDeezerId: string | null;
+  rank: number;
+  rankChange: number | null;
 }
 
 // ─── Notifications (Fase 5) ──────────────────────────────────────────────────

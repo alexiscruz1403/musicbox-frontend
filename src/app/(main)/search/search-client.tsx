@@ -58,12 +58,16 @@ function AlbumCard({
   coverUrl,
   deezerId,
   avgRating,
+  reviewCount,
+  userRating,
 }: {
   title: string;
   artist: string;
   coverUrl: string | null;
   deezerId: string;
   avgRating?: number | null;
+  reviewCount?: number;
+  userRating?: number | null;
 }) {
   return (
     <Link href={`/album/${deezerId}`} className="group block">
@@ -88,6 +92,14 @@ function AlbumCard({
             Ver álbum
           </span>
         </div>
+        {userRating != null && (
+          <span
+            className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-mb-bg/80 border border-mb-ddp font-mono font-bold text-[11px]"
+            style={{ color: ratingColor(userRating) }}
+          >
+            {userRating.toFixed(2)}
+          </span>
+        )}
       </div>
       <div className="mt-2.5">
         <p className="font-serif text-mb-text text-base leading-tight truncate">
@@ -99,7 +111,13 @@ function AlbumCard({
             className="font-mono font-bold text-sm mt-1 block"
             style={{ color: ratingColor(avgRating) }}
           >
-            {avgRating.toFixed(1)}
+            {avgRating.toFixed(2)}
+          </span>
+        ) : reviewCount != null ? (
+          <span className="text-mb-dim text-xs mt-1 block">
+            {reviewCount > 0
+              ? `${reviewCount} reseña${reviewCount !== 1 ? "s" : ""}`
+              : "Sin reseñas aún"}
           </span>
         ) : (
           <span className="text-mb-dim text-xs mt-1 block">Sin reseñas</span>
@@ -115,12 +133,16 @@ function TrackCard({
   coverUrl,
   deezerId,
   durationMs,
+  reviewCount,
+  userRating,
 }: {
   title: string;
   artist: string;
   coverUrl: string | null;
   deezerId: string;
   durationMs?: number | null;
+  reviewCount?: number;
+  userRating?: number | null;
 }) {
   return (
     <Link href={`/track/${deezerId}`} className="group block">
@@ -145,6 +167,14 @@ function TrackCard({
             Ver canción
           </span>
         </div>
+        {userRating != null && (
+          <span
+            className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-mb-bg/80 border border-mb-ddp font-mono font-bold text-[11px]"
+            style={{ color: ratingColor(userRating) }}
+          >
+            {userRating.toFixed(2)}
+          </span>
+        )}
       </div>
       <div className="mt-2.5">
         <p className="font-serif text-mb-text text-base leading-tight truncate">
@@ -154,6 +184,13 @@ function TrackCard({
         {durationMs != null && (
           <span className="font-mono text-mb-dim text-xs mt-1 block">
             {formatMs(durationMs)}
+          </span>
+        )}
+        {reviewCount != null && (
+          <span className="text-mb-dim text-xs mt-1 block">
+            {reviewCount > 0
+              ? `${reviewCount} reseña${reviewCount !== 1 ? "s" : ""}`
+              : "Sin reseñas aún"}
           </span>
         )}
       </div>
@@ -186,6 +223,11 @@ function ArtistCard({ artist }: { artist: CatalogArtist }) {
       <p className="font-semibold text-mb-text text-sm text-center">
         {artist.name}
       </p>
+      {artist.reviewCount != null && (
+        <p className="text-mb-dim text-xs -mt-1">
+          {artist.reviewCount} reseña{artist.reviewCount !== 1 ? "s" : ""}
+        </p>
+      )}
     </Link>
   );
 }
@@ -725,6 +767,8 @@ export function SearchClient({ accessToken }: SearchClientProps) {
                           title={a.title}
                           artist={a.artist.name}
                           coverUrl={a.coverUrl}
+                          reviewCount={a.reviewCount}
+                          userRating={a.userRating}
                         />
                       )),
                       ...visibleTracks.filter((t) => !!t.deezerId).map((t) => (
@@ -735,6 +779,8 @@ export function SearchClient({ accessToken }: SearchClientProps) {
                           artist={t.artist.name}
                           coverUrl={t.coverUrl}
                           durationMs={t.durationMs}
+                          reviewCount={t.reviewCount}
+                          userRating={t.userRating}
                         />
                       )),
                     ]}

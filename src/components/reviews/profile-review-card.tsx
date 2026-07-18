@@ -47,10 +47,12 @@ export function ProfileReviewCard({ item }: { item: UserReviewHistoryItem }) {
             className="shrink-0 font-mono font-bold text-lg leading-none"
             style={{ color: ratingColor(rating) }}
           >
-            {rating.toFixed(1)}
+            {rating.toFixed(2)}
           </span>
         </div>
-        <p className="text-sm text-mb-muted mt-2 line-clamp-2">{item.description}</p>
+        {item.description && (
+          <p className="text-sm text-mb-muted mt-2 line-clamp-2">{item.description}</p>
+        )}
       </div>
     </Link>
   );

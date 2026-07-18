@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { UserCheck, UserPlus, Clock, Pencil, Flag, Settings, Lock } from "lucide-react";
+import { UserCheck, UserPlus, Clock, Pencil, Flag, Settings, Lock, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiFollow, apiUnfollow, apiUserReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { getInitials } from "@/lib/review-format";
 import { ProfileReviewCard } from "@/components/reviews/profile-review-card";
 import { ReportModal } from "@/components/reports/report-modal";
@@ -13,6 +14,14 @@ import { FollowListDrawer } from "@/components/profile/follow-list-drawer";
 import type { PublicProfileResponse, UserReviewHistoryItem } from "@/types/api";
 
 type Tab = "todo" | "albums" | "songs";
+type ReviewSort = "recent" | "oldest" | "best" | "worst";
+
+const SORT_OPTIONS: { id: ReviewSort; label: string }[] = [
+  { id: "recent", label: "Más reciente" },
+  { id: "oldest", label: "Más antigua" },
+  { id: "best", label: "Mejor puntuada" },
+  { id: "worst", label: "Peor puntuada" },
+];
 
 interface ProfileClientProps {
   profile: PublicProfileResponse;
@@ -71,10 +80,13 @@ export default function ProfileClient({
   const [reportOpen, setReportOpen] = useState(false);
   const [followListKind, setFollowListKind] = useState<"followers" | "following" | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
+  const [reviewQuery, setReviewQuery] = useState("");
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { user, stats } = profile;
   const locked = !isOwnProfile && user.isPrivate && !isFollowing;
+  const debouncedReviewQuery = useDebouncedValue(reviewQuery.trim(), 350);
 
   const {
     items: reviewItems,
@@ -83,10 +95,16 @@ export default function ProfileClient({
     isFetchingNextPage,
     isLoading: reviewsLoading,
   } = useOfflineListQuery({
-    queryKey: ["user-reviews", user.handle],
-    cacheKey: `user-reviews:${user.handle}`,
+    queryKey: ["user-reviews", user.handle, reviewSort, debouncedReviewQuery],
+    cacheKey: `user-reviews:${user.handle}:${reviewSort}:${debouncedReviewQuery}`,
     fetchPage: async (cursor) => {
-      const { data } = await apiUserReviews(user.handle, cursor);
+      const { data } = await apiUserReviews(
+        user.handle,
+        cursor,
+        accessToken,
+        reviewSort,
+        debouncedReviewQuery || undefined,
+      );
       return data;
     },
     enabled: !locked,
@@ -377,13 +395,58 @@ export default function ProfileClient({
               </div>
             </div>
 
+            {/* Sort + search controls */}
+            <div className="flex items-center gap-3 flex-wrap mb-5">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mb-dim pointer-events-none"
+                  aria-hidden
+                />
+                <input
+                  type="text"
+                  value={reviewQuery}
+                  onChange={(e) => setReviewQuery(e.target.value)}
+                  aria-label="Buscar reseñas por álbum, canción o artista"
+                  placeholder="Buscar por álbum, canción o artista"
+                  className="w-full h-10 pl-9 pr-3 bg-mb-input border border-mb-border rounded-lg text-mb-text text-sm placeholder:text-mb-dim outline-none focus:border-mb-primary transition-colors"
+                />
+              </div>
+              <select
+                value={reviewSort}
+                onChange={(e) => setReviewSort(e.target.value as ReviewSort)}
+                aria-label="Ordenar reseñas"
+                className="h-10 px-3 bg-mb-input border border-mb-border rounded-lg text-mb-text text-sm cursor-pointer"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Tab content */}
             {activeTab === "todo" &&
-              renderReviewList(reviewItems, "Todavía no hay reseñas. ¡Sé el primero en compartir!")}
+              renderReviewList(
+                reviewItems,
+                debouncedReviewQuery
+                  ? `No hay reseñas que coincidan con "${debouncedReviewQuery}".`
+                  : "Todavía no hay reseñas. ¡Sé el primero en compartir!",
+              )}
             {activeTab === "albums" &&
-              renderReviewList(albumItems, "Todavía no hay reseñas de álbumes.")}
+              renderReviewList(
+                albumItems,
+                debouncedReviewQuery
+                  ? `No hay reseñas que coincidan con "${debouncedReviewQuery}".`
+                  : "Todavía no hay reseñas de álbumes.",
+              )}
             {activeTab === "songs" &&
-              renderReviewList(songItems, "Todavía no hay reseñas de canciones.")}
+              renderReviewList(
+                songItems,
+                debouncedReviewQuery
+                  ? `No hay reseñas que coincidan con "${debouncedReviewQuery}".`
+                  : "Todavía no hay reseñas de canciones.",
+              )}
           </>
         )}
       </div>

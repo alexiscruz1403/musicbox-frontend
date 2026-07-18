@@ -109,7 +109,7 @@ export function CommunityReviewCard({
           className="shrink-0 font-mono font-bold text-[26px] leading-none"
           style={{ color: ratingColor(review.rating) }}
         >
-          {review.rating.toFixed(1)}
+          {review.rating.toFixed(2)}
         </span>
       </div>
 
@@ -137,16 +137,18 @@ export function CommunityReviewCard({
         </Link>
       )}
 
-      <Link href={`/reviews/${review.id}`}>
-        <p
-          className={cn(
-            "text-[15px] leading-relaxed text-mb-text mb-3.5",
-            clampDescription && "line-clamp-4",
-          )}
-        >
-          {review.description}
-        </p>
-      </Link>
+      {review.description && (
+        <Link href={`/reviews/${review.id}`}>
+          <p
+            className={cn(
+              "text-[15px] leading-relaxed text-mb-text mb-3.5",
+              clampDescription && "line-clamp-4",
+            )}
+          >
+            {review.description}
+          </p>
+        </Link>
+      )}
 
       <div className="flex items-center gap-1">
         <button

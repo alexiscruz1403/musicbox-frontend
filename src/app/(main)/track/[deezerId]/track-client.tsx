@@ -7,7 +7,7 @@ import { ArrowLeft, Play, Pause, Disc3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiTrackReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
-import { formatMs, coverGradient } from "@/lib/review-format";
+import { formatMs, coverGradient, ratingColor } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import type { CatalogTrack } from "@/types/api";
 
@@ -35,6 +35,7 @@ interface AudioPreviewProps {
 function AudioPreviewPlayer({ previewUrl }: AudioPreviewProps) {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [playbackError, setPlaybackError] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const toggle = useCallback(() => {
@@ -54,7 +55,11 @@ function AudioPreviewPlayer({ previewUrl }: AudioPreviewProps) {
       audioRef.current.pause();
       setPlaying(false);
     } else {
-      audioRef.current.play().catch(() => {});
+      setPlaybackError(false);
+      audioRef.current.play().catch(() => {
+        setPlaying(false);
+        setPlaybackError(true);
+      });
       setPlaying(true);
     }
   }, [playing, previewUrl]);
@@ -144,6 +149,12 @@ function AudioPreviewPlayer({ previewUrl }: AudioPreviewProps) {
           </>
         )}
       </button>
+
+      {playbackError && (
+        <p role="alert" className="text-mb-error text-xs mt-2">
+          No se pudo reproducir la previsualización.
+        </p>
+      )}
     </>
   );
 }
@@ -280,12 +291,38 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
               )}
             </div>
             {/* Audio preview */}
-            {track.previewUrl && <AudioPreviewPlayer previewUrl={track.previewUrl} />}
+            {track.previewUrl && (
+              <AudioPreviewPlayer key={track.deezerId} previewUrl={track.previewUrl} />
+            )}
 
             {/* Rating + CTA */}
-            <div className="flex items-end gap-6 flex-wrap justify-center md:justify-start">
-              <div role="group" aria-label="0 reseñas">
-                <p className="text-mb-muted text-sm mt-1.5">0 reseñas</p>
+            <div className="mt-4 md:mt-0 flex items-end gap-6 flex-wrap justify-center md:justify-start">
+              <div
+                role="group"
+                aria-label={
+                  track.userRating != null
+                    ? `Tu puntuación: ${track.userRating} de 10`
+                    : "Todavía no reseñaste esta canción"
+                }
+              >
+                <div className="flex items-baseline gap-2.5">
+                  <span
+                    className="font-mono font-bold text-5xl md:text-7xl leading-[0.9]"
+                    style={{
+                      color:
+                        track.userRating != null
+                          ? ratingColor(track.userRating)
+                          : "#5C5670",
+                    }}
+                  >
+                    {track.userRating != null ? track.userRating : "—"}
+                  </span>
+                  <span className="font-mono text-lg text-mb-dim">/10</span>
+                </div>
+                <p className="text-mb-muted text-sm mt-1.5">
+                  {track.reviewCount ?? 0} reseña
+                  {(track.reviewCount ?? 0) !== 1 ? "s" : ""}
+                </p>
               </div>
               <button
                 type="button"

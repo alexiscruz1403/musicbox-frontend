@@ -7,7 +7,7 @@ import { ArrowLeft, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiAlbumReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
-import { formatMs, coverGradient } from "@/lib/review-format";
+import { formatMs, coverGradient, ratingColor } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import type { CatalogAlbum } from "@/types/api";
 
@@ -76,12 +76,20 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
       }
       const audio = new Audio(previewUrl);
       audio.addEventListener("ended", () => setPlayingId(null));
-      audio.play().catch(() => {});
+      audio
+        .play()
+        .catch(() => setPlayingId((cur) => (cur === trackId ? null : cur)));
       audioRef.current = audio;
       setPlayingId(trackId);
     },
     [playingId],
   );
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+    };
+  }, []);
 
   const {
     items: reviews,
@@ -174,9 +182,31 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
               )}
             </div>
             <div className="flex items-end gap-6 flex-wrap justify-center md:justify-start">
-              <div role="group" aria-label="0 reseñas">
+              <div
+                role="group"
+                aria-label={
+                  album.userRating != null
+                    ? `Tu puntuación: ${album.userRating} de 10`
+                    : "Todavía no reseñaste este álbum"
+                }
+              >
+                <div className="flex items-baseline gap-2.5">
+                  <span
+                    className="font-mono font-bold text-5xl md:text-7xl leading-[0.9]"
+                    style={{
+                      color:
+                        album.userRating != null
+                          ? ratingColor(album.userRating)
+                          : "#5C5670",
+                    }}
+                  >
+                    {album.userRating != null ? album.userRating : "—"}
+                  </span>
+                  <span className="font-mono text-lg text-mb-dim">/10</span>
+                </div>
                 <p className="text-mb-muted text-sm mt-1.5">
-                  0 reseñas
+                  {album.reviewCount ?? 0} reseña
+                  {(album.reviewCount ?? 0) !== 1 ? "s" : ""}
                 </p>
               </div>
               <button
@@ -227,6 +257,14 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                       {track.title}
                     </Link>
                   </div>
+                  {track.userRating != null && (
+                    <span
+                      className="shrink-0 font-mono font-bold text-xs bg-mb-ddp/20 border border-mb-ddp rounded px-1.5 py-0.5"
+                      style={{ color: ratingColor(track.userRating) }}
+                    >
+                      {track.userRating.toFixed(2)}
+                    </span>
+                  )}
                   {track.durationMs != null && (
                     <span className="shrink-0 font-mono text-sm text-mb-muted min-w-[38px] text-right">
                       {formatMs(track.durationMs)}
