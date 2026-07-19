@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { apiTrendingAlbums } from "@/lib/api";
 import { ratingColor, coverGradient, rankDeltaMeta } from "@/lib/review-format";
 
 export function TrendingWidget() {
+  const t = useTranslations("Feed.trendingWidget");
+  const tCommon = useTranslations("Common");
   const { data, isLoading } = useQuery({
     queryKey: ["trending", "albums", "widget"],
     queryFn: () => apiTrendingAlbums(5),
@@ -18,13 +21,13 @@ export function TrendingWidget() {
     <section className="bg-mb-card border border-mb-border rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-[13px] font-semibold tracking-wide uppercase text-mb-muted">
-          Trending ahora
+          {t("heading")}
         </h2>
         <Link
           href="/trending"
           className="text-xs font-medium text-mb-accent hover:underline"
         >
-          Ver todo
+          {t("viewAll")}
         </Link>
       </div>
 
@@ -41,7 +44,7 @@ export function TrendingWidget() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <p className="text-sm text-mb-dim">Todavía no hay suficientes reseñas.</p>
+        <p className="text-sm text-mb-dim">{t("empty")}</p>
       ) : (
         <div className="flex flex-col gap-3">
           {items.map((album, i) => {
@@ -63,7 +66,7 @@ export function TrendingWidget() {
                       : { background: coverGradient(album.deezerId) }
                   }
                   role="img"
-                  aria-label={`Cover de ${album.title}`}
+                  aria-label={tCommon("coverAlt", { title: album.title })}
                 />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm text-mb-text truncate">{album.title}</span>

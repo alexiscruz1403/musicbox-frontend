@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { enqueueMutation } from "@/lib/offline/mutation-queue";
 import type { CatalogAlbum, CatalogTrack, TrackReviewItemDto } from "@/types/api";
 
@@ -24,6 +25,7 @@ export function OfflineReviewForm({
   onDone,
   onCancel,
 }: OfflineReviewFormProps) {
+  const t = useTranslations("Offline.reviewForm");
   const [description, setDescription] = useState("");
   const [rating, setRating] = useState(8);
   const [trackRatings, setTrackRatings] = useState<Record<string, number>>({});
@@ -55,15 +57,14 @@ export function OfflineReviewForm({
     return (
       <div className="p-4">
         <p className="text-sm text-mb-success mb-4">
-          Reseña guardada. Se va a publicar automáticamente cuando vuelva la
-          conexión.
+          {t("queuedMessage")}
         </p>
         <button
           type="button"
           onClick={onDone}
           className="text-sm text-mb-accent cursor-pointer"
         >
-          Volver
+          {t("back")}
         </button>
       </div>
     );
@@ -76,14 +77,14 @@ export function OfflineReviewForm({
         onClick={onCancel}
         className="text-sm text-mb-accent cursor-pointer"
       >
-        ← Cancelar
+        {t("cancel")}
       </button>
-      <h2 className="font-serif text-xl text-mb-text">Escribir reseña</h2>
+      <h2 className="font-serif text-xl text-mb-text">{t("heading")}</h2>
 
       {resourceType === "TRACK" && (
         <div>
           <label className="block text-sm text-mb-muted mb-1">
-            Puntaje (1-10)
+            {t("ratingLabel")}
           </label>
           <input
             type="number"
@@ -98,7 +99,7 @@ export function OfflineReviewForm({
 
       {resourceType === "ALBUM" && album && (
         <div className="space-y-2">
-          <p className="text-sm text-mb-muted">Puntuá cada canción (1-10)</p>
+          <p className="text-sm text-mb-muted">{t("rateEachTrack")}</p>
           {album.tracks.map((t) => (
             <div key={t.deezerId} className="flex items-center justify-between gap-3">
               <span className="text-sm text-mb-text truncate">{t.title}</span>
@@ -118,7 +119,7 @@ export function OfflineReviewForm({
       )}
 
       <div>
-        <label className="block text-sm text-mb-muted mb-1">Descripción</label>
+        <label className="block text-sm text-mb-muted mb-1">{t("descriptionLabel")}</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -133,7 +134,7 @@ export function OfflineReviewForm({
         disabled={isPending || description.trim().length === 0}
         className="w-full h-11 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-sm disabled:opacity-50 cursor-pointer"
       >
-        Guardar (se sincroniza al reconectar)
+        {t("submit")}
       </button>
     </div>
   );

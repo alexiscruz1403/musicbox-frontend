@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   apiFollow,
@@ -24,6 +25,8 @@ interface UserSearchWidgetProps {
 }
 
 export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
+  const t = useTranslations("Feed.userSearch");
+  const tCommon = useTranslations("Common");
   const [query, setQuery] = useState("");
   const [committedQuery, setCommittedQuery] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -177,8 +180,8 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setDropdownOpen(true)}
             onKeyDown={handleKeyDown}
-            aria-label="Buscar usuarios"
-            placeholder="Buscá usuarios por nombre o @handle…"
+            aria-label={t("ariaLabel")}
+            placeholder={t("placeholder")}
             className="flex-1 min-w-0 h-12 bg-transparent border-none outline-none text-mb-text text-[15px] placeholder:text-mb-dim"
           />
           {query && (
@@ -189,7 +192,7 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
                 setCommittedQuery("");
                 setDropdownOpen(true);
               }}
-              aria-label="Limpiar búsqueda"
+              aria-label={tCommon("clearSearch")}
               className="w-7 h-7 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
@@ -229,7 +232,7 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
             </div>
           ) : results.length === 0 ? (
             <p className="text-mb-muted text-sm text-center py-2">
-              No encontramos usuarios para &ldquo;{committedQuery}&rdquo;.
+              {t("noResults", { query: committedQuery })}
             </p>
           ) : (
             <div className="flex flex-col gap-3.5">
@@ -278,7 +281,7 @@ export function UserSearchWidget({ accessToken }: UserSearchWidgetProps) {
                   disabled={isFetchingNextPage}
                   className="mt-1 h-9 text-sm font-medium text-mb-accent hover:underline disabled:opacity-60 disabled:no-underline cursor-pointer disabled:cursor-not-allowed"
                 >
-                  {isFetchingNextPage ? "Cargando…" : "Cargar más resultados"}
+                  {isFetchingNextPage ? t("loadingMore") : t("loadMore")}
                 </button>
               )}
             </div>

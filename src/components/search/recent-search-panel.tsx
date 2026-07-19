@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export interface RecentSearchRow {
   id: string;
@@ -19,7 +20,7 @@ interface RecentSearchPanelProps {
 }
 
 export function RecentSearchPanel({
-  title = "Búsquedas recientes",
+  title,
   items,
   isLoading,
   emptyLabel,
@@ -27,11 +28,14 @@ export function RecentSearchPanel({
   onDeleteOne,
   onDeleteAll,
 }: RecentSearchPanelProps) {
+  const t = useTranslations("Common");
+  const heading = title ?? t("recentSearches");
+
   return (
     <div>
       <div className="flex items-center justify-between px-2 pb-1.5 pt-1">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-mb-dim">
-          {title}
+          {heading}
         </span>
         {items.length > 0 && (
           <button
@@ -39,7 +43,7 @@ export function RecentSearchPanel({
             onClick={onDeleteAll}
             className="text-xs font-medium text-mb-accent cursor-pointer hover:underline"
           >
-            Borrar todo
+            {t("clearAllSearches")}
           </button>
         )}
       </div>
@@ -71,7 +75,7 @@ export function RecentSearchPanel({
             <button
               type="button"
               onClick={() => onDeleteOne(item.id)}
-              aria-label="Quitar de recientes"
+              aria-label={t("removeFromRecent")}
               className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-mb-dim opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-mb-ddp hover:text-mb-text transition-opacity cursor-pointer"
             >
               <X className="w-3 h-3" />

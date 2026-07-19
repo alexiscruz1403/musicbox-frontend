@@ -3,9 +3,10 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { ShieldAlert } from "lucide-react";
 import { getInitials, timeAgo } from "@/lib/review-format";
-import { getNotificationText, notificationHref } from "@/lib/notification-format";
+import { useNotificationText, notificationHref } from "@/lib/notification-format";
 import { apiMarkNotificationRead, apiRespondFollowRequest } from "@/lib/api";
 import { tokenStore } from "@/lib/token-store";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,8 @@ export function NotificationRow({
   onClose,
   followRequestId,
 }: NotificationRowProps) {
+  const t = useTranslations("Notifications");
+  const notificationText = useNotificationText(notification);
   const queryClient = useQueryClient();
   const [justRead, setJustRead] = useState(false);
   const [resolution, setResolution] = useState<"accepted" | "rejected" | null>(null);
@@ -72,7 +75,7 @@ export function NotificationRow({
         markRead();
         void queryClient.invalidateQueries({ queryKey: ["follow-requests"] });
       } catch {
-        setRespondError("No se pudo procesar la solicitud. Probá de nuevo.");
+        setRespondError(t("respondError"));
       }
     });
   }
@@ -116,7 +119,7 @@ export function NotificationRow({
             <span className="font-mono text-mb-accent">@{notification.actor.handle}</span>{" "}
           </>
         )}
-        {getNotificationText(notification)}
+        {notificationText}
       </span>
       <span className="block text-[11px] text-mb-dim mt-1">
         {timeAgo(notification.createdAt)}
@@ -130,7 +133,7 @@ export function NotificationRow({
   );
 
   const unreadDot = unread && (
-    <span aria-label="No leída" className="shrink-0 w-2 h-2 rounded-full bg-mb-primary mt-1.5" />
+    <span aria-label={t("unreadLabel")} className="shrink-0 w-2 h-2 rounded-full bg-mb-primary mt-1.5" />
   );
 
   // A <button> can't nest inside a <Link> (invalid HTML + event bubbling
@@ -159,14 +162,14 @@ export function NotificationRow({
                 onClick={() => handleRespond("ACCEPTED")}
                 className="min-h-9 px-3.5 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-xs transition-colors cursor-pointer"
               >
-                Aceptar
+                {t("accept")}
               </button>
               <button
                 type="button"
                 onClick={() => handleRespond("REJECTED")}
                 className="min-h-9 px-3.5 bg-transparent border border-mb-border rounded-lg text-mb-muted font-medium text-xs hover:border-mb-dim hover:text-mb-text transition-colors cursor-pointer"
               >
-                Rechazar
+                {t("reject")}
               </button>
             </span>
           )}
@@ -177,7 +180,7 @@ export function NotificationRow({
                 resolution === "accepted" ? "text-mb-success" : "text-mb-muted",
               )}
             >
-              {resolution === "accepted" ? "Solicitud aceptada" : "Solicitud rechazada"}
+              {resolution === "accepted" ? t("requestAccepted") : t("requestRejected")}
             </span>
           )}
           {respondError && (

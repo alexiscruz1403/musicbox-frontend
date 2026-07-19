@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { X, CheckCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiMarkAllNotificationsRead, apiNotifications, apiListFollowRequests } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -11,16 +12,16 @@ import { NotificationRow } from "./notification-row";
 
 type NotifTab = "all" | "unread";
 
-const TABS: { id: NotifTab; label: string }[] = [
-  { id: "all", label: "Todas" },
-  { id: "unread", label: "No leídas" },
-];
-
 interface NotificationsPanelProps {
   accessToken: string | null;
 }
 
 export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
+  const t = useTranslations("Notifications");
+  const TABS: { id: NotifTab; label: string }[] = [
+    { id: "all", label: t("tabAll") },
+    { id: "unread", label: t("tabUnread") },
+  ];
   const { isOpen, close } = useNotificationsPanelStore();
   const [tab, setTab] = useState<NotifTab>("all");
   const [markingAll, setMarkingAll] = useState(false);
@@ -113,7 +114,7 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
 
       <section
         role="dialog"
-        aria-label="Notificaciones"
+        aria-label={t("title")}
         className="absolute top-0 right-0 bottom-16 md:bottom-0 w-full md:w-[420px] bg-mb-card border-l border-mb-border flex flex-col shadow-[-12px_0_48px_rgba(0,0,0,0.5)]"
       >
         <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-mb-border">
@@ -121,13 +122,13 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
             <button
               type="button"
               onClick={close}
-              aria-label="Cerrar notificaciones"
+              aria-label={t("closeAriaLabel")}
               className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
             <h2 className="font-serif font-normal text-xl text-mb-text truncate">
-              Notificaciones
+              {t("title")}
             </h2>
           </div>
           <button
@@ -137,7 +138,7 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
             className="shrink-0 inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-mb-accent text-xs font-medium hover:bg-mb-dp transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <CheckCheck className="w-3.5 h-3.5" />
-            Marcar todas
+            {t("markAllRead")}
           </button>
         </div>
 
@@ -183,7 +184,7 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
                 <CheckCheck className="w-6 h-6 text-mb-success" />
               </div>
               <p className="text-[15px] text-mb-muted">
-                Estás al día. Sin notificaciones nuevas.
+                {t("emptyState")}
               </p>
             </div>
           ) : (
@@ -203,7 +204,7 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
                 {isFetchingNextPage && (
                   <div
                     className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
-                    aria-label="Cargando más notificaciones"
+                    aria-label={t("loadingMoreAriaLabel")}
                   />
                 )}
               </div>

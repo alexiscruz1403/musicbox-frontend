@@ -1,6 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
+import { useTranslations } from "next-intl";
 import { CommunityReviewCard } from "@/components/reviews/community-review-card";
 import type { CatalogReview } from "@/types/api";
 
@@ -25,6 +26,7 @@ export function CommunityReviewList({
   hasSession,
   hasMore = true,
 }: CommunityReviewListProps) {
+  const t = useTranslations("Reviews.card");
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -71,11 +73,11 @@ export function CommunityReviewList({
         {isFetchingNextPage ? (
           <div
             className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
-            aria-label="Cargando más reseñas"
+            aria-label={t("loadingMoreAriaLabel")}
           />
         ) : (
           !hasMore && (
-            <p className="text-mb-dim text-sm">Ya viste todas las reseñas por ahora.</p>
+            <p className="text-mb-dim text-sm">{t("allCaughtUp")}</p>
           )
         )}
       </div>

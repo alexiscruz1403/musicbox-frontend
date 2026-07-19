@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   apiCreateReview,
@@ -21,30 +22,33 @@ interface TrackReviewFormClientProps {
 
 const MAX_CHARS = 2000;
 
-function mapApiError(err: ApiError): string {
-  switch (err.code) {
-    case "IDEMPOTENCY_KEY_REQUIRED":
-      return "Ocurrió un error al enviar tu reseña. Recargá la página e intentá de nuevo.";
-    case "REVIEW_ALREADY_EXISTS":
-      return "Ya tenés una reseña activa de esta canción.";
-    case "INVALID_UPDATE_FOR_TYPE":
-      return "No se puede modificar ese campo para este tipo de reseña.";
-    case "NOT_REVIEW_OWNER":
-      return "No tenés permiso para modificar esta reseña.";
-    case "REVIEW_NOT_FOUND":
-      return "Esta reseña ya no existe.";
-    default:
-      return err.message || "Ocurrió un error. Intentá de nuevo.";
-  }
-}
-
 export function TrackReviewFormClient({
   track,
   accessToken,
   existingReview,
 }: TrackReviewFormClientProps) {
   const router = useRouter();
+  const t = useTranslations("Reviews.newTrack");
+  const tForm = useTranslations("Reviews.form");
+  const tCommon = useTranslations("Common");
   const mode = existingReview ? "edit" : "create";
+
+  function mapApiError(err: ApiError): string {
+    switch (err.code) {
+      case "IDEMPOTENCY_KEY_REQUIRED":
+        return tForm("errorIdempotency");
+      case "REVIEW_ALREADY_EXISTS":
+        return t("reviewedAlready");
+      case "INVALID_UPDATE_FOR_TYPE":
+        return tForm("errorInvalidUpdate");
+      case "NOT_REVIEW_OWNER":
+        return tForm("errorNotOwner");
+      case "REVIEW_NOT_FOUND":
+        return tForm("errorNotFound");
+      default:
+        return err.message || tCommon("genericError");
+    }
+  }
 
   const [score, setScore] = useState(
     existingReview ? Number(existingReview.rating) : 0,
@@ -99,7 +103,7 @@ export function TrackReviewFormClient({
       <button
         type="button"
         onClick={() => router.back()}
-        aria-label="Volver"
+        aria-label={tCommon("back")}
         className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
@@ -116,18 +120,18 @@ export function TrackReviewFormClient({
                 : { background: coverGradient(track.deezerId) }
             }
             role="img"
-            aria-label={`Cover de ${track.title}`}
+            aria-label={tCommon("coverAlt", { title: track.title })}
           />
           <div className="min-w-0 flex-1">
             <div className="font-serif text-xl text-mb-text truncate">{track.title}</div>
             <div className="text-sm text-mb-muted mt-0.5 truncate">
-              {track.artist.name} · canción
+              {track.artist.name} · {t("trackTypeLabel")}
             </div>
           </div>
         </div>
 
         <h1 className="font-serif font-normal text-[32px] leading-[1.2] text-mb-text mb-9">
-          {mode === "edit" ? "Editar tu reseña de " : "Tu reseña de "}
+          {mode === "edit" ? tForm("editHeadingPrefix") : tForm("newHeadingPrefix")}
           <span className="text-mb-accent">{track.title}</span>
         </h1>
         {saveError && (
@@ -142,14 +146,14 @@ export function TrackReviewFormClient({
         {/* Rating */}
         <div
           role="group"
-          aria-label="Puntuación: elegí de 0.25 a 10, en incrementos de 0.25"
+          aria-label={t("scoreGroupAriaLabel")}
           className="mb-9"
         >
           <label
             htmlFor="mbScoreSlider"
             className="block text-[13px] font-semibold text-mb-muted uppercase tracking-wider mb-4"
           >
-            Tu puntaje
+            {t("scoreLabel")}
           </label>
           <div className="flex flex-col md:flex-row items-center gap-3 md:gap-6">
             <div className="order-1 md:order-2 shrink-0 flex items-baseline gap-1 justify-center md:justify-end">
@@ -173,7 +177,7 @@ export function TrackReviewFormClient({
                   const v = Math.round(parseFloat(e.target.value) * 4) / 4;
                   setScore(v);
                 }}
-                aria-valuetext={score === 0 ? "Sin calificar" : `${score.toFixed(2)} de 10`}
+                aria-valuetext={score === 0 ? tForm("unrated") : tForm("ratingOutOfTen", { rating: score.toFixed(2) })}
                 className="w-full min-h-11 cursor-pointer"
                 style={{ accentColor: score === 0 ? "#5C5670" : ratingColor(score) }}
               />
@@ -195,7 +199,7 @@ export function TrackReviewFormClient({
             htmlFor="mbReview"
             className="block text-[13px] font-semibold text-mb-muted uppercase tracking-wider mb-4"
           >
-            Tu reseña <span className="normal-case font-normal text-mb-dim">(opcional)</span>
+            {t("reviewLabel")} <span className="normal-case font-normal text-mb-dim">{tForm("optional")}</span>
           </label>
           <div className="relative">
             <textarea
@@ -203,7 +207,7 @@ export function TrackReviewFormClient({
               value={body}
               onChange={(e) => setBody(e.target.value)}
               maxLength={MAX_CHARS}
-              placeholder="¿Qué te pareció? Contanos qué te hizo sentir esta canción, qué destacás o qué mejorarías…"
+              placeholder={t("reviewPlaceholder")}
               className="w-full min-h-[200px] p-[18px] pb-10 bg-mb-input border border-mb-border focus:border-mb-primary rounded-lg text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-none text-[15px] leading-relaxed"
             />
             <div
@@ -222,7 +226,7 @@ export function TrackReviewFormClient({
             onClick={() => router.back()}
             className="inline-flex items-center justify-center min-h-12 px-5.5 rounded-lg text-mb-muted font-medium text-[15px] hover:text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
           >
-            Cancelar
+            {tForm("cancel")}
           </button>
           <button
             type="button"
@@ -235,7 +239,7 @@ export function TrackReviewFormClient({
                 : "bg-mb-border text-mb-dim cursor-not-allowed",
             )}
           >
-            {isPending ? "Publicando…" : mode === "edit" ? "Guardar cambios" : "Publicar reseña"}
+            {isPending ? tForm("publishing") : mode === "edit" ? tForm("saveChanges") : tForm("publish")}
           </button>
         </div>
       </div>

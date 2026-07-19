@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Play } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiAlbumReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
@@ -56,6 +57,8 @@ interface AlbumClientProps {
 
 export function AlbumClient({ album, hasSession }: AlbumClientProps) {
   const router = useRouter();
+  const t = useTranslations("Album");
+  const tCommon = useTranslations("Common");
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -120,8 +123,8 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const reviewTabs: { id: ReviewSort; label: string }[] = [
-    { id: "recent", label: "Recientes" },
-    { id: "rating", label: "Mejor puntuadas" },
+    { id: "recent", label: t("sortRecent") },
+    { id: "rating", label: t("sortRating") },
   ];
 
   return (
@@ -130,7 +133,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
       <button
         type="button"
         onClick={() => router.back()}
-        aria-label="Volver"
+        aria-label={tCommon("back")}
         className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
@@ -154,13 +157,13 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                 : { background: coverGradient(album.deezerId) }
             }
             role="img"
-            aria-label={`Cover de ${album.title}`}
+            aria-label={tCommon("coverAlt", { title: album.title })}
           />
 
           {/* Info */}
           <div className="min-w-0 flex-1 pb-2">
             <span className="inline-block px-2.5 py-1 border border-mb-ddp rounded-full text-[11px] tracking-widest uppercase text-mb-accent font-semibold mb-3.5">
-              Álbum
+              {t("typeBadge")}
             </span>
             <h1 className="font-serif font-normal text-[32px] md:text-5xl leading-[1.05] text-mb-text mb-2.5">
               {album.title}
@@ -186,8 +189,8 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                 role="group"
                 aria-label={
                   album.userRating != null
-                    ? `Tu puntuación: ${album.userRating} de 10`
-                    : "Todavía no reseñaste este álbum"
+                    ? t("yourRatingAriaLabel", { rating: album.userRating })
+                    : t("notReviewedAriaLabel")
                 }
               >
                 <div className="flex items-baseline gap-2.5">
@@ -205,8 +208,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                   <span className="font-mono text-lg text-mb-dim">/10</span>
                 </div>
                 <p className="text-mb-muted text-sm mt-1.5">
-                  {album.reviewCount ?? 0} reseña
-                  {(album.reviewCount ?? 0) !== 1 ? "s" : ""}
+                  {t("reviewCount", { count: album.reviewCount ?? 0 })}
                 </p>
               </div>
               <button
@@ -220,7 +222,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                 }
                 className="h-12 px-7 bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)] cursor-pointer"
               >
-                Escribir reseña
+                {t("writeReviewButton")}
               </button>
             </div>
           </div>
@@ -233,7 +235,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
         {/* Tracklist */}
         <section>
           <h2 className="font-serif font-normal text-2xl text-mb-text mb-4">
-            Canciones
+            {t("tracklistHeading")}
           </h2>
           <div className="flex flex-col">
             {album.tracks.map((track, index) => {
@@ -275,8 +277,8 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                     onClick={() => togglePlay(track.deezerId, track.previewUrl)}
                     aria-label={
                       isPlaying
-                        ? `Pausar preview de ${track.title}`
-                        : `Reproducir preview de ${track.title}`
+                        ? t("pausePreviewAriaLabel", { title: track.title })
+                        : t("playPreviewAriaLabel", { title: track.title })
                     }
                     disabled={!track.previewUrl}
                     className="shrink-0 w-11 h-11 flex items-center justify-center rounded-full transition-colors hover:bg-mb-dp cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
@@ -297,7 +299,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
         {/* Reviews */}
         <section>
           <h2 className="font-serif font-normal text-2xl text-mb-text mb-4">
-            Qué dice la comunidad
+            {t("communityHeading")}
           </h2>
 
           {/* Sort tabs */}
@@ -325,7 +327,7 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
             isLoading={reviewsLoading}
             isFetchingNextPage={isFetchingNextPage}
             sentinelRef={sentinelRef}
-            emptyMessage="Todavía no hay reseñas de este álbum."
+            emptyMessage={t("noReviewsYet")}
             hasSession={hasSession}
           />
         </section>

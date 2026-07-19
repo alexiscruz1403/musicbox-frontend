@@ -4,26 +4,27 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { apiConfirmChangeEmail, type ApiError } from "@/lib/api";
 
 type Status = "loading" | "success" | "error";
 
-const ERROR_MESSAGES: Record<string, string> = {
-  INVALID_CHANGE_EMAIL_TOKEN:
-    "Este link para confirmar tu nuevo email expiró o no es válido.",
-  OAUTH_ACCOUNT_EMAIL_LOCKED:
-    "Tu cuenta usa Google para iniciar sesión, así que el email no se puede cambiar.",
-  EMAIL_TAKEN: "Ese email ya fue confirmado en otra cuenta mientras tanto.",
+const ERROR_MESSAGE_KEYS: Record<string, string> = {
+  INVALID_CHANGE_EMAIL_TOKEN: "errorInvalidToken",
+  OAUTH_ACCOUNT_EMAIL_LOCKED: "errorOauthLocked",
+  EMAIL_TAKEN: "errorEmailTaken",
 };
 
 export function ConfirmChangeEmailClient() {
+  const t = useTranslations("Auth.ConfirmChangeEmail");
+  const tCommon = useTranslations("Common");
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
   const token = searchParams.get("token");
 
   const linkMissing = !userId || !token;
   const [status, setStatus] = useState<Status>(linkMissing ? "error" : "loading");
-  const [errorMessage, setErrorMessage] = useState("Este link no es válido.");
+  const [errorMessage, setErrorMessage] = useState(t("linkInvalidDefault"));
 
   useEffect(() => {
     if (!userId || !token) return;
@@ -36,10 +37,11 @@ export function ConfirmChangeEmailClient() {
       } catch (err) {
         if (cancelled) return;
         const apiErr = err as ApiError;
+        const mappedKey = ERROR_MESSAGE_KEYS[apiErr.code];
         setErrorMessage(
-          ERROR_MESSAGES[apiErr.code] ||
+          (mappedKey ? t(mappedKey) : undefined) ||
             apiErr.message ||
-            "Ocurrió un error. Intentá de nuevo.",
+            tCommon("genericError"),
         );
         setStatus("error");
       }
@@ -48,6 +50,7 @@ export function ConfirmChangeEmailClient() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, token]);
 
   return (
@@ -63,8 +66,8 @@ export function ConfirmChangeEmailClient() {
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>
-          <h1 className="font-serif text-2xl text-mb-text">Confirmando el cambio de tu email…</h1>
-          <p role="status" className="text-sm text-mb-muted">Esto toma solo un segundo.</p>
+          <h1 className="font-serif text-2xl text-mb-text">{t("loadingHeading")}</h1>
+          <p role="status" className="text-sm text-mb-muted">{t("loadingSubtitle")}</p>
         </>
       )}
 
@@ -73,15 +76,15 @@ export function ConfirmChangeEmailClient() {
           <div className="w-14 h-14 mx-auto rounded-full bg-mb-success/10 border border-mb-success/40 flex items-center justify-center">
             <CheckCircle2 className="w-6 h-6 text-mb-success" />
           </div>
-          <h1 className="font-serif text-2xl text-mb-text">¡Email actualizado!</h1>
+          <h1 className="font-serif text-2xl text-mb-text">{t("successHeading")}</h1>
           <p role="status" className="text-sm text-mb-muted leading-relaxed">
-            Tu nuevo correo ya está confirmado. Ya podés usarlo para iniciar sesión.
+            {t("successMessage")}
           </p>
           <Link
             href="/login"
             className="inline-flex w-full min-h-11 items-center justify-center bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors"
           >
-            Iniciar sesión
+            {tCommon("signIn")}
           </Link>
         </>
       )}
@@ -91,7 +94,7 @@ export function ConfirmChangeEmailClient() {
           <div className="w-14 h-14 mx-auto rounded-full bg-mb-error/10 border border-mb-error/40 flex items-center justify-center">
             <XCircle className="w-6 h-6 text-mb-error" />
           </div>
-          <h1 className="font-serif text-2xl text-mb-text">No pudimos confirmar tu email</h1>
+          <h1 className="font-serif text-2xl text-mb-text">{t("errorHeading")}</h1>
           <p role="alert" className="text-sm text-mb-muted leading-relaxed">
             {errorMessage}
           </p>
@@ -99,7 +102,7 @@ export function ConfirmChangeEmailClient() {
             href="/login"
             className="inline-flex w-full min-h-11 items-center justify-center bg-transparent border border-mb-border rounded-xl text-mb-muted hover:text-mb-text hover:bg-mb-input font-medium transition-colors"
           >
-            Volver a iniciar sesión
+            {tCommon("backToLogin")}
           </Link>
         </>
       )}

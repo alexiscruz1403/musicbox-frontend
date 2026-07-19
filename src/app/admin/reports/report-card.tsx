@@ -1,23 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { timeAgo } from "@/lib/review-format";
 import type { AdminReportRow, ReportStatus } from "@/types/api";
-
-const TYPE_META: Record<
-  AdminReportRow["targetType"],
-  { label: string; className: string }
-> = {
-  REVIEW: { label: "Reseña", className: "text-mb-accent bg-mb-dp border-mb-ddp" },
-  COMMENT: { label: "Comentario", className: "text-mb-muted bg-mb-input border-mb-border" },
-  USER: { label: "Usuario", className: "text-mb-primary-h bg-mb-dp border-mb-ddp" },
-};
-
-const STATUS_META: Record<ReportStatus, { label: string; className: string }> = {
-  PENDING: { label: "Pendiente", className: "text-yellow-300 bg-yellow-300/10" },
-  REVIEWED: { label: "Aceptado", className: "text-mb-success bg-mb-success/10" },
-  DISMISSED: { label: "Descartado", className: "text-mb-dim bg-mb-border/40" },
-};
 
 interface ReportCardProps {
   report: AdminReportRow;
@@ -26,18 +12,19 @@ interface ReportCardProps {
 }
 
 function ReportedContentBox({ report }: { report: AdminReportRow }) {
+  const t = useTranslations("Admin.reports.card");
   const content = report.reportedContent;
 
   if (!content) {
     return (
-      <p className="text-sm text-mb-dim italic">Contenido no disponible.</p>
+      <p className="text-sm text-mb-dim italic">{t("contentUnavailable")}</p>
     );
   }
 
   if ("handle" in content) {
     return (
       <p className="text-sm text-mb-text">
-        Usuario <span className="font-mono text-mb-accent">@{content.handle}</span>
+        {t("userLabel")} <span className="font-mono text-mb-accent">@{content.handle}</span>
       </p>
     );
   }
@@ -53,7 +40,7 @@ function ReportedContentBox({ report }: { report: AdminReportRow }) {
       {content.reviewType === "ALBUM" && content.trackDescriptions.length > 0 && (
         <div className="mt-3 pt-3 border-t border-mb-border flex flex-col gap-2.5">
           <span className="block text-[11px] tracking-wide uppercase text-mb-dim font-semibold">
-            Reseñas de canciones del álbum
+            {t("albumTrackReviewsLabel")}
           </span>
           {content.trackDescriptions.map((t, i) => (
             <div key={i}>
@@ -72,8 +59,22 @@ function ReportedContentBox({ report }: { report: AdminReportRow }) {
 }
 
 export function ReportCard({ report, onDismiss, onAccept }: ReportCardProps) {
-  const typeMeta = TYPE_META[report.targetType];
-  const statusMeta = STATUS_META[report.status];
+  const t = useTranslations("Admin.reports.card");
+
+  const typeMetaMap: Record<AdminReportRow["targetType"], { label: string; className: string }> = {
+    REVIEW: { label: t("typeReview"), className: "text-mb-accent bg-mb-dp border-mb-ddp" },
+    COMMENT: { label: t("typeComment"), className: "text-mb-muted bg-mb-input border-mb-border" },
+    USER: { label: t("typeUser"), className: "text-mb-primary-h bg-mb-dp border-mb-ddp" },
+  };
+
+  const statusMetaMap: Record<ReportStatus, { label: string; className: string }> = {
+    PENDING: { label: t("statusPending"), className: "text-yellow-300 bg-yellow-300/10" },
+    REVIEWED: { label: t("statusReviewed"), className: "text-mb-success bg-mb-success/10" },
+    DISMISSED: { label: t("statusDismissed"), className: "text-mb-dim bg-mb-border/40" },
+  };
+
+  const typeMeta = typeMetaMap[report.targetType];
+  const statusMeta = statusMetaMap[report.status];
 
   return (
     <article className="bg-mb-card border border-mb-border rounded-xl p-5">
@@ -102,21 +103,21 @@ export function ReportCard({ report, onDismiss, onAccept }: ReportCardProps) {
 
       <div className="mb-3">
         <span className="block text-[11px] tracking-wide uppercase text-mb-dim font-semibold mb-1">
-          Detalle
+          {t("detailLabel")}
         </span>
         <p className="text-sm text-mb-text leading-relaxed">{report.reason}</p>
       </div>
 
       <div className="bg-mb-input border border-mb-border rounded-lg p-3.5 mb-3.5">
         <span className="block text-[11px] tracking-wide uppercase text-mb-dim font-semibold mb-1.5">
-          Contenido reportado
+          {t("reportedContentLabel")}
         </span>
         <ReportedContentBox report={report} />
       </div>
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <span className="text-xs text-mb-dim">
-          Reportado por <span className="font-mono text-mb-muted">@{report.reporter.handle}</span>{" "}
+          {t("reportedByPrefix")} <span className="font-mono text-mb-muted">@{report.reporter.handle}</span>{" "}
           · {timeAgo(report.createdAt)}
         </span>
         {report.status === "PENDING" && (
@@ -126,14 +127,14 @@ export function ReportCard({ report, onDismiss, onAccept }: ReportCardProps) {
               onClick={onDismiss}
               className="min-h-10 px-4 border border-mb-border rounded-lg text-mb-muted font-medium text-[13px] hover:border-mb-dim hover:text-mb-text transition-colors cursor-pointer"
             >
-              Descartar
+              {t("dismissButton")}
             </button>
             <button
               type="button"
               onClick={onAccept}
               className="min-h-10 px-4 border border-mb-error rounded-lg text-mb-error font-semibold text-[13px] hover:bg-mb-error/10 transition-colors cursor-pointer"
             >
-              Aceptar y actuar
+              {t("acceptButton")}
             </button>
           </div>
         )}

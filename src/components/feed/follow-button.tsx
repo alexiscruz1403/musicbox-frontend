@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { FollowStatus } from "@/lib/follow-status";
 
@@ -20,23 +21,25 @@ export function FollowButton({
   onClick,
   className,
 }: FollowButtonProps) {
+  const t = useTranslations("Common");
+
   const label =
     status === "following"
-      ? "Siguiendo"
+      ? t("following")
       : status === "pending"
-        ? "Solicitado"
+        ? t("pending")
         : isPrivate
-          ? "Solicitar"
-          : "Seguir";
+          ? t("requestFollow")
+          : t("follow");
 
   const ariaLabel =
     status === "following"
-      ? `Dejar de seguir a ${displayName}`
+      ? t("unfollowAriaLabel", { name: displayName })
       : status === "pending"
-        ? `Cancelar solicitud a ${displayName}`
+        ? t("cancelRequestAriaLabel", { name: displayName })
         : isPrivate
-          ? `Solicitar seguir a ${displayName}`
-          : `Seguir a ${displayName}`;
+          ? t("requestFollowAriaLabel", { name: displayName })
+          : t("followAriaLabel", { name: displayName });
 
   return (
     <button

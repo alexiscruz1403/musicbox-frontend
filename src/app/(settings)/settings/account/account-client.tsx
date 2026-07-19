@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   apiExportUserData,
@@ -27,6 +28,8 @@ export default function AccountClient({
   accessToken,
   initialIsPrivate,
 }: AccountClientProps) {
+  const t = useTranslations("Settings.Account");
+  const tCommon = useTranslations("Common");
   const [exportError, setExportError] = useState<string | null>(null);
   const [isExporting, startExportTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -50,7 +53,7 @@ export default function AccountClient({
       } catch (err) {
         setIsPrivate(previous);
         const apiErr = err as ApiError;
-        setPrivacyError(apiErr.message || "No se pudo actualizar la privacidad de tu cuenta.");
+        setPrivacyError(apiErr.message || t("privacyError"));
       }
     });
   }
@@ -63,7 +66,7 @@ export default function AccountClient({
         setPwSent(true);
       } catch (err) {
         const apiErr = err as ApiError;
-        setPwError(apiErr.message || "No se pudo enviar el email. Intentá de nuevo.");
+        setPwError(apiErr.message || t("sendEmailError"));
       }
     });
   }
@@ -84,7 +87,7 @@ export default function AccountClient({
         URL.revokeObjectURL(url);
       } catch (err) {
         const apiErr = err as ApiError;
-        setExportError(apiErr.message || "No se pudo exportar tus datos. Intentá de nuevo.");
+        setExportError(apiErr.message || t("exportError"));
       }
     });
   }
@@ -95,11 +98,11 @@ export default function AccountClient({
         <button
           onClick={() => router.back()}
           className="text-mb-muted hover:text-mb-text transition-colors cursor-pointer"
-          aria-label="Volver"
+          aria-label={tCommon("back")}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <span className="font-medium text-mb-text">Cuenta</span>
+        <span className="font-medium text-mb-text">{t("title")}</span>
       </header>
 
       <div className="max-w-xl mx-auto px-4 py-8 md:py-14">
@@ -109,21 +112,21 @@ export default function AccountClient({
             className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            Volver
+            {tCommon("back")}
           </button>
-          <h1 className="font-serif text-3xl text-mb-text mb-2">Cuenta</h1>
+          <h1 className="font-serif text-3xl text-mb-text mb-2">{t("title")}</h1>
         </div>
 
         {/* Email */}
         <section className="py-7 border-b border-mb-border">
-          <h2 className="text-sm font-semibold text-mb-text mb-3.5">Email</h2>
+          <h2 className="text-sm font-semibold text-mb-text mb-3.5">{t("emailTitle")}</h2>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <input
               type="email"
               value={email}
               readOnly
               disabled
-              aria-label="Email actual"
+              aria-label={t("emailCurrentLabel")}
               className="flex-1 min-w-0 py-4 px-3.5 sm:py-0 sm:h-12 bg-mb-input border border-mb-border rounded-lg text-mb-muted cursor-not-allowed outline-none"
             />
             <button
@@ -131,16 +134,16 @@ export default function AccountClient({
               onClick={() => setChangeEmailOpen(true)}
               className="shrink-0 min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors cursor-pointer"
             >
-              Cambiar email
+              {t("changeEmail")}
             </button>
           </div>
         </section>
 
         {/* Password */}
         <section className="py-7 border-b border-mb-border">
-          <h2 className="text-sm font-semibold text-mb-text mb-1.5">Contraseña</h2>
+          <h2 className="text-sm font-semibold text-mb-text mb-1.5">{t("passwordTitle")}</h2>
           <p className="text-[13px] text-mb-muted leading-relaxed mb-3.5">
-            Te enviamos un link para restablecer tu contraseña a tu email actual.
+            {t("passwordDescription")}
           </p>
           {pwError && (
             <p role="alert" className="text-mb-error text-xs mb-3">
@@ -149,7 +152,7 @@ export default function AccountClient({
           )}
           {pwSent ? (
             <p role="status" className="text-mb-success text-sm">
-              Te enviamos un email a {email} con instrucciones.
+              {t("passwordEmailSent", { email })}
             </p>
           ) : (
             <button
@@ -158,16 +161,16 @@ export default function AccountClient({
               disabled={isPwPending}
               className="min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
             >
-              {isPwPending ? "Enviando…" : "Cambiar contraseña"}
+              {isPwPending ? t("sending") : t("changePassword")}
             </button>
           )}
         </section>
 
         {/* Export */}
         <section className="py-7 border-b border-mb-border">
-          <h2 className="text-sm font-semibold text-mb-text mb-1.5">Exportar datos</h2>
+          <h2 className="text-sm font-semibold text-mb-text mb-1.5">{t("exportTitle")}</h2>
           <p className="text-[13px] text-mb-muted leading-relaxed mb-3.5">
-            Recibirás un archivo JSON con todas tus reseñas, comentarios y datos de perfil.
+            {t("exportDescription")}
           </p>
           {exportError && (
             <p role="alert" className="text-mb-error text-xs mb-3">
@@ -181,23 +184,22 @@ export default function AccountClient({
             className="inline-flex items-center gap-2 min-h-11 px-4 border border-mb-primary rounded-lg text-mb-accent font-medium text-sm hover:bg-mb-dp transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" />
-            {isExporting ? "Preparando…" : "Descargar mis datos"}
+            {isExporting ? t("preparing") : t("downloadData")}
           </button>
         </section>
 
         {/* Privacy */}
         <section className="py-7 border-b border-mb-border">
-          <h2 className="text-sm font-semibold text-mb-text mb-1.5">Privacidad de la cuenta</h2>
+          <h2 className="text-sm font-semibold text-mb-text mb-1.5">{t("privacyTitle")}</h2>
           <p className="text-[13px] text-mb-muted leading-relaxed mb-4">
-            Los perfiles públicos muestran tu historial de reseñas a cualquier usuario. Los
-            perfiles privados requieren aprobar cada solicitud de seguimiento.
+            {t("privacyDescription")}
           </p>
           {privacyError && (
             <p role="alert" className="text-mb-error text-xs mb-3">
               {privacyError}
             </p>
           )}
-          <div role="group" aria-label="Visibilidad del perfil" className="flex flex-col gap-2">
+          <div role="group" aria-label={t("visibilityLabel")} className="flex flex-col gap-2">
             <button
               type="button"
               onClick={() => handleSetPrivacy(false)}
@@ -218,9 +220,9 @@ export default function AccountClient({
                 {!isPrivate && <span className="w-2 h-2 rounded-full bg-mb-accent" />}
               </span>
               <span>
-                <span className="block text-sm font-semibold text-mb-text">Público</span>
+                <span className="block text-sm font-semibold text-mb-text">{t("publicLabel")}</span>
                 <span className="block text-xs text-mb-muted mt-0.5">
-                  Cualquiera puede ver tus reseñas y seguirte sin aprobación.
+                  {t("publicDescription")}
                 </span>
               </span>
             </button>
@@ -244,10 +246,9 @@ export default function AccountClient({
                 {isPrivate && <span className="w-2 h-2 rounded-full bg-mb-accent" />}
               </span>
               <span>
-                <span className="block text-sm font-semibold text-mb-text">Privado</span>
+                <span className="block text-sm font-semibold text-mb-text">{t("privateLabel")}</span>
                 <span className="block text-xs text-mb-muted mt-0.5">
-                  Solo tus seguidores aprobados ven tu historial. Cada nuevo seguidor requiere tu
-                  aprobación.
+                  {t("privateDescription")}
                 </span>
               </span>
             </button>
@@ -256,16 +257,16 @@ export default function AccountClient({
 
         {/* Danger zone */}
         <section className="mt-8 p-6 border border-mb-error/40 rounded-xl bg-mb-error/[0.03]">
-          <h2 className="text-sm font-semibold text-mb-error mb-1.5">Zona peligrosa</h2>
+          <h2 className="text-sm font-semibold text-mb-error mb-1.5">{t("dangerZoneTitle")}</h2>
           <p className="text-[13px] text-mb-muted leading-relaxed mb-4">
-            Eliminar tu cuenta es permanente. No vas a poder recuperar tus datos.
+            {t("deleteWarning")}
           </p>
           <button
             type="button"
             onClick={() => setDeleteOpen(true)}
             className="min-h-11 px-4.5 border border-mb-error rounded-lg text-mb-error font-semibold text-sm hover:bg-mb-error/10 transition-colors cursor-pointer"
           >
-            Eliminar mi cuenta
+            {t("deleteAccountButton")}
           </button>
         </section>
       </div>

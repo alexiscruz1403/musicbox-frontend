@@ -14,27 +14,29 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { PendingSyncBadge } from "@/components/offline/pending-sync-badge";
 import { usePendingMutationCount } from "@/hooks/use-pending-mutation-count";
 import type { Session } from "next-auth";
 
-const NAV_ITEMS = [
-  { href: "/feed", icon: Home, label: "Feed" },
-  { href: "/trending", icon: TrendingUp, label: "Trending" },
-  { href: "/search", icon: Search, label: "Buscar" },
-  { href: "/recommendations", icon: Sparkles, label: "Recomendaciones" },
-];
-
 interface SidebarProps {
   session: Session | null;
 }
 
 export function Sidebar({ session }: SidebarProps) {
+  const t = useTranslations("Nav");
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const pendingSyncCount = usePendingMutationCount();
+
+  const NAV_ITEMS = [
+    { href: "/feed", icon: Home, label: t("feed") },
+    { href: "/trending", icon: TrendingUp, label: t("trending") },
+    { href: "/search", icon: Search, label: t("search") },
+    { href: "/recommendations", icon: Sparkles, label: t("recommendations") },
+  ];
 
   function isActive(href: string) {
     return pathname === href || pathname.startsWith(href + "/");
@@ -99,7 +101,7 @@ export function Sidebar({ session }: SidebarProps) {
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-mb-primary rounded-r-full" />
             )}
             <User className="w-4 h-4 shrink-0" />
-            {!collapsed && <span className="truncate">Mi perfil</span>}
+            {!collapsed && <span className="truncate">{t("profile")}</span>}
           </Link>
         )}
 
@@ -117,7 +119,7 @@ export function Sidebar({ session }: SidebarProps) {
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-mb-primary rounded-r-full" />
             )}
             <Settings className="w-4 h-4 shrink-0" />
-            {!collapsed && <span className="truncate">Configuración</span>}
+            {!collapsed && <span className="truncate">{t("settings")}</span>}
           </Link>
         )}
 
@@ -135,7 +137,7 @@ export function Sidebar({ session }: SidebarProps) {
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-mb-primary rounded-r-full" />
             )}
             <Shield className="w-4 h-4 shrink-0" />
-            {!collapsed && <span className="truncate">Reportes</span>}
+            {!collapsed && <span className="truncate">{t("reports")}</span>}
           </Link>
         )}
       </nav>
@@ -150,7 +152,7 @@ export function Sidebar({ session }: SidebarProps) {
       <button
         onClick={() => setCollapsed((c) => !c)}
         className="mx-3 mb-2 p-2 rounded-lg text-mb-dim hover:text-mb-muted hover:bg-mb-input transition-colors flex items-center justify-center cursor-pointer"
-        aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+        aria-label={collapsed ? t("expandMenu") : t("collapseMenu")}
       >
         {collapsed ? (
           <ChevronRight className="w-4 h-4" />

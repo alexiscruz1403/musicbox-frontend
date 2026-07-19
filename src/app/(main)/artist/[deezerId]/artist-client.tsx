@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   apiCatalogArtistDetail,
@@ -42,6 +43,8 @@ function ArtistTopItemCard({
   avgRating: number | null;
   reviewCount: number;
 }) {
+  const t = useTranslations("Artist");
+  const tCommon = useTranslations("Common");
   return (
     <Link href={href} className="group block">
       <div className="relative rounded-xl overflow-hidden aspect-square">
@@ -49,7 +52,7 @@ function ArtistTopItemCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverUrl}
-            alt={`Cover de ${title}`}
+            alt={tCommon("coverAlt", { title })}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -57,7 +60,7 @@ function ArtistTopItemCard({
             className="w-full h-full"
             style={{ background: coverGradient(deezerId) }}
             role="img"
-            aria-label={`Cover de ${title}`}
+            aria-label={tCommon("coverAlt", { title })}
           />
         )}
       </div>
@@ -75,11 +78,11 @@ function ArtistTopItemCard({
                 {avgRating.toFixed(2)}
               </span>
               <span className="text-mb-dim text-[11px]">
-                · {reviewCount} reseña{reviewCount !== 1 ? "s" : ""}
+                {t("reviewCount", { count: reviewCount })}
               </span>
             </>
           ) : (
-            <span className="text-mb-dim text-xs">Sin reseñas</span>
+            <span className="text-mb-dim text-xs">{t("noReviews")}</span>
           )}
         </span>
       </div>
@@ -88,6 +91,7 @@ function ArtistTopItemCard({
 }
 
 function CatalogAlbumTile({ album }: { album: CatalogAlbum }) {
+  const tCommon = useTranslations("Common");
   return (
     <Link href={`/album/${album.deezerId}`} className="group block">
       <div className="relative rounded-xl overflow-hidden aspect-square">
@@ -95,7 +99,7 @@ function CatalogAlbumTile({ album }: { album: CatalogAlbum }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={album.coverUrl}
-            alt={`Cover de ${album.title}`}
+            alt={tCommon("coverAlt", { title: album.title })}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -103,7 +107,7 @@ function CatalogAlbumTile({ album }: { album: CatalogAlbum }) {
             className="w-full h-full"
             style={{ background: coverGradient(album.deezerId) }}
             role="img"
-            aria-label={`Cover de ${album.title}`}
+            aria-label={tCommon("coverAlt", { title: album.title })}
           />
         )}
       </div>
@@ -115,6 +119,7 @@ function CatalogAlbumTile({ album }: { album: CatalogAlbum }) {
 }
 
 function CatalogTrackRow({ track }: { track: ArtistTrackItem }) {
+  const tCommon = useTranslations("Common");
   return (
     <Link
       href={`/track/${track.deezerId}`}
@@ -128,7 +133,7 @@ function CatalogTrackRow({ track }: { track: ArtistTrackItem }) {
             : { background: coverGradient(track.deezerId) }
         }
         role="img"
-        aria-label={`Cover de ${track.title}`}
+        aria-label={tCommon("coverAlt", { title: track.title })}
       />
       <span className="min-w-0 flex-1">
         <span className="block text-sm text-mb-text truncate">{track.title}</span>
@@ -169,6 +174,8 @@ interface ArtistClientProps {
 
 export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientProps) {
   const router = useRouter();
+  const t = useTranslations("Artist");
+  const tCommon = useTranslations("Common");
   const [topMode, setTopMode] = useState<TopMode>("albums");
   const [catalogTab, setCatalogTab] = useState<CatalogTab>("albums");
 
@@ -229,8 +236,8 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
   });
 
   const topToggle: { id: TopMode; label: string }[] = [
-    { id: "albums", label: "Álbumes" },
-    { id: "tracks", label: "Canciones" },
+    { id: "albums", label: t("albumsLabel") },
+    { id: "tracks", label: t("tracksLabel") },
   ];
 
   return (
@@ -239,7 +246,7 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
       <button
         type="button"
         onClick={() => router.back()}
-        aria-label="Volver"
+        aria-label={tCommon("back")}
         className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
@@ -272,15 +279,17 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
           )}
           <div className="min-w-0 flex-1 pb-1.5">
             <span className="inline-block px-2.5 py-1 border border-mb-ddp rounded-full text-[11px] tracking-widest uppercase text-mb-accent font-semibold mb-3.5">
-              Artista
+              {t("typeBadge")}
             </span>
             <h1 className="font-serif font-normal text-[32px] md:text-5xl leading-[1.05] text-mb-text mb-2.5">
               {artist.name}
             </h1>
             <p className="text-sm text-mb-muted">
-              {albumsTotal} álbum{albumsTotal !== 1 ? "es" : ""} · {tracksTotal} canci
-              {tracksTotal !== 1 ? "ones" : "ón"} · {artist.reviewCount ?? 0} reseña
-              {(artist.reviewCount ?? 0) !== 1 ? "s" : ""} totales
+              {t("statsSummary", {
+                albumsCount: albumsTotal,
+                tracksCount: tracksTotal,
+                reviewsCount: artist.reviewCount ?? 0,
+              })}
             </p>
           </div>
         </div>
@@ -291,7 +300,7 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
         <section className="mb-12">
           <div className="flex items-baseline justify-between mb-4.5 flex-wrap gap-3">
             <h2 className="font-serif font-normal text-[22px] text-mb-text">
-              Top 5 más reseñados
+              {t("topReviewedHeading")}
             </h2>
             <div className="flex gap-1">
               {topToggle.map((t) => (
@@ -315,7 +324,7 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
             <TopGridSkeleton />
           ) : topReviewed.length === 0 ? (
             <p className="text-mb-muted text-sm py-6">
-              Todavía no hay reseñas para este artista.
+              {t("noReviewsForTop")}
             </p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
@@ -337,13 +346,13 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
         {/* ── Top 5 trending ── */}
         <section className="mb-14">
           <h2 className="font-serif font-normal text-[22px] text-mb-text mb-4.5">
-            Top 5 trending
+            {t("trendingHeading")}
           </h2>
           {detailLoading ? (
             <TopGridSkeleton />
           ) : topTrending.length === 0 ? (
             <p className="text-mb-muted text-sm py-6">
-              Todavía no hay tendencias para este artista.
+              {t("noTrendingForArtist")}
             </p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
@@ -375,7 +384,7 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
                   : "border-b-2 border-transparent text-mb-muted font-medium hover:text-mb-text",
               )}
             >
-              Álbumes <span className="font-mono text-[11px] text-mb-dim">({albumsTotal})</span>
+              {t("albumsLabel")} <span className="font-mono text-[11px] text-mb-dim">({albumsTotal})</span>
             </button>
             <button
               type="button"
@@ -387,7 +396,7 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
                   : "border-b-2 border-transparent text-mb-muted font-medium hover:text-mb-text",
               )}
             >
-              Canciones <span className="font-mono text-[11px] text-mb-dim">({tracksTotal})</span>
+              {t("tracksLabel")} <span className="font-mono text-[11px] text-mb-dim">({tracksTotal})</span>
             </button>
           </div>
 
@@ -395,7 +404,7 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
             <>
               {albums.length === 0 && !fetchingMoreAlbums ? (
                 <p className="text-mb-muted text-sm py-6">
-                  Este artista todavía no tiene álbumes en el catálogo.
+                  {t("noAlbumsInCatalog")}
                 </p>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
@@ -408,12 +417,12 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
                 {fetchingMoreAlbums ? (
                   <div
                     className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
-                    aria-label="Cargando más álbumes"
+                    aria-label={t("loadingMoreAlbumsAriaLabel")}
                   />
                 ) : (
                   !hasMoreAlbums &&
                   albums.length > 0 && (
-                    <p className="text-mb-dim text-sm">Ya viste todo el catálogo.</p>
+                    <p className="text-mb-dim text-sm">{t("catalogEnd")}</p>
                   )
                 )}
               </div>
@@ -422,12 +431,12 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
             <>
               {tracks.length === 0 && !fetchingMoreTracks ? (
                 <p className="text-mb-muted text-sm py-6">
-                  Este artista todavía no tiene canciones en el catálogo.
+                  {t("noTracksInCatalog")}
                 </p>
               ) : (
                 <div className="flex flex-col">
-                  {tracks.map((t) => (
-                    <CatalogTrackRow key={t.deezerId} track={t} />
+                  {tracks.map((tr) => (
+                    <CatalogTrackRow key={tr.deezerId} track={tr} />
                   ))}
                 </div>
               )}
@@ -435,12 +444,12 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
                 {fetchingMoreTracks ? (
                   <div
                     className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
-                    aria-label="Cargando más canciones"
+                    aria-label={t("loadingMoreTracksAriaLabel")}
                   />
                 ) : (
                   !hasMoreTracks &&
                   tracks.length > 0 && (
-                    <p className="text-mb-dim text-sm">Ya viste todo el catálogo.</p>
+                    <p className="text-mb-dim text-sm">{t("catalogEnd")}</p>
                   )
                 )}
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiChangeEmail, ApiError } from "@/lib/api";
 
@@ -12,15 +13,15 @@ interface ChangeEmailModalProps {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const ERROR_MESSAGES: Record<string, string> = {
-  SAME_EMAIL: "Ese ya es tu email actual.",
-  EMAIL_TAKEN: "Ese email ya está en uso por otra cuenta.",
-  USER_NOT_FOUND: "No pudimos encontrar tu cuenta. Iniciá sesión de nuevo e intentá otra vez.",
-  OAUTH_ACCOUNT_EMAIL_LOCKED:
-    "Tu cuenta usa Google para iniciar sesión, así que el email no se puede cambiar acá.",
+const ERROR_MESSAGE_KEYS: Record<string, string> = {
+  SAME_EMAIL: "errorSameEmail",
+  EMAIL_TAKEN: "errorEmailTaken",
+  USER_NOT_FOUND: "errorUserNotFound",
+  OAUTH_ACCOUNT_EMAIL_LOCKED: "errorOauthLocked",
 };
 
 export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModalProps) {
+  const t = useTranslations("Settings.Account");
   const [newEmail, setNewEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -47,7 +48,7 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
   function handleSubmit() {
     if (isPending) return;
     if (!EMAIL_REGEX.test(newEmail.trim())) {
-      setError("Ese email no parece válido.");
+      setError(t("emailInvalid"));
       return;
     }
     setError(null);
@@ -57,8 +58,9 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
         setSent(true);
       } catch (err) {
         const apiErr = err as ApiError;
+        const mappedKey = ERROR_MESSAGE_KEYS[apiErr.code];
         setError(
-          ERROR_MESSAGES[apiErr.code] || apiErr.message || "No se pudo cambiar el email. Intentá de nuevo.",
+          (mappedKey ? t(mappedKey) : undefined) || apiErr.message || t("changeEmailError"),
         );
       }
     });
@@ -73,21 +75,20 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Cambiar email"
+        aria-label={t("changeEmail")}
         className="w-full sm:max-w-[400px] bg-mb-card border border-mb-border rounded-t-2xl sm:rounded-xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
       >
         {!sent ? (
           <>
             <h3 className="font-serif text-xl text-mb-text mb-3 leading-tight">
-              Cambiar tu email
+              {t("changeEmailHeading")}
             </h3>
             <p className="text-sm text-mb-muted leading-relaxed mb-5">
-              Te vamos a enviar un link de confirmación a tu nuevo correo. Tu email actual
-              no cambia hasta que confirmes.
+              {t("changeEmailDescription")}
             </p>
 
             <label htmlFor="mbNewEmail" className="block text-sm font-medium text-mb-muted mb-2">
-              Nuevo email
+              {t("newEmailLabel")}
             </label>
             <input
               id="mbNewEmail"
@@ -97,7 +98,7 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
                 setNewEmail(e.target.value);
                 setError(null);
               }}
-              placeholder="nuevo@email.com"
+              placeholder={t("newEmailPlaceholder")}
               autoComplete="email"
               disabled={isPending}
               className={cn(
@@ -121,7 +122,7 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
                 onClick={handleClose}
                 className="min-h-11 px-5 rounded-lg text-mb-muted font-medium text-sm hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
               >
-                Cancelar
+                {t("cancel")}
               </button>
               <button
                 type="button"
@@ -134,7 +135,7 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
                     : "bg-mb-primary hover:bg-mb-primary-h text-white cursor-pointer",
                 )}
               >
-                {isPending ? "Enviando…" : "Enviar link de confirmación"}
+                {isPending ? t("sending") : t("sendConfirmationLink")}
               </button>
             </div>
           </>
@@ -146,16 +147,16 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
               </svg>
             </div>
             <p className="text-sm text-mb-text leading-relaxed mb-6">
-              Te enviamos un link de confirmación a{" "}
-              <span className="font-mono text-mb-accent">{newEmail.trim()}</span>. Abrilo
-              para completar el cambio.
+              {t("confirmationSentPrefix")}{" "}
+              <span className="font-mono text-mb-accent">{newEmail.trim()}</span>
+              {t("confirmationSentSuffix")}
             </p>
             <button
               type="button"
               onClick={handleClose}
               className="w-full min-h-11 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-sm transition-colors cursor-pointer"
             >
-              Cerrar
+              {t("close")}
             </button>
           </div>
         )}

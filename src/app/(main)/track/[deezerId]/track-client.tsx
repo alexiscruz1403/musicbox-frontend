@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Play, Pause, Disc3 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiTrackReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
@@ -33,6 +34,7 @@ interface AudioPreviewProps {
 }
 
 function AudioPreviewPlayer({ previewUrl }: AudioPreviewProps) {
+  const t = useTranslations("Track");
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackError, setPlaybackError] = useState(false);
@@ -81,7 +83,7 @@ function AudioPreviewPlayer({ previewUrl }: AudioPreviewProps) {
         <button
           type="button"
           onClick={toggle}
-          aria-label={playing ? "Pausar preview" : "Reproducir preview de 30 segundos"}
+          aria-label={playing ? t("pausePreview") : t("playPreview30s")}
           className="w-12 h-12 flex items-center justify-center bg-mb-primary hover:bg-mb-primary-h rounded-full text-white transition-colors shrink-0 cursor-pointer"
         >
           {playing ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
@@ -136,23 +138,23 @@ function AudioPreviewPlayer({ previewUrl }: AudioPreviewProps) {
       <button
         type="button"
         onClick={toggle}
-        aria-label={playing ? "Pausar preview" : "Escuchar preview · 30s"}
+        aria-label={playing ? t("pausePreview") : t("listenPreview30s")}
         className="md:hidden w-full h-12 flex items-center justify-center gap-2.5 bg-transparent border border-mb-primary rounded-lg text-mb-accent font-semibold text-[15px] hover:bg-mb-dp transition-colors mt-5 cursor-pointer"
       >
         {playing ? (
           <>
-            <Pause className="w-4 h-4" /> Pausar preview
+            <Pause className="w-4 h-4" /> {t("pausePreview")}
           </>
         ) : (
           <>
-            <Play className="w-4 h-4" /> Escuchar preview · 30s
+            <Play className="w-4 h-4" /> {t("listenPreview30s")}
           </>
         )}
       </button>
 
       {playbackError && (
         <p role="alert" className="text-mb-error text-xs mt-2">
-          No se pudo reproducir la previsualización.
+          {t("playbackError")}
         </p>
       )}
     </>
@@ -168,6 +170,8 @@ interface TrackClientProps {
 
 export function TrackClient({ track, hasSession }: TrackClientProps) {
   const router = useRouter();
+  const t = useTranslations("Track");
+  const tCommon = useTranslations("Common");
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -200,8 +204,8 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const reviewTabs: { id: ReviewSort; label: string }[] = [
-    { id: "recent", label: "Recientes" },
-    { id: "rating", label: "Mejor puntuadas" },
+    { id: "recent", label: t("sortRecent") },
+    { id: "rating", label: t("sortRating") },
   ];
 
   const newReviewHref = hasSession
@@ -214,7 +218,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
       <button
         type="button"
         onClick={() => router.back()}
-        aria-label="Volver"
+        aria-label={tCommon("back")}
         className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
@@ -235,7 +239,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={track.coverUrl}
-                alt={`Cover de ${track.title}`}
+                alt={tCommon("coverAlt", { title: track.title })}
                 className="w-40 h-40 md:w-60 md:h-60 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.8)] object-cover"
               />
             ) : (
@@ -243,7 +247,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
                 className="w-40 h-40 md:w-60 md:h-60 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.8)]"
                 style={{ background: coverGradient(track.deezerId) }}
                 role="img"
-                aria-label={`Cover de ${track.title}`}
+                aria-label={tCommon("coverAlt", { title: track.title })}
               />
             )}
             {track.albumDeezerId && (
@@ -253,7 +257,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
               >
                 <Disc3 className="w-3 h-3" />
                 <span className="whitespace-nowrap">
-                  del álbum{" "}
+                  {t("fromAlbumPrefix")}{" "}
                   <span className="text-mb-text font-medium">
                     {track.albumTitle ?? "…"}
                   </span>
@@ -265,7 +269,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
           {/* Info */}
           <div className="min-w-0 flex-1 pb-2">
             <span className="inline-block px-2.5 py-1 border border-mb-ddp rounded-full text-[11px] tracking-widest uppercase text-mb-accent font-semibold mb-3.5">
-              Canción
+              {t("typeBadge")}
             </span>
             <h1 className="font-serif font-normal text-[32px] md:text-5xl leading-[1.05] text-mb-text mb-2.5">
               {track.title}
@@ -301,8 +305,8 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
                 role="group"
                 aria-label={
                   track.userRating != null
-                    ? `Tu puntuación: ${track.userRating} de 10`
-                    : "Todavía no reseñaste esta canción"
+                    ? t("yourRatingAriaLabel", { rating: track.userRating })
+                    : t("notReviewedAriaLabel")
                 }
               >
                 <div className="flex items-baseline gap-2.5">
@@ -320,8 +324,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
                   <span className="font-mono text-lg text-mb-dim">/10</span>
                 </div>
                 <p className="text-mb-muted text-sm mt-1.5">
-                  {track.reviewCount ?? 0} reseña
-                  {(track.reviewCount ?? 0) !== 1 ? "s" : ""}
+                  {t("reviewCount", { count: track.reviewCount ?? 0 })}
                 </p>
               </div>
               <button
@@ -329,7 +332,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
                 onClick={() => router.push(newReviewHref)}
                 className="hidden md:block h-12 px-7 bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)] cursor-pointer"
               >
-                Escribir reseña
+                {t("writeReviewButton")}
               </button>
             </div>
 
@@ -339,7 +342,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
               onClick={() => router.push(newReviewHref)}
               className="md:hidden w-full h-12 border-none bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg mt-3 transition-colors cursor-pointer"
             >
-              Escribir reseña
+              {t("writeReviewButton")}
             </button>
           </div>
         </div>
@@ -349,7 +352,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
       <div className="max-w-[760px] mx-auto px-6 md:px-[clamp(24px,5vw,48px)] py-12 pb-24">
         <section>
           <h2 className="font-serif font-normal text-2xl text-mb-text mb-4">
-            Qué dice la comunidad
+            {t("communityHeading")}
           </h2>
 
           {/* Sort tabs */}
@@ -377,7 +380,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
             isLoading={reviewsLoading}
             isFetchingNextPage={isFetchingNextPage}
             sentinelRef={sentinelRef}
-            emptyMessage="Todavía no hay reseñas de esta canción."
+            emptyMessage={t("noReviewsYet")}
             clampDescription={false}
             hasSession={hasSession}
           />

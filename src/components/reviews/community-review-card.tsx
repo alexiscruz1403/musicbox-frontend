@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { ratingColor, timeAgo, getInitials, coverGradient } from "@/lib/review-format";
 import { sendReaction } from "@/lib/reactions";
@@ -23,6 +24,8 @@ export function CommunityReviewCard({
 }: CommunityReviewCardProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations("Reviews.card");
+  const tCommon = useTranslations("Common");
   const [reaction, setReaction] = useState<ReactionType | null>(review.userReaction);
   const [likes, setLikes] = useState(review.likesCount);
   const [dislikes, setDislikes] = useState(review.dislikesCount);
@@ -78,7 +81,7 @@ export function CommunityReviewCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={review.user.avatarUrl}
-              alt={`Avatar de ${review.user.displayName}`}
+              alt={t("avatarAlt", { name: review.user.displayName })}
               className="w-9 h-9 rounded-full object-cover shrink-0"
             />
           ) : (
@@ -126,7 +129,7 @@ export function CommunityReviewCard({
                 : { background: coverGradient(review.id) }
             }
             role="img"
-            aria-label={`Cover de ${review.externalTitle ?? ""}`}
+            aria-label={tCommon("coverAlt", { title: review.externalTitle ?? "" })}
           />
           <div className="min-w-0 flex-1">
             <div className="font-serif text-[15px] text-mb-text truncate">
@@ -154,7 +157,7 @@ export function CommunityReviewCard({
         <button
           type="button"
           onClick={() => handleReact("LIKE")}
-          aria-label="Me gusta"
+          aria-label={t("likeAriaLabel")}
           aria-pressed={reaction === "LIKE"}
           className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input cursor-pointer"
           style={{ color: reaction === "LIKE" ? "#8B56E8" : "#9B95B0" }}
@@ -170,7 +173,7 @@ export function CommunityReviewCard({
         <button
           type="button"
           onClick={() => handleReact("DISLIKE")}
-          aria-label="No me gusta"
+          aria-label={t("dislikeAriaLabel")}
           aria-pressed={reaction === "DISLIKE"}
           className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input cursor-pointer"
           style={{ color: reaction === "DISLIKE" ? "#8B56E8" : "#9B95B0" }}
@@ -185,7 +188,7 @@ export function CommunityReviewCard({
         </button>
         <Link
           href={`/reviews/${review.id}`}
-          aria-label="Comentarios"
+          aria-label={t("commentsAriaLabel")}
           className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors"
         >
           <MessageCircle width={17} height={17} strokeWidth={1.75} />

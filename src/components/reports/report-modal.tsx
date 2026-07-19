@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiCreateReport, generateIdempotencyKey, ApiError } from "@/lib/api";
 import type { ReportTargetType } from "@/types/api";
@@ -27,6 +28,7 @@ export function ReportModal({
   previewTitle,
   previewSubtitle,
 }: ReportModalProps) {
+  const t = useTranslations("Report");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -65,11 +67,11 @@ export function ReportModal({
       } catch (err) {
         const apiErr = err as ApiError;
         if (apiErr.statusCode === 429) {
-          setError("Ya reportaste demasiado, probá más tarde.");
+          setError(t("rateLimitError"));
         } else if (apiErr.code === "REPORT_TARGET_NOT_FOUND") {
-          setError("Este contenido ya no existe.");
+          setError(t("targetNotFoundError"));
         } else {
-          setError(apiErr.message || "No se pudo enviar el reporte.");
+          setError(apiErr.message || t("genericError"));
         }
       }
     });
@@ -84,27 +86,27 @@ export function ReportModal({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Reportar contenido"
+        aria-label={t("title")}
         className="w-full sm:max-w-[460px] max-h-[90vh] overflow-y-auto bg-mb-card border border-mb-border rounded-t-2xl sm:rounded-xl p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
       >
         <div className="flex items-center justify-between mb-1.5">
-          <h3 className="font-serif text-xl text-mb-text">Reportar contenido</h3>
+          <h3 className="font-serif text-xl text-mb-text">{t("title")}</h3>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t("closeAriaLabel")}
             className="w-9 h-9 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
         <p className="text-xs text-mb-muted mb-4.5">
-          Tu reporte es anónimo para el usuario reportado.
+          {t("anonymousNote")}
         </p>
 
         <div className="bg-mb-input border border-mb-border rounded-lg p-3.5 mb-5">
           <span className="block text-[11px] tracking-wide uppercase text-mb-dim font-semibold mb-1.5">
-            Estás reportando
+            {t("reportingLabel")}
           </span>
           <p className="text-sm text-mb-text leading-relaxed">{previewTitle}</p>
           {previewSubtitle && (
@@ -115,7 +117,7 @@ export function ReportModal({
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
             <label htmlFor="reportReason" className="text-sm font-semibold text-mb-muted">
-              Detalles
+              {t("detailsLabel")}
             </label>
             <span
               className={cn(
@@ -123,7 +125,7 @@ export function ReportModal({
                 reason.length > REASON_MAX * 0.9 ? "text-mb-error" : "text-mb-dim",
               )}
             >
-              {reason.length} / {REASON_MAX}
+              {t("charCount", { count: reason.length, max: REASON_MAX })}
             </span>
           </div>
           <textarea
@@ -132,7 +134,7 @@ export function ReportModal({
             onChange={(e) => setReason(e.target.value)}
             maxLength={REASON_MAX}
             rows={4}
-            placeholder="Contanos qué está mal con este contenido…"
+            placeholder={t("placeholder")}
             className="w-full min-h-[90px] p-3 bg-mb-input border border-mb-border focus:border-mb-primary rounded-lg text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-y text-sm leading-relaxed"
           />
         </div>
@@ -151,7 +153,7 @@ export function ReportModal({
             role="status"
             className="mb-4 bg-mb-success/10 border border-mb-success rounded-lg px-4 py-3 text-mb-success text-sm"
           >
-            Reporte enviado ✓
+            {t("successMessage")}
           </div>
         )}
 
@@ -161,7 +163,7 @@ export function ReportModal({
             onClick={onClose}
             className="min-h-11 px-5 rounded-lg text-mb-muted font-medium text-sm hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
           >
-            Cancelar
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -174,7 +176,7 @@ export function ReportModal({
                 : "bg-mb-primary hover:bg-mb-primary-h text-white cursor-pointer",
             )}
           >
-            {isPending ? "Enviando…" : success ? "Reporte enviado ✓" : "Enviar reporte"}
+            {isPending ? t("sending") : success ? t("successMessage") : t("submit")}
           </button>
         </div>
       </div>

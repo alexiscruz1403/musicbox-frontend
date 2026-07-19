@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 interface LegalPageShellProps {
   title: string;
@@ -7,7 +8,9 @@ interface LegalPageShellProps {
   children: React.ReactNode;
 }
 
-export function LegalPageShell({ title, lastUpdated, children }: LegalPageShellProps) {
+export async function LegalPageShell({ title, lastUpdated, children }: LegalPageShellProps) {
+  const t = await getTranslations("Legal.shell");
+
   return (
     <div className="min-h-screen bg-mb-bg py-10 px-4 md:py-14">
       <div className="max-w-[840px] mx-auto">
@@ -16,7 +19,7 @@ export function LegalPageShell({ title, lastUpdated, children }: LegalPageShellP
           className="inline-flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors text-sm mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver
+          {t("back")}
         </Link>
 
         <div className="bg-white rounded-sm shadow-[0_2px_14px_rgba(20,20,19,0.35)] px-6 py-9 md:px-[0.85in] md:py-[0.85in]">

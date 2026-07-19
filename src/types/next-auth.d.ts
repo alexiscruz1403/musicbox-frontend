@@ -13,6 +13,7 @@ declare module "next-auth" {
       avatarUrl?: string;
       status: string;
       role: string;
+      language: string;
     } & DefaultSession["user"];
   }
 
@@ -23,6 +24,7 @@ declare module "next-auth" {
     avatarUrl?: string | null;
     status: string;
     role: string;
+    language: string;
     accessToken: string;
     refreshToken: string;
   }
@@ -36,6 +38,7 @@ declare module "next-auth/jwt" {
     avatarUrl: string | null;
     status: string;
     role: string;
+    language: string;
     accessToken: string;
     refreshToken: string;
     error?: string;

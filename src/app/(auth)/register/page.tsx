@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Eye, EyeOff, Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiRegister, apiCheckHandle, generateIdempotencyKey, type ApiError } from "@/lib/api";
 import { getPasswordStrength, STRENGTH_COLORS } from "@/lib/password-strength";
@@ -14,6 +15,8 @@ type HandleStatus = "idle" | "short" | "invalid" | "checking" | "available" | "t
 const HANDLE_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
 export default function RegisterPage() {
+  const t = useTranslations("Auth.Register");
+  const tCommon = useTranslations("Common");
   const [displayName, setDisplayName] = useState("");
   const [handle, setHandle] = useState("");
   const [email, setEmail] = useState("");
@@ -74,17 +77,17 @@ export default function RegisterPage() {
     setGlobalError(null);
 
     if (!terms) {
-      setGlobalError("Debés aceptar los términos y condiciones.");
+      setGlobalError(t("mustAcceptTerms"));
       return;
     }
     if (handleStatus === "taken") {
-      setFieldErrors((p) => ({ ...p, handle: "Este handle ya está en uso." }));
+      setFieldErrors((p) => ({ ...p, handle: t("handleTaken") }));
       return;
     }
     if (handleStatus === "invalid" || handleStatus === "short") {
       setFieldErrors((p) => ({
         ...p,
-        handle: "Handle inválido. Usá letras, números o _. Mínimo 3 caracteres.",
+        handle: t("handleInvalidMessage"),
       }));
       return;
     }
@@ -116,16 +119,16 @@ export default function RegisterPage() {
         if (apiErr.code === "HANDLE_TAKEN") {
           setFieldErrors((p) => ({
             ...p,
-            handle: "Este handle ya está en uso.",
+            handle: t("handleTaken"),
           }));
           setHandleStatus("taken");
         } else if (apiErr.code === "EMAIL_TAKEN") {
           setFieldErrors((p) => ({
             ...p,
-            email: "Este email ya está registrado.",
+            email: t("emailTaken"),
           }));
         } else {
-          setGlobalError(apiErr.message ?? "Ocurrió un error. Intentá de nuevo.");
+          setGlobalError(apiErr.message ?? tCommon("genericError"));
         }
       }
     });
@@ -143,9 +146,9 @@ export default function RegisterPage() {
       </div>
 
       <div className="text-center space-y-1">
-        <h2 className="font-serif text-xl text-mb-text">Crea tu cuenta</h2>
+        <h2 className="font-serif text-xl text-mb-text">{t("heading")}</h2>
         <p className="text-mb-muted text-sm">
-          Compartí tu amor por la música.
+          {t("subtitle")}
         </p>
       </div>
 
@@ -165,7 +168,7 @@ export default function RegisterPage() {
             htmlFor="displayName"
             className="block text-sm text-mb-muted font-medium"
           >
-            ¿Cómo te llamamos?
+            {t("displayNameLabel")}
           </label>
           <input
             id="displayName"
@@ -175,7 +178,7 @@ export default function RegisterPage() {
             autoComplete="name"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Tu nombre"
+            placeholder={t("displayNamePlaceholder")}
             className="w-full h-11 bg-mb-input border border-mb-border focus:border-mb-primary rounded-xl px-4 text-mb-text placeholder:text-mb-dim outline-none transition-colors"
           />
         </div>
@@ -186,7 +189,7 @@ export default function RegisterPage() {
             htmlFor="handle"
             className="block text-sm text-mb-muted font-medium"
           >
-            Tu handle
+            {t("handleLabel")}
           </label>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-mb-dim font-mono text-sm select-none">
@@ -200,7 +203,7 @@ export default function RegisterPage() {
               autoComplete="username"
               value={handle}
               onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-              placeholder="tu_handle"
+              placeholder={t("handlePlaceholder")}
               className={cn(
                 "w-full h-11 bg-mb-input border rounded-xl pl-8 pr-10 font-mono text-sm text-mb-text placeholder:text-mb-dim outline-none transition-colors",
                 fieldErrors.handle || handleStatus === "taken" || handleStatus === "invalid"
@@ -244,14 +247,14 @@ export default function RegisterPage() {
           {fieldErrors.handle ? (
             <p className="text-xs text-mb-error">{fieldErrors.handle}</p>
           ) : handleStatus === "taken" ? (
-            <p className="text-xs text-mb-error">Este handle ya está en uso.</p>
+            <p className="text-xs text-mb-error">{t("handleTaken")}</p>
           ) : handleStatus === "available" ? (
-            <p className="text-xs text-mb-success">¡Handle disponible!</p>
+            <p className="text-xs text-mb-success">{t("handleAvailable")}</p>
           ) : handleStatus === "short" ? (
-            <p className="text-xs text-mb-dim">Mínimo 3 caracteres.</p>
+            <p className="text-xs text-mb-dim">{t("minThreeChars")}</p>
           ) : handleStatus === "invalid" ? (
             <p className="text-xs text-mb-error">
-              Solo letras, números y guion bajo.
+              {t("handleInvalidShort")}
             </p>
           ) : null}
         </div>
@@ -262,7 +265,7 @@ export default function RegisterPage() {
             htmlFor="email"
             className="block text-sm text-mb-muted font-medium"
           >
-            Correo electrónico
+            {tCommon("email")}
           </label>
           <input
             id="email"
@@ -271,7 +274,7 @@ export default function RegisterPage() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@email.com"
+            placeholder={tCommon("emailPlaceholder")}
             className={cn(
               "w-full h-11 bg-mb-input border rounded-xl px-4 text-mb-text placeholder:text-mb-dim outline-none transition-colors",
               fieldErrors.email
@@ -290,7 +293,7 @@ export default function RegisterPage() {
             htmlFor={passwordId}
             className="block text-sm text-mb-muted font-medium"
           >
-            Contraseña
+            {tCommon("password")}
           </label>
           <div className="relative">
             <input
@@ -301,14 +304,14 @@ export default function RegisterPage() {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 8 caracteres"
+              placeholder={t("minEightCharsPlaceholder")}
               className="w-full h-11 bg-mb-input border border-mb-border focus:border-mb-primary rounded-xl px-4 pr-11 text-mb-text placeholder:text-mb-dim outline-none transition-colors"
             />
             <button
               type="button"
               onClick={() => setShowPw((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors cursor-pointer"
-              aria-label={showPw ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-label={showPw ? tCommon("hidePassword") : tCommon("showPassword")}
             >
               {showPw ? (
                 <EyeOff className="w-4 h-4" />
@@ -363,23 +366,23 @@ export default function RegisterPage() {
             )}
           </button>
           <span className="text-sm text-mb-muted leading-snug">
-            Acepto los{" "}
+            {t("termsAcceptPrefix")}{" "}
             <a
               href="/terms"
               target="_blank"
               rel="noopener noreferrer"
               className="text-mb-accent hover:text-mb-primary-h transition-colors"
             >
-              términos de servicio
+              {t("termsOfService")}
             </a>{" "}
-            y la{" "}
+            {t("termsAcceptMiddle")}{" "}
             <a
               href="/privacy"
               target="_blank"
               rel="noopener noreferrer"
               className="text-mb-accent hover:text-mb-primary-h transition-colors"
             >
-              política de privacidad
+              {t("privacyPolicy")}
             </a>
           </span>
         </div>
@@ -411,10 +414,10 @@ export default function RegisterPage() {
                   d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                 />
               </svg>
-              Creando cuenta…
+              {t("creatingAccount")}
             </>
           ) : (
-            "Crear cuenta"
+            t("submit")
           )}
         </button>
       </form>
@@ -422,7 +425,7 @@ export default function RegisterPage() {
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-mb-border" />
         <span className="text-mb-dim text-xs whitespace-nowrap">
-          o continúa con Google
+          {t("orContinueWithGoogle")}
         </span>
         <div className="flex-1 h-px bg-mb-border" />
       </div>
@@ -451,16 +454,16 @@ export default function RegisterPage() {
             fill="#EA4335"
           />
         </svg>
-        Continuar con Google
+        {tCommon("continueWithGoogle")}
       </button>
 
       <p className="text-center text-sm text-mb-muted">
-        ¿Ya tenés cuenta?{" "}
+        {t("haveAccount")}{" "}
         <Link
           href="/login"
           className="text-mb-accent hover:text-mb-primary-h transition-colors font-medium"
         >
-          Iniciá sesión
+          {t("loginLink")}
         </Link>
       </p>
     </div>

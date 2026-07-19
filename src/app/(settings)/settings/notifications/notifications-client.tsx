@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiUpdateNotificationPrefs, generateIdempotencyKey, ApiError } from "@/lib/api";
 import {
@@ -58,6 +59,8 @@ export default function NotificationsClient({
   initialPrefs,
   accessToken,
 }: NotificationsClientProps) {
+  const t = useTranslations("Settings.Notifications");
+  const tCommon = useTranslations("Common");
   // The backend returns exactly one of these two fields, never both — which
   // one depends on the account's current isPrivate setting.
   const isPrivateAccount = initialPrefs.followRequestsEnabled !== undefined;
@@ -98,15 +101,13 @@ export default function NotificationsClient({
         } else {
           const granted = await requestPushPermissionAndSubscribe(accessToken);
           if (!granted) {
-            setPushError(
-              "No se concedió el permiso de notificaciones del navegador.",
-            );
+            setPushError(t("pushPermissionDenied"));
             return;
           }
           setPushEnabled(true);
         }
       } catch {
-        setPushError("No se pudo actualizar las notificaciones push.");
+        setPushError(t("pushUpdateError"));
       }
     });
   }
@@ -143,28 +144,28 @@ export default function NotificationsClient({
         setSavedOk(true);
       } catch (err) {
         const apiErr = err as ApiError;
-        setSaveError(apiErr.message || "No se pudieron guardar las preferencias.");
+        setSaveError(apiErr.message || t("saveError"));
       }
     });
   }
 
   const rows: { key: string; label: string; on: boolean; onToggle: () => void }[] = [
-    { key: "likes", label: "Me gusta en mis reseñas", on: likes, onToggle: () => toggle(setLikes) },
+    { key: "likes", label: t("likesLabel"), on: likes, onToggle: () => toggle(setLikes) },
     {
       key: "dislikes",
-      label: "No me gusta en mis reseñas",
+      label: t("dislikesLabel"),
       on: dislikes,
       onToggle: () => toggle(setDislikes),
     },
     {
       key: "comments",
-      label: "Comentarios en mis reseñas",
+      label: t("commentsLabel"),
       on: comments,
       onToggle: () => toggle(setComments),
     },
     {
       key: "follow",
-      label: isPrivateAccount ? "Solicitudes de seguimiento" : "Nuevos seguidores",
+      label: isPrivateAccount ? t("followRequestsLabel") : t("newFollowersLabel"),
       on: followToggle,
       onToggle: () => toggle(setFollowToggle),
     },
@@ -176,11 +177,11 @@ export default function NotificationsClient({
         <button
           onClick={() => router.back()}
           className="text-mb-muted hover:text-mb-text transition-colors cursor-pointer"
-          aria-label="Volver"
+          aria-label={tCommon("back")}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <span className="font-medium text-mb-text">Notificaciones</span>
+        <span className="font-medium text-mb-text">{t("title")}</span>
       </header>
 
       <div className="max-w-xl mx-auto px-4 py-8 md:py-14">
@@ -190,10 +191,10 @@ export default function NotificationsClient({
             className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            Volver
+            {tCommon("back")}
           </button>
-          <h1 className="font-serif text-3xl text-mb-text mb-1.5">Notificaciones</h1>
-          <p className="text-sm text-mb-muted mb-8">Elegí qué querés que te avisemos.</p>
+          <h1 className="font-serif text-3xl text-mb-text mb-1.5">{t("title")}</h1>
+          <p className="text-sm text-mb-muted mb-8">{t("subtitle")}</p>
         </div>
 
         {saveError && (
@@ -209,7 +210,7 @@ export default function NotificationsClient({
             role="status"
             className="mb-6 bg-mb-success/10 border border-mb-success rounded-lg px-4 py-3 text-mb-success text-sm"
           >
-            ¡Preferencias guardadas!
+            {t("preferencesSaved")}
           </div>
         )}
 
@@ -229,12 +230,12 @@ export default function NotificationsClient({
         >
           <span className="min-w-0">
             <span className="block text-base font-semibold text-mb-text">
-              Recibir notificaciones
+              {t("receiveNotifications")}
             </span>
             <span className="block text-[13px] text-mb-muted mt-0.5">
               {master
-                ? "Estás recibiendo notificaciones."
-                : "Todas las notificaciones están pausadas."}
+                ? t("receivingOn")
+                : t("receivingOff")}
             </span>
           </span>
           <span
@@ -278,12 +279,10 @@ export default function NotificationsClient({
             <div className="h-px w-full bg-mb-border my-7" />
             <div>
               <h2 className="text-sm font-semibold text-mb-text mb-1">
-                Notificaciones push en este dispositivo
+                {t("pushTitle")}
               </h2>
               <p className="text-[13px] text-mb-muted mb-3">
-                Recibí notificaciones aunque no tengas Vinlyst abierto. Usa
-                los mismos toggles de arriba para decidir qué tipos de aviso
-                llegan.
+                {t("pushDescription")}
               </p>
               {pushError && (
                 <p role="alert" className="text-xs text-mb-error mb-2">
@@ -291,7 +290,7 @@ export default function NotificationsClient({
                 </p>
               )}
               <ToggleRow
-                label="Activar push en este navegador"
+                label={t("enablePushBrowser")}
                 on={pushEnabled}
                 disabled={pushPending}
                 onToggle={togglePush}
@@ -308,7 +307,7 @@ export default function NotificationsClient({
             disabled={isPending}
             className="min-h-12 px-6.5 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-[15px] transition-colors disabled:opacity-70 cursor-pointer disabled:cursor-not-allowed"
           >
-            {isPending ? "Guardando…" : "Guardar preferencias"}
+            {isPending ? tCommon("saving") : t("savePreferences")}
           </button>
         </div>
       </div>
@@ -321,7 +320,7 @@ export default function NotificationsClient({
           disabled={isPending}
           className="w-full min-h-12 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white font-semibold text-[15px] transition-colors disabled:opacity-70 cursor-pointer disabled:cursor-not-allowed"
         >
-          {isPending ? "Guardando…" : "Guardar preferencias"}
+          {isPending ? tCommon("saving") : t("savePreferences")}
         </button>
       </div>
     </div>

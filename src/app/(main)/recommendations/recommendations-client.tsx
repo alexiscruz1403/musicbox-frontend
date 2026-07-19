@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { apiGetMe, apiGetRecommendations } from "@/lib/api";
 import { coverGradient } from "@/lib/review-format";
 import type { RecommendationItem } from "@/types/api";
@@ -11,6 +12,7 @@ interface RecommendationsClientProps {
 }
 
 function RecommendationCard({ item }: { item: RecommendationItem }) {
+  const tCommon = useTranslations("Common");
   return (
     <Link
       href={`/album/${item.deezerId}`}
@@ -18,7 +20,7 @@ function RecommendationCard({ item }: { item: RecommendationItem }) {
     >
       <span
         role="img"
-        aria-label={`Cover de ${item.title}`}
+        aria-label={tCommon("coverAlt", { title: item.title })}
         className="block aspect-square"
         style={
           item.coverUrl
@@ -58,9 +60,10 @@ function RecommendationsSkeleton() {
 }
 
 function EmptyRecommendations({ reviewCount }: { reviewCount: number }) {
+  const t = useTranslations("Recommendations");
   const count = Math.max(0, Math.min(3, reviewCount));
   const hint =
-    count === 0 ? "Empezá ahora" : count === 1 ? "Faltan 2 más" : count === 2 ? "Solo falta 1 más" : "";
+    count === 0 ? t("hintStart") : count === 1 ? t("hintTwoMore") : count === 2 ? t("hintOneMore") : "";
 
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-6 min-h-[60vh]">
@@ -87,21 +90,20 @@ function EmptyRecommendations({ reviewCount }: { reviewCount: number }) {
         </svg>
       </div>
       <h1 className="font-serif font-normal text-[28px] leading-tight text-mb-text mb-3">
-        Aún no tenemos suficiente info
+        {t("emptyHeading")}
       </h1>
       <p className="text-[15px] leading-relaxed text-mb-muted max-w-[420px] mb-8">
-        Escribí al menos 3 reseñas para que podamos entender tu gusto musical y sugerirte qué
-        escuchar.
+        {t("emptyBody")}
       </p>
 
       <div className="w-[340px] max-w-full mb-2.5">
         <div className="flex justify-between items-baseline mb-2">
-          <span className="text-[13px] text-mb-muted font-medium">{count} / 3 reseñas</span>
+          <span className="text-[13px] text-mb-muted font-medium">{t("progressLabel", { count })}</span>
           <span className="text-[13px] text-mb-accent">{hint}</span>
         </div>
         <div
           role="progressbar"
-          aria-label={`${count} de 3 reseñas`}
+          aria-label={t("progressAriaLabel", { count })}
           aria-valuenow={count}
           aria-valuemin={0}
           aria-valuemax={3}
@@ -118,13 +120,14 @@ function EmptyRecommendations({ reviewCount }: { reviewCount: number }) {
         href="/search"
         className="mt-6 min-h-12 flex items-center px-6 rounded-lg bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)]"
       >
-        Buscar qué reseñar →
+        {t("searchCta")}
       </Link>
     </div>
   );
 }
 
 export function RecommendationsClient({ accessToken }: RecommendationsClientProps) {
+  const t = useTranslations("Recommendations");
   const recsQuery = useQuery({
     queryKey: ["recommendations"],
     queryFn: () => apiGetRecommendations(accessToken),
@@ -153,9 +156,9 @@ export function RecommendationsClient({ accessToken }: RecommendationsClientProp
           <>
             <header className="mb-8">
               <h1 className="font-serif font-normal text-[32px] leading-tight text-mb-text mb-2">
-                Para vos
+                {t("heading")}
               </h1>
-              <p className="text-sm text-mb-muted">Basado en tus reseñas recientes.</p>
+              <p className="text-sm text-mb-muted">{t("subheading")}</p>
             </header>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">

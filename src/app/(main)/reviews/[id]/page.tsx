@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { apiGetReview, ApiError } from "@/lib/api";
 import { ReviewDetailClient } from "./review-detail-client";
@@ -9,16 +10,17 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
+  const t = await getTranslations("Reviews.detail");
   try {
     const { id } = await params;
     const { data } = await apiGetReview(id);
-    const title = data.externalTitle ?? "reseña";
-    const byline = data.user.handle ? ` por @${data.user.handle}` : "";
+    const title = data.externalTitle ?? t("titleFallbackWord");
+    const byline = data.user.handle ? t("bylineSuffix", { handle: data.user.handle }) : "";
     return {
-      title: `Reseña de ${title}${byline} | Vinlyst`,
+      title: t("pageTitle", { title, byline }),
     };
   } catch {
-    return { title: "Reseña | Vinlyst" };
+    return { title: t("pageTitleFallback") };
   }
 }
 

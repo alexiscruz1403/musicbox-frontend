@@ -3,17 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiTrendingAlbums, apiTrendingTracks } from "@/lib/api";
 import { ratingColor, coverGradient, rankDeltaMeta } from "@/lib/review-format";
 import type { TrendingAlbum, TrendingTrack } from "@/types/api";
 
 type TrendingTab = "albums" | "tracks";
-
-const TABS: { id: TrendingTab; label: string }[] = [
-  { id: "albums", label: "Álbumes" },
-  { id: "tracks", label: "Canciones" },
-];
 
 interface TrendingItem {
   deezerId: string;
@@ -54,6 +50,8 @@ function RankDelta({ rankChange }: { rankChange: number | null }) {
 }
 
 function TopRow({ item, rank }: { item: TrendingItem; rank: number }) {
+  const t = useTranslations("Trending");
+  const tCommon = useTranslations("Common");
   const rating = item.avgRating;
   return (
     <Link
@@ -74,7 +72,7 @@ function TopRow({ item, rank }: { item: TrendingItem; rank: number }) {
             : { background: coverGradient(item.deezerId) }
         }
         role="img"
-        aria-label={`Cover de ${item.title}`}
+        aria-label={tCommon("coverAlt", { title: item.title })}
       />
       <span className="min-w-0 flex-1">
         <span className="block font-serif text-lg text-mb-text leading-tight truncate">
@@ -94,7 +92,7 @@ function TopRow({ item, rank }: { item: TrendingItem; rank: number }) {
           )}
           {rating != null && <span className="text-mb-border">·</span>}
           <span className="text-xs text-mb-dim">
-            {item.reviewCount} reseñas esta semana
+            {t("reviewsThisWeek", { count: item.reviewCount })}
           </span>
         </span>
         <RankDelta rankChange={item.rankChange} />
@@ -151,17 +149,24 @@ function TrendingSkeleton() {
 }
 
 function EmptyTrending() {
+  const t = useTranslations("Trending");
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-6">
       <p className="text-mb-muted text-sm">
-        Todavía no hay suficientes reseñas para calcular el trending.
+        {t("empty")}
       </p>
     </div>
   );
 }
 
 export function TrendingClient() {
+  const t = useTranslations("Trending");
   const [tab, setTab] = useState<TrendingTab>("albums");
+
+  const TABS: { id: TrendingTab; label: string }[] = [
+    { id: "albums", label: t("tabAlbums") },
+    { id: "tracks", label: t("tabTracks") },
+  ];
 
   const albumsQuery = useQuery({
     queryKey: ["trending", "albums"],
@@ -189,25 +194,25 @@ export function TrendingClient() {
       <div className="max-w-[1000px] mx-auto px-6 md:px-[clamp(20px,3vw,48px)] py-9">
         <header className="mb-7">
           <h1 className="font-serif font-normal text-[32px] leading-tight text-mb-text">
-            Trending ahora
+            {t("heading")}
           </h1>
         </header>
 
         {/* Tabs */}
         <div className="flex gap-1 border-b border-mb-border mb-8">
-          {TABS.map((t) => (
+          {TABS.map((tb) => (
             <button
-              key={t.id}
+              key={tb.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(tb.id)}
               className={cn(
                 "h-11 px-4 bg-transparent border-none text-sm cursor-pointer whitespace-nowrap transition-colors -mb-px",
-                tab === t.id
+                tab === tb.id
                   ? "border-b-2 border-mb-primary text-mb-text font-semibold"
                   : "border-b-2 border-transparent text-mb-muted font-medium hover:text-mb-text",
               )}
             >
-              {t.label}
+              {tb.label}
             </button>
           ))}
         </div>

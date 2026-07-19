@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { UserCheck, UserPlus, Clock, Pencil, Flag, Settings, Lock, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiFollow, apiUnfollow, apiUserReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
@@ -15,13 +16,6 @@ import type { PublicProfileResponse, UserReviewHistoryItem } from "@/types/api";
 
 type Tab = "todo" | "albums" | "songs";
 type ReviewSort = "recent" | "oldest" | "best" | "worst";
-
-const SORT_OPTIONS: { id: ReviewSort; label: string }[] = [
-  { id: "recent", label: "Más reciente" },
-  { id: "oldest", label: "Más antigua" },
-  { id: "best", label: "Mejor puntuada" },
-  { id: "worst", label: "Peor puntuada" },
-];
 
 interface ProfileClientProps {
   profile: PublicProfileResponse;
@@ -67,6 +61,14 @@ export default function ProfileClient({
   currentUserHandle,
   accessToken,
 }: ProfileClientProps) {
+  const t = useTranslations("PublicProfile");
+  const tCommon = useTranslations("Common");
+  const SORT_OPTIONS: { id: ReviewSort; label: string }[] = [
+    { id: "recent", label: t("sortRecent") },
+    { id: "oldest", label: t("sortOldest") },
+    { id: "best", label: t("sortBest") },
+    { id: "worst", label: t("sortWorst") },
+  ];
   const [isFollowing, setIsFollowing] = useState(
     profile.isFollowing ?? false,
   );
@@ -156,7 +158,7 @@ export default function ProfileClient({
           {isFetchingNextPage && (
             <div
               className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
-              aria-label="Cargando más reseñas"
+              aria-label={t("loadingMoreReviewsAriaLabel")}
             />
           )}
         </div>
@@ -215,7 +217,7 @@ export default function ProfileClient({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={user.coverUrl}
-            alt={`Portada de ${user.displayName}`}
+            alt={t("coverAlt", { name: user.displayName })}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -239,7 +241,7 @@ export default function ProfileClient({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={user.avatarUrl}
-                alt={`Avatar de ${user.displayName}`}
+                alt={t("avatarAlt", { name: user.displayName })}
                 className="w-20 h-20 rounded-full border-4 border-mb-bg object-cover"
               />
             ) : (
@@ -255,8 +257,8 @@ export default function ProfileClient({
               <button
                 type="button"
                 onClick={() => setReportOpen(true)}
-                aria-label="Reportar usuario"
-                title="Reportar usuario"
+                aria-label={t("reportUserAriaLabel")}
+                title={t("reportUserAriaLabel")}
                 className="flex items-center justify-center w-9 h-9 bg-mb-input border border-mb-border rounded-lg text-mb-muted hover:border-mb-error hover:text-mb-error transition-colors cursor-pointer"
               >
                 <Flag className="w-3.5 h-3.5" />
@@ -269,12 +271,12 @@ export default function ProfileClient({
                   className="flex items-center gap-2 px-4 h-9 bg-mb-input border border-mb-border rounded-lg text-sm font-medium text-mb-text hover:border-mb-primary/50 transition-colors"
                 >
                   <Pencil className="w-3.5 h-3.5" />
-                  Editar perfil
+                  {t("editProfileLink")}
                 </Link>
                 <Link
                   href="/settings"
-                  aria-label="Configuración"
-                  title="Configuración"
+                  aria-label={t("settingsAriaLabel")}
+                  title={t("settingsAriaLabel")}
                   className="md:hidden flex items-center justify-center w-9 h-9 bg-mb-input border border-mb-border rounded-lg text-mb-muted hover:border-mb-primary/50 hover:text-mb-text transition-colors"
                 >
                   <Settings className="w-3.5 h-3.5" />
@@ -294,22 +296,22 @@ export default function ProfileClient({
                 {isFollowing ? (
                   <>
                     <UserCheck className="w-3.5 h-3.5" />
-                    Siguiendo
+                    {tCommon("following")}
                   </>
                 ) : requestSent ? (
                   <>
                     <Clock className="w-3.5 h-3.5" />
-                    Solicitud enviada
+                    {t("requestSentLabel")}
                   </>
                 ) : user.isPrivate ? (
                   <>
                     <UserPlus className="w-3.5 h-3.5" />
-                    Solicitar seguir
+                    {t("requestFollowLabel")}
                   </>
                 ) : (
                   <>
                     <UserPlus className="w-3.5 h-3.5" />
-                    Seguir
+                    {tCommon("follow")}
                   </>
                 )}
               </button>
@@ -319,7 +321,7 @@ export default function ProfileClient({
                 className="flex items-center gap-2 px-4 h-9 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-sm font-semibold text-white transition-colors"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                Seguir
+                {tCommon("follow")}
               </Link>
             )}
           </div>
@@ -340,17 +342,17 @@ export default function ProfileClient({
 
         {/* Stats */}
         <div className="flex items-center gap-6 mb-6">
-          <StatItem value={stats.reviewCount} label="reseñas" />
+          <StatItem value={stats.reviewCount} label={t("statsReviews")} />
           <div className="w-px h-8 bg-mb-border" />
           <StatItem
             value={followerCount}
-            label="seguidores"
+            label={t("statsFollowers")}
             onClick={!locked ? () => setFollowListKind("followers") : undefined}
           />
           <div className="w-px h-8 bg-mb-border" />
           <StatItem
             value={stats.followingCount}
-            label="siguiendo"
+            label={t("statsFollowing")}
             onClick={!locked ? () => setFollowListKind("following") : undefined}
           />
         </div>
@@ -361,10 +363,10 @@ export default function ProfileClient({
             <div className="w-14 h-14 rounded-full bg-mb-input border border-mb-border flex items-center justify-center mb-5">
               <Lock className="w-6 h-6 text-mb-dim" />
             </div>
-            <h2 className="font-serif text-xl text-mb-text mb-2">Esta cuenta es privada</h2>
+            <h2 className="font-serif text-xl text-mb-text mb-2">{t("privateAccountHeading")}</h2>
             <p className="text-sm text-mb-muted leading-relaxed max-w-xs">
-              Seguí a <span className="font-mono text-mb-accent">@{user.handle}</span> para ver
-              sus reseñas, álbumes y canciones.
+              {t("privateAccountBefore")} <span className="font-mono text-mb-accent">@{user.handle}</span>{" "}
+              {t("privateAccountAfter")}
             </p>
           </div>
         ) : (
@@ -374,9 +376,9 @@ export default function ProfileClient({
               <div className="flex gap-0">
                 {(
                   [
-                    { id: "todo" as Tab, label: "Todo" },
-                    { id: "albums" as Tab, label: "Álbumes" },
-                    { id: "songs" as Tab, label: "Canciones" },
+                    { id: "todo" as Tab, label: t("tabAll") },
+                    { id: "albums" as Tab, label: t("tabAlbums") },
+                    { id: "songs" as Tab, label: t("tabTracks") },
                   ] as const
                 ).map(({ id, label }) => (
                   <button
@@ -406,15 +408,15 @@ export default function ProfileClient({
                   type="text"
                   value={reviewQuery}
                   onChange={(e) => setReviewQuery(e.target.value)}
-                  aria-label="Buscar reseñas por álbum, canción o artista"
-                  placeholder="Buscar por álbum, canción o artista"
+                  aria-label={t("searchReviewsAriaLabel")}
+                  placeholder={t("searchReviewsPlaceholder")}
                   className="w-full h-10 pl-9 pr-3 bg-mb-input border border-mb-border rounded-lg text-mb-text text-sm placeholder:text-mb-dim outline-none focus:border-mb-primary transition-colors"
                 />
               </div>
               <select
                 value={reviewSort}
                 onChange={(e) => setReviewSort(e.target.value as ReviewSort)}
-                aria-label="Ordenar reseñas"
+                aria-label={t("sortReviewsAriaLabel")}
                 className="h-10 px-3 bg-mb-input border border-mb-border rounded-lg text-mb-text text-sm cursor-pointer"
               >
                 {SORT_OPTIONS.map((opt) => (
@@ -430,22 +432,22 @@ export default function ProfileClient({
               renderReviewList(
                 reviewItems,
                 debouncedReviewQuery
-                  ? `No hay reseñas que coincidan con "${debouncedReviewQuery}".`
-                  : "Todavía no hay reseñas. ¡Sé el primero en compartir!",
+                  ? t("noReviewsMatchQuery", { query: debouncedReviewQuery })
+                  : t("noReviewsAtAll"),
               )}
             {activeTab === "albums" &&
               renderReviewList(
                 albumItems,
                 debouncedReviewQuery
-                  ? `No hay reseñas que coincidan con "${debouncedReviewQuery}".`
-                  : "Todavía no hay reseñas de álbumes.",
+                  ? t("noReviewsMatchQuery", { query: debouncedReviewQuery })
+                  : t("noAlbumReviews"),
               )}
             {activeTab === "songs" &&
               renderReviewList(
                 songItems,
                 debouncedReviewQuery
-                  ? `No hay reseñas que coincidan con "${debouncedReviewQuery}".`
-                  : "Todavía no hay reseñas de canciones.",
+                  ? t("noReviewsMatchQuery", { query: debouncedReviewQuery })
+                  : t("noTrackReviews"),
               )}
           </>
         )}

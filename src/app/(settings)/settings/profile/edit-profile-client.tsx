@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Camera, Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   apiPatchMe,
@@ -36,6 +37,8 @@ export default function EditProfileClient({
   initialUser,
   accessToken,
 }: EditProfileClientProps) {
+  const t = useTranslations("Settings.Profile");
+  const tCommon = useTranslations("Common");
   const [displayName, setDisplayName] = useState(
     initialUser.displayName ?? "",
   );
@@ -103,7 +106,7 @@ export default function EditProfileClient({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setSaveError("La imagen no puede superar los 5MB.");
+      setSaveError(t("imageTooLarge"));
       return;
     }
     setPendingAvatarFile(file);
@@ -114,7 +117,7 @@ export default function EditProfileClient({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setSaveError("La imagen no puede superar los 5MB.");
+      setSaveError(t("imageTooLarge"));
       return;
     }
     setPendingCoverFile(file);
@@ -166,9 +169,9 @@ export default function EditProfileClient({
         const apiErr = err as ApiError;
         if (apiErr.code === "HANDLE_TAKEN") {
           setHandleStatus("taken");
-          setSaveError("Ese handle ya está en uso.");
+          setSaveError(t("handleTakenError"));
         } else {
-          setSaveError(apiErr.message ?? "Error al guardar. Intentá de nuevo.");
+          setSaveError(apiErr.message ?? t("saveError"));
         }
       }
     });
@@ -189,17 +192,17 @@ export default function EditProfileClient({
         <button
           onClick={() => router.back()}
           className="text-mb-muted hover:text-mb-text transition-colors cursor-pointer"
-          aria-label="Volver"
+          aria-label={tCommon("back")}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <span className="font-medium text-mb-text">Editar perfil</span>
+        <span className="font-medium text-mb-text">{t("title")}</span>
         <button
           onClick={handleSave}
           disabled={!canSave}
           className="ml-auto text-sm font-semibold text-mb-primary disabled:text-mb-dim transition-colors cursor-pointer disabled:cursor-not-allowed"
         >
-          {isPending ? "Guardando…" : "Guardar"}
+          {isPending ? tCommon("saving") : t("save")}
         </button>
       </header>
 
@@ -210,9 +213,9 @@ export default function EditProfileClient({
           className="flex items-center gap-2 text-mb-muted hover:text-mb-text transition-colors mb-6 text-sm cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver
+          {tCommon("back")}
         </button>
-        <h1 className="font-serif text-3xl text-mb-text">Editar perfil</h1>
+        <h1 className="font-serif text-3xl text-mb-text">{t("title")}</h1>
       </div>
 
       {/* Cover upload — capped to the width the cover actually renders at on
@@ -223,7 +226,7 @@ export default function EditProfileClient({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverPreview}
-            alt="Vista previa de la portada"
+            alt={t("coverPreviewAlt")}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -242,7 +245,7 @@ export default function EditProfileClient({
           className="absolute right-4 bottom-4 flex items-center gap-2 h-10 px-3.5 bg-mb-bg/60 backdrop-blur border border-mb-border rounded-lg text-sm font-medium text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
         >
           <Camera className="w-4 h-4" />
-          Cambiar portada
+          {t("changeCover")}
         </button>
         <input
           ref={coverFileInputRef}
@@ -250,7 +253,7 @@ export default function EditProfileClient({
           accept="image/*"
           className="hidden"
           onChange={handleCoverChange}
-          aria-label="Seleccionar imagen de portada"
+          aria-label={t("selectCoverImage")}
         />
       </div>
 
@@ -262,7 +265,7 @@ export default function EditProfileClient({
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={avatarPreview}
-                alt="Vista previa del avatar"
+                alt={t("avatarPreviewAlt")}
                 className="w-24 h-24 rounded-full object-cover border-4 border-mb-card"
               />
             ) : (
@@ -274,7 +277,7 @@ export default function EditProfileClient({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-              aria-label="Cambiar foto de perfil"
+              aria-label={t("changeProfilePhoto")}
             >
               <Camera className="w-6 h-6 text-white" />
             </button>
@@ -284,7 +287,7 @@ export default function EditProfileClient({
             onClick={() => fileInputRef.current?.click()}
             className="mt-3 text-sm text-mb-accent hover:text-mb-primary-h transition-colors cursor-pointer"
           >
-            Cambiar foto
+            {t("changePhoto")}
           </button>
           <input
             ref={fileInputRef}
@@ -292,7 +295,7 @@ export default function EditProfileClient({
             accept="image/*"
             className="hidden"
             onChange={handleAvatarChange}
-            aria-label="Seleccionar imagen de perfil"
+            aria-label={t("selectProfileImage")}
           />
         </div>
 
@@ -310,7 +313,7 @@ export default function EditProfileClient({
             role="status"
             className="mb-6 bg-mb-success/10 border border-mb-success rounded-lg px-4 py-3 text-mb-success text-sm"
           >
-            ¡Perfil actualizado!
+            {t("profileUpdated")}
           </div>
         )}
 
@@ -321,7 +324,7 @@ export default function EditProfileClient({
               htmlFor="displayName"
               className="block text-sm text-mb-muted font-medium"
             >
-              Nombre para mostrar
+              {t("displayNameLabel")}
             </label>
             <input
               id="displayName"
@@ -340,7 +343,7 @@ export default function EditProfileClient({
               htmlFor="handle"
               className="block text-sm text-mb-muted font-medium"
             >
-              Handle
+              {t("handleLabel")}
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-mb-dim font-mono text-sm select-none">
@@ -399,15 +402,15 @@ export default function EditProfileClient({
             </div>
             {handleStatus === "taken" && (
               <p className="text-xs text-mb-error">
-                Este handle ya está en uso.
+                {t("handleTaken")}
               </p>
             )}
             {handleStatus === "available" && (
-              <p className="text-xs text-mb-success">¡Handle disponible!</p>
+              <p className="text-xs text-mb-success">{t("handleAvailable")}</p>
             )}
             {handleStatus === "invalid" && (
               <p className="text-xs text-mb-error">
-                Solo letras, números y guion bajo. Mínimo 3 caracteres.
+                {t("handleInvalid")}
               </p>
             )}
           </div>
@@ -419,7 +422,7 @@ export default function EditProfileClient({
                 htmlFor="bio"
                 className="text-sm text-mb-muted font-medium"
               >
-                Bio
+                {t("bioLabel")}
               </label>
               <span
                 className={cn(
@@ -438,7 +441,7 @@ export default function EditProfileClient({
               rows={4}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="Contá algo sobre vos y tu gusto musical…"
+              placeholder={t("bioPlaceholder")}
               className="w-full bg-mb-input border border-mb-border focus:border-mb-primary rounded-xl px-4 py-3 text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-none text-sm"
             />
           </div>
@@ -473,10 +476,10 @@ export default function EditProfileClient({
                       d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                     />
                   </svg>
-                  Guardando…
+                  {tCommon("saving")}
                 </>
               ) : (
-                "Guardar cambios"
+                t("saveChanges")
               )}
             </button>
           </div>

@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   apiCreateReview,
@@ -42,33 +43,36 @@ function resolveInitialRatings(
   return { ratings, notes };
 }
 
-function mapApiError(err: ApiError): string {
-  switch (err.code) {
-    case "TRACK_NOT_IN_ALBUM":
-      return "Una de las canciones seleccionadas no pertenece a este álbum.";
-    case "IDEMPOTENCY_KEY_REQUIRED":
-      return "Ocurrió un error al enviar tu reseña. Recargá la página e intentá de nuevo.";
-    case "REVIEW_ALREADY_EXISTS":
-      return "Ya tenés una reseña activa de este álbum.";
-    case "INVALID_UPDATE_FOR_TYPE":
-      return "No se puede modificar ese campo para este tipo de reseña.";
-    case "NOT_REVIEW_OWNER":
-      return "No tenés permiso para modificar esta reseña.";
-    case "REVIEW_NOT_FOUND":
-      return "Esta reseña ya no existe.";
-    default:
-      return err.message || "Ocurrió un error. Intentá de nuevo.";
-  }
-}
-
 export function AlbumReviewFormClient({
   album,
   accessToken,
   existingReview,
 }: AlbumReviewFormClientProps) {
   const router = useRouter();
+  const t = useTranslations("Reviews.newAlbum");
+  const tForm = useTranslations("Reviews.form");
+  const tCommon = useTranslations("Common");
   const mode = existingReview ? "edit" : "create";
   const initial = resolveInitialRatings(album, existingReview);
+
+  function mapApiError(err: ApiError): string {
+    switch (err.code) {
+      case "TRACK_NOT_IN_ALBUM":
+        return t("trackNotInAlbum");
+      case "IDEMPOTENCY_KEY_REQUIRED":
+        return tForm("errorIdempotency");
+      case "REVIEW_ALREADY_EXISTS":
+        return t("reviewedAlready");
+      case "INVALID_UPDATE_FOR_TYPE":
+        return tForm("errorInvalidUpdate");
+      case "NOT_REVIEW_OWNER":
+        return tForm("errorNotOwner");
+      case "REVIEW_NOT_FOUND":
+        return tForm("errorNotFound");
+      default:
+        return err.message || tCommon("genericError");
+    }
+  }
 
   const [description, setDescription] = useState(existingReview?.description ?? "");
   const [trackRatings, setTrackRatings] = useState<Record<string, number>>(initial.ratings);
@@ -143,7 +147,7 @@ export function AlbumReviewFormClient({
       <button
         type="button"
         onClick={() => router.back()}
-        aria-label="Volver"
+        aria-label={tCommon("back")}
         className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
@@ -160,18 +164,18 @@ export function AlbumReviewFormClient({
                 : { background: coverGradient(album.deezerId) }
             }
             role="img"
-            aria-label={`Cover de ${album.title}`}
+            aria-label={tCommon("coverAlt", { title: album.title })}
           />
           <div className="min-w-0 flex-1">
             <div className="font-serif text-xl text-mb-text truncate">{album.title}</div>
             <div className="text-sm text-mb-muted mt-0.5 truncate">
-              {album.artist.name} · álbum
+              {album.artist.name} · {t("albumTypeLabel")}
             </div>
           </div>
         </div>
 
         <h1 className="font-serif font-normal text-[32px] leading-[1.2] text-mb-text mb-8">
-          {mode === "edit" ? "Editar tu reseña de " : "Tu reseña de "}
+          {mode === "edit" ? tForm("editHeadingPrefix") : tForm("newHeadingPrefix")}
           <span className="text-mb-accent">{album.title}</span>
         </h1>
         {saveError && (
@@ -189,8 +193,8 @@ export function AlbumReviewFormClient({
             htmlFor="mbGeneral"
             className="block text-[13px] font-semibold text-mb-muted uppercase tracking-wider mb-3.5"
           >
-            ¿Tu impresión general del álbum?{" "}
-            <span className="normal-case font-normal text-mb-dim">(opcional)</span>
+            {t("generalImpressionLabel")}{" "}
+            <span className="normal-case font-normal text-mb-dim">{tForm("optional")}</span>
           </label>
           <div className="relative">
             <textarea
@@ -198,7 +202,7 @@ export function AlbumReviewFormClient({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={MAX_CHARS}
-              placeholder="Contanos qué te dejó el disco como conjunto: su arco, su producción, qué lo hace memorable…"
+              placeholder={t("generalImpressionPlaceholder")}
               className="w-full min-h-[120px] p-4 pb-8 bg-mb-input border border-mb-border focus:border-mb-primary rounded-lg text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-y text-[15px] leading-relaxed"
             />
             <div
@@ -213,10 +217,10 @@ export function AlbumReviewFormClient({
         {/* Songs */}
         <div className="mb-2">
           <h2 className="font-serif font-normal text-2xl text-mb-text mb-1">
-            Calificá cada canción
+            {t("rateEachSongHeading")}
           </h2>
           <p className="text-sm text-mb-muted mb-6">
-            El rating del álbum será el promedio de tus calificaciones por canción.
+            {t("rateEachSongSubheading")}
           </p>
         </div>
 
@@ -253,8 +257,8 @@ export function AlbumReviewFormClient({
                       const v = Math.round(parseFloat(e.target.value) * 4) / 4;
                       setRating(track.deezerId, v);
                     }}
-                    aria-label={`Puntuación de ${track.title}`}
-                    aria-valuetext={rating === 0 ? "Sin calificar" : `${rating.toFixed(2)} de 10`}
+                    aria-label={t("trackRatingAriaLabel", { title: track.title })}
+                    aria-valuetext={rating === 0 ? tForm("unrated") : tForm("ratingOutOfTen", { rating: rating.toFixed(2) })}
                     className="flex-1 min-h-8 cursor-pointer"
                     style={{ accentColor: rating === 0 ? "#5C5670" : ratingColor(rating) }}
                   />
@@ -274,7 +278,7 @@ export function AlbumReviewFormClient({
                       <textarea
                         value={trackNotes[track.deezerId] ?? ""}
                         onChange={(e) => setNote(track.deezerId, e.target.value)}
-                        placeholder="Nota sobre esta canción…"
+                        placeholder={t("trackNotePlaceholder")}
                         className="w-full min-h-16 p-3 bg-[#16161F] border border-mb-border focus:border-mb-primary rounded-md text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-y text-sm leading-relaxed"
                       />
                       <button
@@ -282,7 +286,7 @@ export function AlbumReviewFormClient({
                         onClick={() => setOpenNoteFor(null)}
                         className="mt-1.5 text-xs text-mb-dim hover:text-mb-muted transition-colors cursor-pointer"
                       >
-                        Ocultar nota
+                        {t("hideNote")}
                       </button>
                     </div>
                   ) : (
@@ -292,7 +296,7 @@ export function AlbumReviewFormClient({
                       className="inline-flex items-center gap-1.5 min-h-9  rounded-md text-mb-muted text-[13px] font-medium hover:text-mb-accent hover:bg-mb-input transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      {hasNote ? "Editar nota" : "Agregar nota"}
+                      {hasNote ? t("editNote") : t("addNote")}
                     </button>
                   )}
                 </div>
@@ -307,7 +311,7 @@ export function AlbumReviewFormClient({
         <div className="max-w-[780px] mx-auto px-4 md:px-[clamp(16px,5vw,40px)] py-3.5 flex items-center justify-between gap-4">
           <div className="flex flex-col gap-0.5">
             <span className="text-[11px] text-mb-dim uppercase tracking-wider">
-              Promedio actual
+              {t("currentAverageLabel")}
             </span>
             <span className="flex items-baseline gap-1">
               <span
@@ -325,7 +329,7 @@ export function AlbumReviewFormClient({
               onClick={() => router.back()}
               className="hidden md:inline-flex items-center justify-center min-h-11 px-4.5 rounded-lg text-mb-muted font-medium text-sm hover:text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
             >
-              Cancelar
+              {tForm("cancel")}
             </button>
             <button
               type="button"
@@ -339,15 +343,15 @@ export function AlbumReviewFormClient({
               )}
             >
               {isPending
-                ? "Publicando…"
+                ? tForm("publishing")
                 : mode === "edit"
-                  ? "Guardar cambios"
-                  : "Publicar reseña"}
+                  ? tForm("saveChanges")
+                  : tForm("publish")}
             </button>
           </div>
         </div>
         <p className="text-center text-[11px] text-mb-dim pb-2.5">
-          {ratedCount} de {album.tracks.length} canciones calificadas
+          {t("ratedCountLabel", { rated: ratedCount, total: album.tracks.length })}
         </p>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { apiFollow, apiFollowSuggestions } from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,8 @@ interface FollowSuggestionsWidgetProps {
 }
 
 export function FollowSuggestionsWidget({ accessToken }: FollowSuggestionsWidgetProps) {
+  const t = useTranslations("Feed.followSuggestions");
+  const tCommon = useTranslations("Common");
   const { data, isLoading } = useQuery({
     queryKey: ["follow-suggestions"],
     queryFn: () => apiFollowSuggestions(accessToken),
@@ -47,7 +50,7 @@ export function FollowSuggestionsWidget({ accessToken }: FollowSuggestionsWidget
   return (
     <section className="bg-mb-card border border-mb-border rounded-xl p-5">
       <h2 className="text-[13px] font-semibold tracking-wide uppercase text-mb-muted mb-4">
-        Personas a seguir
+        {t("heading")}
       </h2>
       {isLoading ? (
         <div className="flex flex-col gap-3.5">
@@ -95,7 +98,9 @@ export function FollowSuggestionsWidget({ accessToken }: FollowSuggestionsWidget
                 onClick={() => handleFollow(s)}
                 disabled={isPending || pendingIds.has(s.id)}
                 aria-label={
-                  pendingIds.has(s.id) ? `Solicitud enviada a ${s.displayName}` : `Seguir a ${s.displayName}`
+                  pendingIds.has(s.id)
+                    ? t("requestSentAriaLabel", { name: s.displayName })
+                    : tCommon("followAriaLabel", { name: s.displayName })
                 }
                 className={cn(
                   "shrink-0 min-h-[34px] px-3.5 rounded-full font-semibold text-[13px] transition-colors disabled:cursor-not-allowed cursor-pointer",
@@ -104,7 +109,7 @@ export function FollowSuggestionsWidget({ accessToken }: FollowSuggestionsWidget
                     : "bg-transparent border border-mb-primary text-mb-accent hover:bg-mb-dp disabled:opacity-60",
                 )}
               >
-                {pendingIds.has(s.id) ? "Solicitud enviada" : "Seguir"}
+                {pendingIds.has(s.id) ? t("requestSentLabel") : tCommon("follow")}
               </button>
             </div>
           ))}

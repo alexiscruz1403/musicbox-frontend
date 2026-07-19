@@ -2,8 +2,10 @@
 
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 
 export function LogoutButton() {
+  const t = useTranslations("Common");
   return (
     <button
       type="button"
@@ -11,7 +13,7 @@ export function LogoutButton() {
       className="flex items-center gap-3 w-full min-h-[52px] px-4.5 bg-transparent border border-mb-border rounded-lg text-mb-error font-medium text-sm text-left hover:bg-mb-error/10 hover:border-mb-error transition-colors cursor-pointer"
     >
       <LogOut className="w-[19px] h-[19px]" />
-      Cerrar sesión
+      {t("logout")}
     </button>
   );
 }

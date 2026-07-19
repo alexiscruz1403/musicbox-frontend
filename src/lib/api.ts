@@ -61,8 +61,30 @@ import type {
   PushSubscriptionPayload,
 } from "@/types/api";
 import { tokenStore } from "@/lib/token-store";
+import { LOCALE_COOKIE, DEFAULT_LOCALE, isAppLocale, type AppLocale } from "@/i18n/locale";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/v1";
+
+// `doFetch` runs in both server contexts (pages passing an explicit
+// accessToken) and client contexts (e.g. account-client.tsx calling
+// apiPatchMe directly) — `next/headers` is server-only, so it's imported
+// dynamically and guarded by `typeof window` rather than statically, which
+// would break client bundling.
+async function resolveLocale(): Promise<AppLocale> {
+  if (typeof window === "undefined") {
+    try {
+      const { cookies } = await import("next/headers");
+      const store = await cookies();
+      const raw = store.get(LOCALE_COOKIE)?.value;
+      return isAppLocale(raw) ? raw : DEFAULT_LOCALE;
+    } catch {
+      return DEFAULT_LOCALE;
+    }
+  }
+  const match = document.cookie.match(new RegExp(`(?:^|; )${LOCALE_COOKIE}=([^;]*)`));
+  const raw = match?.[1];
+  return isAppLocale(raw) ? raw : DEFAULT_LOCALE;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -102,8 +124,10 @@ async function doFetch(
   options: Omit<FetchOptions, "accessToken">,
 ): Promise<Response> {
   const { body, headers: extraHeaders, ...rest } = options;
+  const locale = await resolveLocale();
 
   const headers: Record<string, string> = {
+    "Accept-Language": locale,
     ...(extraHeaders as Record<string, string> | undefined),
   };
 
@@ -260,7 +284,13 @@ export async function apiGetMe(
 
 export async function apiPatchMe(
   accessToken: string,
-  updates: { handle?: string; displayName?: string; bio?: string; isPrivate?: boolean },
+  updates: {
+    handle?: string;
+    displayName?: string;
+    bio?: string;
+    isPrivate?: boolean;
+    language?: "EN" | "ES";
+  },
   idempotencyKey: string,
 ): Promise<ApiSuccessResponse<{ user: MeResponse["user"] }>> {
   return apiFetch<ApiSuccessResponse<{ user: MeResponse["user"] }>>(

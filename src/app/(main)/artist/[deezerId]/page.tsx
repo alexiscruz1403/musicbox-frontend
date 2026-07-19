@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { apiCatalogArtist, apiCatalogArtistAlbums, apiCatalogArtistTracks } from "@/lib/api";
 import { ApiError } from "@/lib/api";
@@ -8,15 +9,16 @@ import { ArtistClient } from "./artist-client";
 export async function generateMetadata({
   params,
 }: PageProps<"/artist/[deezerId]">): Promise<Metadata> {
+  const t = await getTranslations("Artist");
   try {
     const { deezerId } = await params;
     const session = await auth();
     const { data } = await apiCatalogArtist(deezerId, session?.accessToken);
     return {
-      title: `${data.name} | Vinlyst`,
+      title: t("pageTitle", { name: data.name }),
     };
   } catch {
-    return { title: "Artista | Vinlyst" };
+    return { title: t("pageTitleFallback") };
   }
 }
 

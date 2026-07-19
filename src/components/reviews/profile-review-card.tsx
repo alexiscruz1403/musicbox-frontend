@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ratingColor, timeAgo, coverGradient } from "@/lib/review-format";
 import type { UserReviewHistoryItem } from "@/types/api";
 
 export function ProfileReviewCard({ item }: { item: UserReviewHistoryItem }) {
+  const tCommon = useTranslations("Common");
   const rating = Number(item.rating);
 
   return (
@@ -21,7 +23,7 @@ export function ProfileReviewCard({ item }: { item: UserReviewHistoryItem }) {
               : { background: coverGradient(item.id) }
           }
           role="img"
-          aria-label={`Cover de ${item.externalTitle ?? ""}`}
+          aria-label={tCommon("coverAlt", { title: item.externalTitle ?? "" })}
         />
         {item.avatarUrl && (
           // eslint-disable-next-line @next/next/no-img-element

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const t = await getTranslations("Admin.layout");
   return (
     <div className="min-h-screen bg-mb-bg text-mb-text font-sans">
       <header className="sticky top-0 z-10 bg-mb-card border-b border-mb-border">
@@ -14,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             href="/feed"
             className="text-sm text-mb-muted hover:text-mb-text transition-colors"
           >
-            Volver a Vinlyst
+            {t("backToVinlyst")}
           </Link>
         </div>
       </header>

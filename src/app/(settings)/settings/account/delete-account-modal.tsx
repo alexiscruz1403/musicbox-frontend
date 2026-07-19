@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiDeleteMe, ApiError } from "@/lib/api";
 
@@ -18,6 +19,7 @@ export function DeleteAccountModal({
   accessToken,
   handle,
 }: DeleteAccountModalProps) {
+  const t = useTranslations("Settings.Account");
   const [confirmText, setConfirmText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -44,7 +46,7 @@ export function DeleteAccountModal({
         await signOut({ callbackUrl: "/login" });
       } catch (err) {
         const apiErr = err as ApiError;
-        setError(apiErr.message || "No se pudo eliminar la cuenta. Intentá de nuevo.");
+        setError(apiErr.message || t("deleteAccountError"));
       }
     });
   }
@@ -58,19 +60,19 @@ export function DeleteAccountModal({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Confirmar eliminación de cuenta"
+        aria-label={t("deleteConfirmModalLabel")}
         className="w-full sm:max-w-[400px] bg-mb-card border border-mb-border rounded-t-2xl sm:rounded-xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
       >
         <h3 className="font-serif text-xl text-mb-text mb-3 leading-tight">
-          ¿Seguro que querés eliminar tu cuenta?
+          {t("deleteConfirmHeading")}
         </h3>
         <p className="text-sm text-mb-muted leading-relaxed mb-5">
-          Esta acción es irreversible. Tus datos personales serán anonimizados. Tus reseñas
-          se mantendrán como <span className="text-mb-dim">“[usuario eliminado]”</span>.
+          {t("deleteAnonymizeText")}{" "}
+          <span className="text-mb-dim">{t("deletedUserLabel")}</span>.
         </p>
 
         <label htmlFor="mbConfirmDelete" className="block text-sm font-medium text-mb-muted mb-2">
-          Escribí <span className="font-mono text-mb-accent">@{handle}</span> para confirmar
+          {t("typeToConfirmPrefix")} <span className="font-mono text-mb-accent">@{handle}</span> {t("typeToConfirmSuffix")}
         </label>
         <input
           id="mbConfirmDelete"
@@ -102,7 +104,7 @@ export function DeleteAccountModal({
             onClick={onClose}
             className="min-h-11 px-5 rounded-lg text-mb-muted font-medium text-sm hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
           >
-            Cancelar
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -115,7 +117,7 @@ export function DeleteAccountModal({
                 : "bg-mb-error text-mb-bg hover:bg-mb-error/90 cursor-pointer",
             )}
           >
-            {isPending ? "Eliminando…" : "Eliminar definitivamente"}
+            {isPending ? t("deleting") : t("deletePermanently")}
           </button>
         </div>
       </div>

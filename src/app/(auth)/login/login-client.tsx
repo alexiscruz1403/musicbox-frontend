@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Eye, EyeOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 export function LoginClient() {
+  const t = useTranslations("Auth.Login");
+  const tCommon = useTranslations("Common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -33,7 +36,7 @@ export function LoginClient() {
         redirect: false,
       });
       if (result?.error) {
-        setError("Email o contraseña incorrectos.");
+        setError(t("invalidCredentials"));
       } else {
         router.push(callbackUrl);
         router.refresh();
@@ -54,9 +57,9 @@ export function LoginClient() {
 
       <div className="text-center space-y-1">
         <h2 className="font-serif text-xl text-mb-text">
-          Bienvenido de vuelta
+          {t("welcomeBack")}
         </h2>
-        <p className="text-mb-muted text-sm">Tu historial musical te espera.</p>
+        <p className="text-mb-muted text-sm">{t("subtitle")}</p>
       </div>
 
       {error && (
@@ -93,13 +96,13 @@ export function LoginClient() {
             fill="#EA4335"
           />
         </svg>
-        Continuar con Google
+        {tCommon("continueWithGoogle")}
       </button>
 
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-mb-border" />
         <span className="text-mb-dim text-xs whitespace-nowrap">
-          o continúa con tu email
+          {t("orContinueWithEmail")}
         </span>
         <div className="flex-1 h-px bg-mb-border" />
       </div>
@@ -111,7 +114,7 @@ export function LoginClient() {
             htmlFor="email"
             className="block text-sm text-mb-muted font-medium"
           >
-            Correo electrónico
+            {tCommon("email")}
           </label>
           <input
             id="email"
@@ -120,7 +123,7 @@ export function LoginClient() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@email.com"
+            placeholder={tCommon("emailPlaceholder")}
             className={cn(
               "w-full h-11 bg-mb-input border rounded-xl px-4 text-mb-text placeholder:text-mb-dim outline-none transition-colors",
               error
@@ -136,7 +139,7 @@ export function LoginClient() {
             htmlFor="password"
             className="block text-sm text-mb-muted font-medium"
           >
-            Contraseña
+            {tCommon("password")}
           </label>
           <div className="relative">
             <input
@@ -146,7 +149,7 @@ export function LoginClient() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder={tCommon("passwordPlaceholder")}
               className={cn(
                 "w-full h-11 bg-mb-input border rounded-xl px-4 pr-11 text-mb-text placeholder:text-mb-dim outline-none transition-colors",
                 error
@@ -158,7 +161,7 @@ export function LoginClient() {
               type="button"
               onClick={() => setShowPw((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors cursor-pointer"
-              aria-label={showPw ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-label={showPw ? tCommon("hidePassword") : tCommon("showPassword")}
             >
               {showPw ? (
                 <EyeOff className="w-4 h-4" />
@@ -172,7 +175,7 @@ export function LoginClient() {
               href="/forgot-password"
               className="text-xs text-mb-accent hover:text-mb-primary-h transition-colors"
             >
-              ¿Olvidaste tu contraseña?
+              {tCommon("forgotPasswordQuestion")}
             </Link>
           </div>
         </div>
@@ -204,21 +207,21 @@ export function LoginClient() {
                   d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                 />
               </svg>
-              Entrando…
+              {t("signingIn")}
             </>
           ) : (
-            "Entrar"
+            t("submit")
           )}
         </button>
       </form>
 
       <p className="text-center text-sm text-mb-muted">
-        ¿No tenés cuenta?{" "}
+        {t("noAccount")}{" "}
         <Link
           href="/register"
           className="text-mb-accent hover:text-mb-primary-h transition-colors font-medium"
         >
-          Registrate
+          {t("registerLink")}
         </Link>
       </p>
     </div>

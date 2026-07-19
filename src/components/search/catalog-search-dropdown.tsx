@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   apiCatalogQuickSearch,
   apiDeleteCatalogSearchHistoryItem,
@@ -14,12 +15,6 @@ import type {
   CatalogSearchHistoryItem,
   CatalogQuickSearchItem,
 } from "@/types/api";
-
-const TYPE_LABELS: Record<CatalogQuickSearchItem["type"], string> = {
-  album: "Álbum",
-  track: "Canción",
-  artist: "Artista",
-};
 
 function hrefFor(item: CatalogQuickSearchItem): string {
   if (item.type === "album") return `/album/${item.deezerId}`;
@@ -46,6 +41,8 @@ export function CatalogSearchDropdown({
   onSelectRecent,
   onClose,
 }: CatalogSearchDropdownProps) {
+  const t = useTranslations("Search");
+  const tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const showRecent = query.trim().length === 0;
 
@@ -109,7 +106,7 @@ export function CatalogSearchDropdown({
             searchedAt: h.searchedAt,
           }))}
           isLoading={isHistoryLoading}
-          emptyLabel="Sin búsquedas recientes."
+          emptyLabel={tCommon("noRecentSearches")}
           onSelect={(row) => {
             const original = history.find((h) => h.id === row.id);
             if (original) onSelectRecent(original);
@@ -131,7 +128,7 @@ export function CatalogSearchDropdown({
         </div>
       ) : predictive.length === 0 ? (
         <p className="px-2 py-2 text-[13px] text-mb-dim">
-          Sin coincidencias para &ldquo;{debouncedQuery}&rdquo;.
+          {t("noMatchesFor", { query: debouncedQuery })}
         </p>
       ) : (
         predictive.map((item, i) => (
@@ -171,13 +168,13 @@ export function CatalogSearchDropdown({
               <span className="block text-xs text-mb-muted truncate">
                 {item.type === "artist"
                   ? item.albumsCount != null
-                    ? `${item.albumsCount} álbum${item.albumsCount !== 1 ? "es" : ""}`
-                    : "Artista"
+                    ? t("albumsCount", { count: item.albumsCount })
+                    : t("typeLabels.artist")
                   : item.artist}
               </span>
             </span>
             <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-mb-dim">
-              {TYPE_LABELS[item.type]}
+              {t(`typeLabels.${item.type}`)}
             </span>
           </Link>
         ))

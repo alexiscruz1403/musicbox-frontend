@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { WifiOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { listCachedRecentlyViewed } from "@/lib/offline/recently-viewed-cache";
 import { readListCache } from "@/lib/offline/list-cache";
 import { getCachedProfile, getCachedNotificationPrefs } from "@/lib/offline/profile-cache";
@@ -20,21 +21,24 @@ import type {
 
 type Tab = "recent" | "my-reviews" | "feed" | "profile" | "notifications";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "recent", label: "Recientes" },
-  { id: "my-reviews", label: "Mis reseñas" },
-  { id: "feed", label: "Feed" },
-  { id: "profile", label: "Perfil" },
-  { id: "notifications", label: "Notificaciones" },
-];
+const TAB_IDS: Tab[] = ["recent", "my-reviews", "feed", "profile", "notifications"];
+
+const TAB_LABEL_KEYS: Record<Tab, string> = {
+  recent: "tabRecent",
+  "my-reviews": "tabMyReviews",
+  feed: "tabFeed",
+  profile: "tabProfile",
+  notifications: "tabNotifications",
+};
 
 function resourceDisplay(
   item: RecentlyViewedDetailItem,
+  artistLabel: string,
 ): { title: string; subtitle: string; coverUrl: string | null } | null {
   if (!item.detail) return null;
   if (item.resourceType === "ARTIST") {
     const d = item.detail as ArtistDetail;
-    return { title: d.artist.name, subtitle: "Artista", coverUrl: d.artist.imageUrl };
+    return { title: d.artist.name, subtitle: artistLabel, coverUrl: d.artist.imageUrl };
   }
   if (item.resourceType === "ALBUM") {
     const d = item.detail as CatalogAlbum;
@@ -53,6 +57,8 @@ interface OfflineHomeProps {
 // offline-mode-gate.tsx. No hace ninguna llamada de red.
 export function OfflineHome({ accessToken }: OfflineHomeProps) {
   void accessToken; // reservado para acciones futuras que lo necesiten directamente
+  const t = useTranslations("Offline.home");
+  const TABS = TAB_IDS.map((id) => ({ id, label: t(TAB_LABEL_KEYS[id]) }));
   const [tab, setTab] = useState<Tab>("recent");
   const [recent, setRecent] = useState<RecentlyViewedDetailItem[]>([]);
   const [selected, setSelected] = useState<RecentlyViewedDetailItem | null>(null);
@@ -79,7 +85,7 @@ export function OfflineHome({ accessToken }: OfflineHomeProps) {
       <div className="flex items-center gap-2 px-4 py-3 border-b border-mb-border bg-mb-card">
         <WifiOff className="w-4 h-4 text-mb-muted shrink-0" />
         <p className="text-sm text-mb-muted">
-          Sin conexión — mostrando contenido guardado para uso offline.
+          {t("offlineBanner")}
         </p>
       </div>
 
@@ -128,17 +134,18 @@ function RecentList({
   items: RecentlyViewedDetailItem[];
   onSelect: (item: RecentlyViewedDetailItem) => void;
 }) {
+  const t = useTranslations("Offline.home");
   if (items.length === 0) {
     return (
       <p className="p-6 text-sm text-mb-muted text-center">
-        Todavía no guardaste ningún recurso para ver offline.
+        {t("noSavedResources")}
       </p>
     );
   }
   return (
     <ul className="p-2">
       {items.map((item) => {
-        const display = resourceDisplay(item);
+        const display = resourceDisplay(item, t("artistLabel"));
         return (
           <li key={`${item.resourceType}:${item.deezerId}`}>
             <button
@@ -152,7 +159,7 @@ function RecentList({
               />
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-mb-text truncate">
-                  {display?.title ?? "(no disponible offline)"}
+                  {display?.title ?? t("notAvailableOffline")}
                 </p>
                 <p className="text-xs text-mb-muted truncate">{display?.subtitle}</p>
               </div>
@@ -165,6 +172,7 @@ function RecentList({
 }
 
 function MyReviewsList({ items }: { items: UserReviewHistoryItem[] }) {
+  const t = useTranslations("Offline.home");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [rating, setRating] = useState(8);
@@ -201,7 +209,7 @@ function MyReviewsList({ items }: { items: UserReviewHistoryItem[] }) {
   if (items.length === 0) {
     return (
       <p className="p-6 text-sm text-mb-muted text-center">
-        No hay reseñas propias guardadas para ver offline.
+        {t("noOwnReviews")}
       </p>
     );
   }
@@ -214,7 +222,7 @@ function MyReviewsList({ items }: { items: UserReviewHistoryItem[] }) {
           <p className="text-xs text-mb-muted mb-2">{item.externalArtistName}</p>
 
           {pendingIds.has(item.id) ? (
-            <p className="text-xs text-mb-accent">Cambio guardado, pendiente de sincronizar.</p>
+            <p className="text-xs text-mb-accent">{t("pendingSync")}</p>
           ) : editingId === item.id ? (
             <div className="space-y-2">
               {item.type === "TRACK" && (
@@ -239,14 +247,14 @@ function MyReviewsList({ items }: { items: UserReviewHistoryItem[] }) {
                   onClick={() => saveEdit(item)}
                   className="h-9 px-3 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white text-xs font-semibold cursor-pointer"
                 >
-                  Guardar
+                  {t("save")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingId(null)}
                   className="h-9 px-3 border border-mb-border rounded-lg text-mb-muted text-xs cursor-pointer"
                 >
-                  Cancelar
+                  {t("cancel")}
                 </button>
               </div>
             </div>
@@ -259,14 +267,14 @@ function MyReviewsList({ items }: { items: UserReviewHistoryItem[] }) {
                   onClick={() => startEdit(item)}
                   className="text-xs text-mb-accent cursor-pointer"
                 >
-                  Editar
+                  {t("edit")}
                 </button>
                 <button
                   type="button"
                   onClick={() => remove(item)}
                   className="text-xs text-mb-error cursor-pointer"
                 >
-                  Eliminar
+                  {t("delete")}
                 </button>
               </div>
             </div>
@@ -278,10 +286,11 @@ function MyReviewsList({ items }: { items: UserReviewHistoryItem[] }) {
 }
 
 function FeedList({ items }: { items: CatalogReview[] }) {
+  const t = useTranslations("Offline.home");
   if (items.length === 0) {
     return (
       <p className="p-6 text-sm text-mb-muted text-center">
-        No hay reseñas del feed guardadas para ver offline.
+        {t("noFeedReviews")}
       </p>
     );
   }
@@ -303,6 +312,7 @@ function FeedList({ items }: { items: CatalogReview[] }) {
 }
 
 function ProfileTab({ user }: { user: MeResponse["user"] }) {
+  const t = useTranslations("Offline.home");
   const [displayName, setDisplayName] = useState(user.displayName);
   const [saved, setSaved] = useState(false);
   const [, startTransition] = useTransition();
@@ -317,7 +327,7 @@ function ProfileTab({ user }: { user: MeResponse["user"] }) {
   return (
     <div className="p-4 space-y-4 max-w-sm">
       <div>
-        <label className="block text-sm text-mb-muted mb-1">Nombre para mostrar</label>
+        <label className="block text-sm text-mb-muted mb-1">{t("displayNameLabel")}</label>
         <input
           type="text"
           value={displayName}
@@ -329,18 +339,17 @@ function ProfileTab({ user }: { user: MeResponse["user"] }) {
         />
       </div>
       <p className="text-xs text-mb-dim">
-        Cambiar avatar/portada offline no está disponible en esta vista — usá
-        Configuración → Perfil cuando vuelva la conexión.
+        {t("avatarCoverOfflineNote")}
       </p>
       {saved ? (
-        <p className="text-xs text-mb-accent">Cambio guardado, pendiente de sincronizar.</p>
+        <p className="text-xs text-mb-accent">{t("pendingSync")}</p>
       ) : (
         <button
           type="button"
           onClick={save}
           className="h-10 px-4 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white text-sm font-semibold cursor-pointer"
         >
-          Guardar
+          {t("save")}
         </button>
       )}
     </div>
@@ -348,6 +357,7 @@ function ProfileTab({ user }: { user: MeResponse["user"] }) {
 }
 
 function NotificationsTab({ prefs }: { prefs: NotificationPreferences }) {
+  const t = useTranslations("Offline.home");
   const [likes, setLikes] = useState(prefs.likesEnabled);
   const [dislikes, setDislikes] = useState(prefs.dislikesEnabled);
   const [comments, setComments] = useState(prefs.commentsEnabled);
@@ -375,11 +385,11 @@ function NotificationsTab({ prefs }: { prefs: NotificationPreferences }) {
   }
 
   const rows: { label: string; on: boolean; onToggle: () => void }[] = [
-    { label: "Me gusta en mis reseñas", on: likes, onToggle: () => setLikes((v) => !v) },
-    { label: "No me gusta en mis reseñas", on: dislikes, onToggle: () => setDislikes((v) => !v) },
-    { label: "Comentarios en mis reseñas", on: comments, onToggle: () => setComments((v) => !v) },
+    { label: t("likesLabel"), on: likes, onToggle: () => setLikes((v) => !v) },
+    { label: t("dislikesLabel"), on: dislikes, onToggle: () => setDislikes((v) => !v) },
+    { label: t("commentsLabel"), on: comments, onToggle: () => setComments((v) => !v) },
     {
-      label: isPrivateAccount ? "Solicitudes de seguimiento" : "Nuevos seguidores",
+      label: isPrivateAccount ? t("followRequestsLabel") : t("newFollowersLabel"),
       on: followToggle,
       onToggle: () => setFollowToggle((v) => !v),
     },
@@ -417,14 +427,14 @@ function NotificationsTab({ prefs }: { prefs: NotificationPreferences }) {
         ))}
       </div>
       {saved ? (
-        <p className="text-xs text-mb-accent mt-4">Cambio guardado, pendiente de sincronizar.</p>
+        <p className="text-xs text-mb-accent mt-4">{t("pendingSync")}</p>
       ) : (
         <button
           type="button"
           onClick={save}
           className="mt-4 h-10 px-4 bg-mb-primary hover:bg-mb-primary-h rounded-lg text-white text-sm font-semibold cursor-pointer"
         >
-          Guardar
+          {t("save")}
         </button>
       )}
     </div>

@@ -1,13 +1,17 @@
+import { getTranslations } from "next-intl/server";
 import { ErrorState } from "@/components/errors/error-state";
 
-export default function TrackNotFound() {
+export default async function TrackNotFound() {
+  const t = await getTranslations("Track");
+  const tErrors = await getTranslations("Errors");
+
   return (
     <div className="min-h-screen bg-mb-bg flex items-center justify-center px-6">
       <ErrorState
         code="404"
-        title="Canción no encontrada"
-        description="Esta canción no existe o aún no está disponible."
-        action={{ type: "link", href: "/search", label: "Volver a búsqueda" }}
+        title={t("notFoundTitle")}
+        description={t("notFoundDescription")}
+        action={{ type: "link", href: "/search", label: tErrors("backToSearch") }}
       />
     </div>
   );

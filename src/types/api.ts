@@ -19,6 +19,7 @@ export interface AuthUser {
   coverUrl?: string | null;
   status: "ACTIVE" | "SUSPENDED" | "DELETED";
   role: "USER" | "ADMIN";
+  language: "EN" | "ES";
 }
 
 export interface AuthTokens {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   apiCatalogSearch,
@@ -69,6 +70,8 @@ function AlbumCard({
   reviewCount?: number;
   userRating?: number | null;
 }) {
+  const t = useTranslations("Search");
+  const tCommon = useTranslations("Common");
   return (
     <Link href={`/album/${deezerId}`} className="group block">
       <div className="relative rounded-xl overflow-hidden aspect-square">
@@ -76,7 +79,7 @@ function AlbumCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverUrl}
-            alt={`Cover de ${title}`}
+            alt={tCommon("coverAlt", { title })}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -84,12 +87,12 @@ function AlbumCard({
             className="w-full h-full"
             style={{ background: coverGradient(deezerId) }}
             role="img"
-            aria-label={`Cover de ${title}`}
+            aria-label={tCommon("coverAlt", { title })}
           />
         )}
         <div className="absolute inset-0 bg-mb-bg/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <span className="px-4 py-2 bg-mb-primary text-white font-semibold text-sm rounded-lg">
-            Ver álbum
+            {t("viewAlbum")}
           </span>
         </div>
         {userRating != null && (
@@ -116,11 +119,11 @@ function AlbumCard({
         ) : reviewCount != null ? (
           <span className="text-mb-dim text-xs mt-1 block">
             {reviewCount > 0
-              ? `${reviewCount} reseña${reviewCount !== 1 ? "s" : ""}`
-              : "Sin reseñas aún"}
+              ? t("reviewCount", { count: reviewCount })
+              : t("noReviewsYet")}
           </span>
         ) : (
-          <span className="text-mb-dim text-xs mt-1 block">Sin reseñas</span>
+          <span className="text-mb-dim text-xs mt-1 block">{t("noReviews")}</span>
         )}
       </div>
     </Link>
@@ -144,6 +147,8 @@ function TrackCard({
   reviewCount?: number;
   userRating?: number | null;
 }) {
+  const t = useTranslations("Search");
+  const tCommon = useTranslations("Common");
   return (
     <Link href={`/track/${deezerId}`} className="group block">
       <div className="relative rounded-xl overflow-hidden aspect-square">
@@ -151,7 +156,7 @@ function TrackCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={coverUrl}
-            alt={`Cover de ${title}`}
+            alt={tCommon("coverAlt", { title })}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -159,12 +164,12 @@ function TrackCard({
             className="w-full h-full"
             style={{ background: coverGradient(deezerId) }}
             role="img"
-            aria-label={`Cover de ${title}`}
+            aria-label={tCommon("coverAlt", { title })}
           />
         )}
         <div className="absolute inset-0 bg-mb-bg/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <span className="px-4 py-2 bg-mb-primary text-white font-semibold text-sm rounded-lg">
-            Ver canción
+            {t("viewTrack")}
           </span>
         </div>
         {userRating != null && (
@@ -189,8 +194,8 @@ function TrackCard({
         {reviewCount != null && (
           <span className="text-mb-dim text-xs mt-1 block">
             {reviewCount > 0
-              ? `${reviewCount} reseña${reviewCount !== 1 ? "s" : ""}`
-              : "Sin reseñas aún"}
+              ? t("reviewCount", { count: reviewCount })
+              : t("noReviewsYet")}
           </span>
         )}
       </div>
@@ -199,6 +204,7 @@ function TrackCard({
 }
 
 function ArtistCard({ artist }: { artist: CatalogArtist }) {
+  const t = useTranslations("Search");
   return (
     <Link
       href={`/artist/${artist.deezerId}`}
@@ -225,7 +231,7 @@ function ArtistCard({ artist }: { artist: CatalogArtist }) {
       </p>
       {artist.reviewCount != null && (
         <p className="text-mb-dim text-xs -mt-1">
-          {artist.reviewCount} reseña{artist.reviewCount !== 1 ? "s" : ""}
+          {t("reviewCount", { count: artist.reviewCount })}
         </p>
       )}
     </Link>
@@ -233,6 +239,8 @@ function ArtistCard({ artist }: { artist: CatalogArtist }) {
 }
 
 function RecentlyViewedCard({ item }: { item: RecentlyViewedItem }) {
+  const t = useTranslations("Search");
+  const tCommon = useTranslations("Common");
   const type = item.resourceType.toUpperCase();
   const isAlbum = type === "ALBUM";
   const isTrack = type === "TRACK";
@@ -246,11 +254,11 @@ function RecentlyViewedCard({ item }: { item: RecentlyViewedItem }) {
 
   const subtitle = isArtist
     ? item.albumsCount != null
-      ? `${item.albumsCount} álbum${item.albumsCount !== 1 ? "es" : ""}`
-      : "Artista"
+      ? t("albumsCount", { count: item.albumsCount })
+      : t("typeLabels.artist")
     : item.artistName;
 
-  const typeLabel = isAlbum ? "Álbum" : isTrack ? "Canción" : null;
+  const typeLabel = isAlbum ? t("typeLabels.album") : isTrack ? t("typeLabels.track") : null;
 
   return (
     <Link href={href} className="group block">
@@ -264,7 +272,7 @@ function RecentlyViewedCard({ item }: { item: RecentlyViewedItem }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={item.coverUrl}
-            alt={`Cover de ${item.title}`}
+            alt={tCommon("coverAlt", { title: item.title })}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -272,7 +280,7 @@ function RecentlyViewedCard({ item }: { item: RecentlyViewedItem }) {
             className="w-full h-full flex items-center justify-center font-serif text-xl text-mb-accent"
             style={{ background: coverGradient(item.deezerId) }}
             role="img"
-            aria-label={`Cover de ${item.title}`}
+            aria-label={tCommon("coverAlt", { title: item.title })}
           >
             {isArtist ? getInitials(item.title) : ""}
           </div>
@@ -300,14 +308,16 @@ interface SearchClientProps {
 }
 
 export function SearchClient({ accessToken }: SearchClientProps) {
+  const t = useTranslations("Search");
+  const tCommon = useTranslations("Common");
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialQuery = searchParams.get("q") ?? "";
 
   // Initialize tab from URL param so it survives back-navigation
   const initialTab = (() => {
-    const t = searchParams.get("tab");
-    return (["todo", "albums", "songs", "artists"].includes(t ?? "") ? t : "todo") as SearchTab;
+    const tabParam = searchParams.get("tab");
+    return (["todo", "albums", "songs", "artists"].includes(tabParam ?? "") ? tabParam : "todo") as SearchTab;
   })();
 
   const [query, setQuery] = useState(initialQuery);
@@ -557,10 +567,10 @@ export function SearchClient({ accessToken }: SearchClientProps) {
   }, [hasMore, loadMore]);
 
   const tabs: { id: SearchTab; label: string }[] = [
-    { id: "todo", label: "Todo" },
-    { id: "albums", label: "Álbumes" },
-    { id: "songs", label: "Canciones" },
-    { id: "artists", label: "Artistas" },
+    { id: "todo", label: t("tabAll") },
+    { id: "albums", label: t("tabAlbums") },
+    { id: "songs", label: t("tabSongs") },
+    { id: "artists", label: t("tabArtists") },
   ];
 
   function handleSelectRecent(item: CatalogSearchHistoryItem) {
@@ -605,8 +615,8 @@ export function SearchClient({ accessToken }: SearchClientProps) {
                     setDropdownOpen(false);
                   }
                 }}
-                aria-label="Buscar catálogo"
-                placeholder="Buscá un álbum, canción o artista…"
+                aria-label={t("searchAriaLabel")}
+                placeholder={t("searchPlaceholder")}
                 className="flex-1 min-w-0 h-[54px] bg-transparent border-none outline-none text-mb-text text-[17px] placeholder:text-mb-dim"
               />
               {query && (
@@ -617,7 +627,7 @@ export function SearchClient({ accessToken }: SearchClientProps) {
                     setCommittedQuery("");
                     inputRef.current?.focus();
                   }}
-                  aria-label="Limpiar búsqueda"
+                  aria-label={tCommon("clearSearch")}
                   className="w-8 h-8 flex items-center justify-center bg-mb-border rounded-full text-mb-muted hover:bg-mb-ddp hover:text-mb-text transition-colors shrink-0 cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -641,19 +651,19 @@ export function SearchClient({ accessToken }: SearchClientProps) {
           {/* Tabs */}
           {hasQuery && (
             <div className="flex gap-1 mt-3.5 border-b border-mb-border overflow-x-auto no-scrollbar overflow-y-hidden">
-              {tabs.map((t) => (
+              {tabs.map((tb) => (
                 <button
-                  key={t.id}
+                  key={tb.id}
                   type="button"
-                  onClick={() => setActiveTab(t.id)}
+                  onClick={() => setActiveTab(tb.id)}
                   className={cn(
                     "shrink-0 h-11 px-4 bg-transparent border-none text-sm cursor-pointer whitespace-nowrap transition-colors -mb-px",
-                    activeTab === t.id
+                    activeTab === tb.id
                       ? "border-b-2 border-mb-primary text-mb-text font-semibold"
                       : "border-b-2 border-transparent text-mb-muted font-medium hover:text-mb-text",
                   )}
                 >
-                  {t.label}
+                  {tb.label}
                 </button>
               ))}
             </div>
@@ -666,7 +676,7 @@ export function SearchClient({ accessToken }: SearchClientProps) {
             {recentlyViewed.length > 0 && (
               <section className="mb-12">
                 <h2 className="font-serif font-normal text-2xl text-mb-text mb-5">
-                  Visto recientemente
+                  {t("recentlyViewedHeading")}
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
                   {recentlyViewed.map((item) => (
@@ -681,7 +691,7 @@ export function SearchClient({ accessToken }: SearchClientProps) {
 
             <section className="mb-12">
               <h2 className="font-serif font-normal text-2xl text-mb-text mb-5">
-                Álbumes populares esta semana
+                {t("trendingAlbumsHeading")}
               </h2>
               {trendingLoading ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
@@ -704,7 +714,7 @@ export function SearchClient({ accessToken }: SearchClientProps) {
                 </div>
               ) : (
                 <p className="text-mb-muted text-sm">
-                  Usá el buscador para explorar el catálogo.
+                  {t("useSearchHint")}
                 </p>
               )}
             </section>
@@ -712,7 +722,7 @@ export function SearchClient({ accessToken }: SearchClientProps) {
             {trendingArtists.length > 0 && (
               <section>
                 <h2 className="font-serif font-normal text-2xl text-mb-text mb-5">
-                  Artistas más reseñados
+                  {t("trendingArtistsHeading")}
                 </h2>
                 <div className="flex gap-6 overflow-x-auto no-scrollbar pb-2">
                   {trendingArtists.map((ar) => (
@@ -745,12 +755,12 @@ export function SearchClient({ accessToken }: SearchClientProps) {
             {!isFetchingFirstPage && (
               <p className="text-mb-dim text-sm mt-4 mb-5">
                 {activeTab === "artists"
-                  ? `${totalArtists} artista${totalArtists !== 1 ? "s" : ""} encontrado${totalArtists !== 1 ? "s" : ""} para "${committedQuery}"`
+                  ? t("resultsCountArtists", { count: totalArtists, query: committedQuery })
                   : activeTab === "songs"
-                    ? `${totalTracks} canción${totalTracks !== 1 ? "es" : ""} encontrada${totalTracks !== 1 ? "s" : ""} para "${committedQuery}"`
+                    ? t("resultsCountSongs", { count: totalTracks, query: committedQuery })
                     : activeTab === "albums"
-                      ? `${totalAlbums} álbum${totalAlbums !== 1 ? "es" : ""} encontrado${totalAlbums !== 1 ? "s" : ""} para "${committedQuery}"`
-                      : `${totalAlbums + totalTracks} resultado${totalAlbums + totalTracks !== 1 ? "s" : ""} para "${committedQuery}"`}
+                      ? t("resultsCountAlbums", { count: totalAlbums, query: committedQuery })
+                      : t("resultsCountAll", { count: totalAlbums + totalTracks, query: committedQuery })}
               </p>
             )}
 
@@ -771,16 +781,16 @@ export function SearchClient({ accessToken }: SearchClientProps) {
                           userRating={a.userRating}
                         />
                       )),
-                      ...visibleTracks.filter((t) => !!t.deezerId).map((t) => (
+                      ...visibleTracks.filter((tr) => !!tr.deezerId).map((tr) => (
                         <TrackCard
-                          key={`track-${t.deezerId}`}
-                          deezerId={t.deezerId}
-                          title={t.title}
-                          artist={t.artist.name}
-                          coverUrl={t.coverUrl}
-                          durationMs={t.durationMs}
-                          reviewCount={t.reviewCount}
-                          userRating={t.userRating}
+                          key={`track-${tr.deezerId}`}
+                          deezerId={tr.deezerId}
+                          title={tr.title}
+                          artist={tr.artist.name}
+                          coverUrl={tr.coverUrl}
+                          durationMs={tr.durationMs}
+                          reviewCount={tr.reviewCount}
+                          userRating={tr.userRating}
                         />
                       )),
                     ]}
@@ -803,7 +813,7 @@ export function SearchClient({ accessToken }: SearchClientProps) {
               {isFetchingMore && (
                 <div
                   className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
-                  aria-label="Cargando más resultados"
+                  aria-label={t("loadingMoreAriaLabel")}
                 />
               )}
             </div>
@@ -817,10 +827,10 @@ export function SearchClient({ accessToken }: SearchClientProps) {
               <Search className="w-7 h-7 text-mb-dim" />
             </div>
             <h2 className="font-serif font-normal text-[22px] text-mb-text mb-2.5">
-              No encontramos resultados para &ldquo;{committedQuery}&rdquo;
+              {t("noResultsHeading", { query: committedQuery })}
             </h2>
             <p className="text-mb-muted text-sm leading-relaxed max-w-sm">
-              Probá con otro nombre o revisá la ortografía.
+              {t("noResultsBody")}
             </p>
           </div>
         )}

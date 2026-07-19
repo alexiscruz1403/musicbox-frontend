@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Lock, CheckCircle2, AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiResetPassword, type ApiError } from "@/lib/api";
 import { getPasswordStrength, STRENGTH_COLORS } from "@/lib/password-strength";
@@ -11,6 +12,8 @@ import { getPasswordStrength, STRENGTH_COLORS } from "@/lib/password-strength";
 type LinkInvalidReason = "invalid" | "oauth";
 
 export function ResetPasswordClient() {
+  const t = useTranslations("Auth.ResetPassword");
+  const tCommon = useTranslations("Common");
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
   const token = searchParams.get("token");
@@ -58,31 +61,29 @@ export function ResetPasswordClient() {
         <div className="w-14 h-14 mx-auto rounded-full bg-mb-error/10 border border-mb-error/40 flex items-center justify-center">
           <AlertTriangle className="w-6 h-6 text-mb-error" />
         </div>
-        <h1 className="font-serif text-2xl text-mb-text">Este link no es válido</h1>
+        <h1 className="font-serif text-2xl text-mb-text">{t("invalidLinkHeading")}</h1>
         {linkInvalid === "oauth" ? (
           <>
             <p className="text-sm text-mb-muted leading-relaxed">
-              Esta cuenta usa Google para iniciar sesión y no tiene contraseña que
-              restablecer.
+              {t("oauthNoPassword")}
             </p>
             <Link
               href="/login"
               className="inline-flex w-full min-h-11 items-center justify-center bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors"
             >
-              Iniciar sesión
+              {tCommon("signIn")}
             </Link>
           </>
         ) : (
           <>
             <p className="text-sm text-mb-muted leading-relaxed">
-              Este link para restablecer tu contraseña expiró o no es válido. Pedí uno
-              nuevo.
+              {t("linkExpired")}
             </p>
             <Link
               href="/forgot-password"
               className="inline-flex w-full min-h-11 items-center justify-center bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors"
             >
-              Pedir un nuevo link
+              {t("requestNewLink")}
             </Link>
           </>
         )}
@@ -97,13 +98,13 @@ export function ResetPasswordClient() {
           <CheckCircle2 className="w-6 h-6 text-mb-success" />
         </div>
         <p className="text-sm text-mb-text leading-relaxed">
-          Tu contraseña se actualizó correctamente.
+          {t("successMessage")}
         </p>
         <Link
           href="/login"
           className="inline-flex w-full min-h-11 items-center justify-center bg-mb-primary hover:bg-mb-primary-h rounded-xl text-white font-semibold transition-colors"
         >
-          Iniciar sesión
+          {tCommon("signIn")}
         </Link>
       </div>
     );
@@ -115,16 +116,16 @@ export function ResetPasswordClient() {
         <div className="w-[54px] h-[54px] rounded-2xl bg-mb-primary/10 border border-mb-primary/40 flex items-center justify-center">
           <Lock className="w-6 h-6 text-mb-accent" />
         </div>
-        <h1 className="font-serif text-2xl text-mb-text">Elegí una nueva contraseña</h1>
+        <h1 className="font-serif text-2xl text-mb-text">{t("heading")}</h1>
         <p className="text-sm text-mb-muted leading-relaxed">
-          Tiene que ser distinta a la anterior.
+          {t("subtitle")}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="pw1" className="block text-sm text-mb-muted font-medium">
-            Nueva contraseña
+            {t("newPasswordLabel")}
           </label>
           <div className="relative">
             <input
@@ -135,14 +136,14 @@ export function ResetPasswordClient() {
               value={pw1}
               disabled={isPending}
               onChange={(e) => setPw1(e.target.value)}
-              placeholder="••••••••"
+              placeholder={tCommon("passwordPlaceholder")}
               className="w-full h-11 bg-mb-input border border-mb-border focus:border-mb-primary rounded-xl px-4 pr-11 text-mb-text placeholder:text-mb-dim outline-none transition-colors"
             />
             <button
               type="button"
               onClick={() => setShowPw1((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors cursor-pointer"
-              aria-label={showPw1 ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-label={showPw1 ? tCommon("hidePassword") : tCommon("showPassword")}
             >
               {showPw1 ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -167,7 +168,7 @@ export function ResetPasswordClient() {
 
         <div className="space-y-1.5">
           <label htmlFor="pw2" className="block text-sm text-mb-muted font-medium">
-            Confirmar contraseña
+            {t("confirmPasswordLabel")}
           </label>
           <div className="relative">
             <input
@@ -180,7 +181,7 @@ export function ResetPasswordClient() {
                 setPw2(e.target.value);
                 setTouchedPw2(true);
               }}
-              placeholder="••••••••"
+              placeholder={tCommon("passwordPlaceholder")}
               className={cn(
                 "w-full h-11 bg-mb-input border rounded-xl px-4 pr-11 text-mb-text placeholder:text-mb-dim outline-none transition-colors",
                 mismatch ? "border-mb-error" : "border-mb-border focus:border-mb-primary",
@@ -190,12 +191,12 @@ export function ResetPasswordClient() {
               type="button"
               onClick={() => setShowPw2((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-mb-dim hover:text-mb-muted transition-colors cursor-pointer"
-              aria-label={showPw2 ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-label={showPw2 ? tCommon("hidePassword") : tCommon("showPassword")}
             >
               {showPw2 ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          {mismatch && <p className="text-xs text-mb-error">Las contraseñas no coinciden.</p>}
+          {mismatch && <p className="text-xs text-mb-error">{t("passwordMismatch")}</p>}
         </div>
 
         <button
@@ -209,10 +210,10 @@ export function ResetPasswordClient() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
-              Guardando…
+              {tCommon("saving")}
             </>
           ) : (
-            "Guardar nueva contraseña"
+            t("submit")
           )}
         </button>
       </form>

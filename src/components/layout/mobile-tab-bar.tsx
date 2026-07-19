@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Search, User, TrendingUp, Bell, Sparkles, Shield } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useNotificationsPanelStore } from "@/stores/notifications-panel-store";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
@@ -15,6 +16,7 @@ interface MobileTabBarProps {
 }
 
 export function MobileTabBar({ session }: MobileTabBarProps) {
+  const t = useTranslations("Nav");
   const pathname = usePathname();
   const toggleNotifications = useNotificationsPanelStore((s) => s.toggle);
   const { data: unreadData } = useUnreadNotifications(session?.accessToken ?? null);
@@ -22,17 +24,17 @@ export function MobileTabBar({ session }: MobileTabBarProps) {
   const pendingSyncCount = usePendingMutationCount();
 
   const tabs = [
-    { href: "/feed", icon: Home, label: "Feed" },
-    { href: "/search", icon: Search, label: "Buscar" },
-    { href: "/trending", icon: TrendingUp, label: "Trending" },
-    { href: "/recommendations", icon: Sparkles, label: "Recomendaciones" },
+    { href: "/feed", icon: Home, label: t("feed") },
+    { href: "/search", icon: Search, label: t("search") },
+    { href: "/trending", icon: TrendingUp, label: t("trending") },
+    { href: "/recommendations", icon: Sparkles, label: t("recommendations") },
     {
       href: session ? `/u/${session.user.handle}` : "/login",
       icon: User,
-      label: session ? "Perfil" : "Entrar",
+      label: session ? t("profile") : t("signIn"),
     },
     ...(session?.user.role === "ADMIN"
-      ? [{ href: "/admin/reports", icon: Shield, label: "Reportes" }]
+      ? [{ href: "/admin/reports", icon: Shield, label: t("reports") }]
       : []),
   ];
 
@@ -67,7 +69,7 @@ export function MobileTabBar({ session }: MobileTabBarProps) {
           <button
             type="button"
             onClick={toggleNotifications}
-            aria-label="Notificaciones"
+            aria-label={t("notifications")}
             className="flex items-center justify-center flex-1 h-full text-mb-muted transition-colors cursor-pointer"
           >
             <span className="relative inline-flex">

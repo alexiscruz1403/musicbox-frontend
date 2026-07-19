@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock, X } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { apiFollow, apiUnfollow, apiGetFollowers, apiGetFollowing } from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
 import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
@@ -41,6 +42,8 @@ export function FollowListDrawer({
   onClose,
 }: FollowListDrawerProps) {
   const router = useRouter();
+  const t = useTranslations("PublicProfile.followList");
+  const tCommon = useTranslations("Common");
   const [statusOverrides, setStatusOverrides] = useState<Record<string, FollowStatus>>({});
   const [isPending, startTransition] = useTransition();
 
@@ -119,9 +122,9 @@ export function FollowListDrawer({
 
   if (!open) return null;
 
-  const title = kind === "followers" ? "Seguidores" : "Siguiendo";
+  const title = kind === "followers" ? t("followersTitle") : tCommon("following");
   const emptyText =
-    kind === "followers" ? "Todavía no tiene seguidores." : "Todavía no sigue a nadie.";
+    kind === "followers" ? t("noFollowers") : t("noFollowing");
 
   return (
     <div
@@ -140,7 +143,7 @@ export function FollowListDrawer({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Cerrar"
+            aria-label={t("closeAriaLabel")}
             className="w-9 h-9 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
@@ -197,7 +200,7 @@ export function FollowListDrawer({
                           {item.isPrivate && (
                             <Lock
                               className="w-3 h-3 text-mb-dim shrink-0"
-                              aria-label="Cuenta privada"
+                              aria-label={t("privateAccountAriaLabel")}
                             />
                           )}
                         </span>
@@ -222,7 +225,7 @@ export function FollowListDrawer({
                 {isFetchingNextPage && (
                   <div
                     className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
-                    aria-label="Cargando más"
+                    aria-label={t("loadingMoreAriaLabel")}
                   />
                 )}
               </div>

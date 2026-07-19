@@ -1,6 +1,7 @@
 "use client";
 
 import { CloudUpload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { usePendingMutationCount } from "@/hooks/use-pending-mutation-count";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ interface PendingSyncBadgeProps {
 // reseña/edición hecha sin conexión.
 export function PendingSyncBadge({ className }: PendingSyncBadgeProps) {
   const count = usePendingMutationCount();
+  const t = useTranslations("Offline");
 
   if (count === 0) return null;
 
@@ -25,7 +27,7 @@ export function PendingSyncBadge({ className }: PendingSyncBadgeProps) {
       role="status"
     >
       <CloudUpload className="w-3.5 h-3.5 shrink-0" />
-      {count} cambio{count === 1 ? "" : "s"} pendiente{count === 1 ? "" : "s"} de sincronizar
+      {t("pendingSyncBadge", { count })}
     </span>
   );
 }

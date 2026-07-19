@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ArrowLeft, MoreVertical, Pencil, Trash2, Flag, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   apiDeleteReview,
@@ -42,6 +43,8 @@ export function ReviewDetailClient({
   accessToken,
 }: ReviewDetailClientProps) {
   const router = useRouter();
+  const t = useTranslations("Reviews.detail");
+  const tCommon = useTranslations("Common");
   const isOwner = !!currentUserId && currentUserId === review.userId;
 
   const [reaction, setReaction] = useState<ReactionType | null>(review.userReaction);
@@ -138,14 +141,14 @@ export function ReviewDetailClient({
       } catch (err) {
         setCommentsCount((c) => c - 1);
         const apiErr = err as ApiError;
-        setCommentError(apiErr.message || "No se pudo publicar el comentario.");
+        setCommentError(apiErr.message || t("commentPostError"));
       }
     });
   }
 
   function handleDeleteComment(commentId: string) {
     if (!accessToken) return;
-    if (!window.confirm("¿Eliminar este comentario?")) return;
+    if (!window.confirm(t("confirmDeleteComment"))) return;
     setCommentsCount((c) => c - 1);
     setDeletingCommentId(commentId);
     startCommentTransition(async () => {
@@ -162,7 +165,7 @@ export function ReviewDetailClient({
 
   function handleDelete() {
     if (!accessToken) return;
-    if (!window.confirm("¿Eliminar esta reseña? Esta acción no se puede deshacer.")) {
+    if (!window.confirm(t("confirmDeleteReview"))) {
       return;
     }
     setDeleteError(null);
@@ -181,8 +184,8 @@ export function ReviewDetailClient({
         }
         setDeleteError(
           apiErr.code === "NOT_REVIEW_OWNER"
-            ? "No tenés permiso para eliminar esta reseña."
-            : apiErr.message || "No se pudo eliminar la reseña.",
+            ? t("deleteNotOwnerError")
+            : apiErr.message || t("deleteReviewError"),
         );
       }
     });
@@ -193,7 +196,7 @@ export function ReviewDetailClient({
       <button
         type="button"
         onClick={() => router.back()}
-        aria-label="Volver"
+        aria-label={tCommon("back")}
         className="absolute top-5 left-5 z-10 w-11 h-11 flex items-center justify-center rounded-full border border-mb-border bg-mb-bg/50 backdrop-blur text-mb-text hover:bg-mb-input transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5" />
@@ -230,7 +233,7 @@ export function ReviewDetailClient({
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
-                aria-label="Más opciones"
+                aria-label={t("moreOptionsAriaLabel")}
                 className="w-11 h-11 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors cursor-pointer"
               >
                 <MoreVertical className="w-[18px] h-[18px]" />
@@ -243,7 +246,7 @@ export function ReviewDetailClient({
                       className="flex items-center gap-2.5 w-full min-h-10 px-3 py-2 rounded-md text-mb-text text-sm hover:bg-mb-border transition-colors"
                     >
                       <Pencil className="w-4 h-4" />
-                      Editar
+                      {t("editAction")}
                     </Link>
                   )}
                   <button
@@ -253,7 +256,7 @@ export function ReviewDetailClient({
                     className="flex items-center gap-2.5 w-full min-h-10 px-3 py-2 rounded-md text-mb-error text-sm text-left hover:bg-mb-border transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                   >
                     <Trash2 className="w-4 h-4" />
-                    {isPending ? "Eliminando…" : "Eliminar"}
+                    {isPending ? t("deletingLabel") : t("deleteAction")}
                   </button>
                 </div>
               )}
@@ -268,14 +271,14 @@ export function ReviewDetailClient({
                   targetType: "REVIEW",
                   targetId: review.id,
                   previewTitle: review.externalTitle
-                    ? `Reseña de ${review.externalTitle}`
-                    : "Esta reseña",
+                    ? t("reportPreviewTitleWithName", { title: review.externalTitle })
+                    : t("reportPreviewTitleFallback"),
                   previewSubtitle: review.user.handle
-                    ? `de @${review.user.handle}`
+                    ? t("byHandle", { handle: review.user.handle })
                     : undefined,
                 })
               }
-              aria-label="Reportar reseña"
+              aria-label={t("reportReviewAriaLabel")}
               className="shrink-0 w-11 h-11 flex items-center justify-center rounded-lg text-mb-muted hover:bg-mb-input hover:text-mb-error transition-colors cursor-pointer"
             >
               <Flag className="w-[18px] h-[18px]" />
@@ -306,11 +309,11 @@ export function ReviewDetailClient({
                   : { background: coverGradient(review.id) }
               }
               role="img"
-              aria-label={`Cover de ${review.externalTitle ?? ""}`}
+              aria-label={tCommon("coverAlt", { title: review.externalTitle ?? "" })}
             />
             <div className="min-w-0 flex-1">
               <span className="inline-block px-2 py-0.5 border border-mb-ddp rounded-full text-[10px] tracking-wider uppercase text-mb-accent font-semibold mb-1.5">
-                {review.type === "ALBUM" ? "Álbum" : "Canción"}
+                {review.type === "ALBUM" ? t("typeAlbum") : t("typeTrack")}
               </span>
               <div className="font-serif text-lg text-mb-text truncate">
                 {review.externalTitle ?? "—"}
@@ -334,7 +337,7 @@ export function ReviewDetailClient({
             />
             <div className="min-w-0 flex-1">
               <span className="inline-block px-2 py-0.5 border border-mb-ddp rounded-full text-[10px] tracking-wider uppercase text-mb-accent font-semibold mb-1.5">
-                {review.type === "ALBUM" ? "Álbum" : "Canción"}
+                {review.type === "ALBUM" ? t("typeAlbum") : t("typeTrack")}
               </span>
               <div className="font-serif text-lg text-mb-text truncate">
                 {review.externalTitle ?? "—"}
@@ -367,14 +370,14 @@ export function ReviewDetailClient({
         {review.type === "ALBUM" && review.trackReviewItems && review.trackReviewItems.length > 0 && (
           <section className="mb-10">
             <h2 className="font-serif font-normal text-[22px] text-mb-text mb-4.5">
-              Calificaciones por canción
+              {t("perTrackRatingsHeading")}
             </h2>
             <div className="flex flex-col gap-4">
               {review.trackReviewItems.map((item, i) => (
                 <div key={item.deezerId ?? item.trackNumber ?? i}>
                   <div className="flex items-center gap-3 mb-1.5">
                     <span className="min-w-0 flex-1 text-sm text-mb-text truncate">
-                      {item.title ?? `Canción ${item.trackNumber ?? i + 1}`}
+                      {item.title ?? t("trackFallbackLabel", { number: item.trackNumber ?? i + 1 })}
                     </span>
                     <span
                       className="shrink-0 font-mono font-bold text-sm"
@@ -385,7 +388,7 @@ export function ReviewDetailClient({
                   </div>
                   <div
                     role="img"
-                    aria-label={`Puntuación ${item.rating.toFixed(2)} de 10`}
+                    aria-label={t("ratingAriaLabel", { rating: item.rating.toFixed(2) })}
                     className="h-1.5 rounded-full bg-mb-input overflow-hidden"
                   >
                     <div
@@ -409,7 +412,7 @@ export function ReviewDetailClient({
           <button
             type="button"
             onClick={() => handleReact("LIKE")}
-            aria-label="Me gusta"
+            aria-label={t("likeAriaLabel")}
             aria-pressed={reaction === "LIKE"}
             className="inline-flex items-center gap-2 min-h-11 px-3.5 rounded-lg text-sm font-medium hover:bg-mb-input transition-colors cursor-pointer"
             style={{ color: reaction === "LIKE" ? "#8B56E8" : "#9B95B0" }}
@@ -420,7 +423,7 @@ export function ReviewDetailClient({
           <button
             type="button"
             onClick={() => handleReact("DISLIKE")}
-            aria-label="No me gusta"
+            aria-label={t("dislikeAriaLabel")}
             aria-pressed={reaction === "DISLIKE"}
             className="inline-flex items-center gap-2 min-h-11 px-3.5 rounded-lg text-sm font-medium hover:bg-mb-input transition-colors cursor-pointer"
             style={{ color: reaction === "DISLIKE" ? "#8B56E8" : "#9B95B0" }}
@@ -437,7 +440,7 @@ export function ReviewDetailClient({
         {/* Comments */}
         <section>
           <h2 className="font-serif font-normal text-[22px] text-mb-text mb-5">
-            {commentsCount} comentarios
+            {t("commentsHeading", { count: commentsCount })}
           </h2>
 
           {accessToken ? (
@@ -452,7 +455,7 @@ export function ReviewDetailClient({
                 <textarea
                   value={draftComment}
                   onChange={(e) => setDraftComment(e.target.value)}
-                  placeholder="Sumá tu comentario…"
+                  placeholder={t("commentPlaceholder")}
                   className="w-full min-h-11 p-2.5 bg-mb-input border border-mb-border focus:border-mb-primary rounded-lg text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-y text-sm leading-relaxed"
                 />
                 {commentError && (
@@ -472,7 +475,7 @@ export function ReviewDetailClient({
                         : "bg-mb-primary hover:bg-mb-primary-h text-white cursor-pointer",
                     )}
                   >
-                    Comentar
+                    {t("commentSubmit")}
                   </button>
                 </div>
               </div>
@@ -480,9 +483,9 @@ export function ReviewDetailClient({
           ) : (
             <p className="text-mb-muted text-sm mb-7">
               <Link href="/login" className="text-mb-accent hover:underline">
-                Iniciá sesión
+                {t("loginLinkLabel")}
               </Link>{" "}
-              para comentar.
+              {t("loginToCommentSuffix")}
             </p>
           )}
 
@@ -499,7 +502,7 @@ export function ReviewDetailClient({
               ))}
             </div>
           ) : comments.length === 0 ? (
-            <p className="text-mb-muted text-sm">Todavía no hay comentarios. Sé el primero.</p>
+            <p className="text-mb-muted text-sm">{t("noCommentsYet")}</p>
           ) : (
             <>
               <div className="flex flex-col gap-5">
@@ -509,7 +512,7 @@ export function ReviewDetailClient({
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={c.user.avatarUrl}
-                        alt={`Avatar de ${c.user.displayName}`}
+                        alt={t("avatarAlt", { name: c.user.displayName })}
                         className="shrink-0 w-9 h-9 rounded-full object-cover"
                       />
                     ) : (
@@ -539,10 +542,10 @@ export function ReviewDetailClient({
                           type="button"
                           onClick={() => handleDeleteComment(c.id)}
                           disabled={commentPending && deletingCommentId === c.id}
-                          aria-label="Eliminar comentario"
+                          aria-label={t("deleteCommentAriaLabel")}
                           className="min-h-8 py-1 mt-1 bg-transparent border-none text-mb-dim text-xs font-medium cursor-pointer hover:text-mb-error transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                          {commentPending && deletingCommentId === c.id ? "Eliminando…" : "Eliminar"}
+                          {commentPending && deletingCommentId === c.id ? t("deletingLabel") : t("deleteAction")}
                         </button>
                       ) : (
                         currentUserId && (
@@ -554,14 +557,14 @@ export function ReviewDetailClient({
                                 targetId: c.id,
                                 previewTitle: c.content.slice(0, 140),
                                 previewSubtitle: c.user.handle
-                                  ? `de @${c.user.handle}`
+                                  ? t("byHandle", { handle: c.user.handle })
                                   : undefined,
                               })
                             }
-                            aria-label="Reportar comentario"
+                            aria-label={t("reportCommentAriaLabel")}
                             className="min-h-8 py-1 mt-1 bg-transparent border-none text-mb-dim text-xs font-medium cursor-pointer hover:text-mb-error transition-colors"
                           >
-                            Reportar
+                            {t("reportAction")}
                           </button>
                         )
                       )}
@@ -573,7 +576,7 @@ export function ReviewDetailClient({
                 {isFetchingNextPage && (
                   <div
                     className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
-                    aria-label="Cargando más comentarios"
+                    aria-label={t("loadingMoreCommentsAriaLabel")}
                   />
                 )}
               </div>

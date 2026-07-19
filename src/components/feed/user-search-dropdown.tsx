@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   apiUserQuickSearch,
   apiDeleteUserSearchHistoryItem,
@@ -39,6 +40,8 @@ export function UserSearchDropdown({
   onSelectRecent,
   onClose,
 }: UserSearchDropdownProps) {
+  const t = useTranslations("Feed.userSearch");
+  const tCommon = useTranslations("Common");
   const queryClient = useQueryClient();
   const showRecent = query.trim().length === 0;
 
@@ -93,14 +96,14 @@ export function UserSearchDropdown({
     <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 bg-mb-card border border-mb-border rounded-xl shadow-lg p-2 max-h-[320px] overflow-y-auto overflow-x-hidden">
       {showRecent ? (
         <RecentSearchPanel
-          title="Recientes"
+          title={t("recentTitle")}
           items={history.map((h) => ({
             id: h.id,
             label: h.query,
             searchedAt: h.searchedAt,
           }))}
           isLoading={isHistoryLoading}
-          emptyLabel="Sin búsquedas recientes."
+          emptyLabel={tCommon("noRecentSearches")}
           onSelect={(row) => onSelectRecent(row.label)}
           onDeleteOne={(id) => deleteOneMutation.mutate(id)}
           onDeleteAll={() => deleteAllMutation.mutate()}
@@ -118,7 +121,7 @@ export function UserSearchDropdown({
           ))}
         </div>
       ) : predictive.length === 0 ? (
-        <p className="px-2 py-2 text-xs text-mb-dim">Sin coincidencias.</p>
+        <p className="px-2 py-2 text-xs text-mb-dim">{t("noMatches")}</p>
       ) : (
         predictive.map((item) => {
           const status = getQuickStatus(item);
