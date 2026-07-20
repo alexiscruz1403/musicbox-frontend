@@ -282,7 +282,7 @@
     },
     "terms": {
       "pageTitle": "Vinlyst Terms and Conditions",
-      "lastUpdated": "Last updated: July 10, 2026 · Effective upon publication",
+      "lastUpdated": "Last updated: July 19, 2026 — Effective upon publication",
       "introBefore": "Welcome to Vinlyst. These Terms and Conditions (\"Terms\") govern access to and use of the Vinlyst web application (the \"Service\"), operated from Argentina. By creating an account or using the Service, you accept these Terms and our",
       "introPrivacyLink": "Privacy Policy",
       "introAfter": "in full. If you don't agree, you shouldn't use Vinlyst.",
@@ -301,7 +301,10 @@
         "li1Suffix": ") must be between 3 and 30 characters, using only letters, numbers, and underscores, and may not infringe trademarks or impersonate third parties.",
         "li2": "You must provide truthful information when registering and keep it up to date.",
         "li3": "By registering, you give explicit, informed consent to the processing of your personal data under our Privacy Policy, logged with a date and time on your account.",
-        "li4": "Vinlyst reserves the right to suspend or delete accounts that breach these Terms."
+        "li4": "Vinlyst reserves the right to suspend or delete accounts that breach these Terms.",
+        "sub1Heading": "2.1 Private profiles",
+        "sub1Body1": "From your account settings you can choose whether your profile is public or private. If your account is private, your reviews and comments are only visible to accounts you've approved as followers; other users need to send a follow request, which you can accept or decline.",
+        "sub1Body2": "Your lists of followers and accounts you follow remain public even if your profile is private — a private profile controls who can see your content, not who can see who you're connected to."
       },
       "section3": {
         "heading": "3. User-generated content",
@@ -388,7 +391,7 @@
     },
     "privacy": {
       "pageTitle": "Vinlyst Privacy Policy",
-      "lastUpdated": "Last updated: July 10, 2026 · Effective upon publication",
+      "lastUpdated": "Last updated: July 19, 2026 — Effective upon publication",
       "introBefore": "This Privacy Policy describes what personal data Vinlyst collects, why we process it, who we share it with, and what rights you have over it, in accordance with Argentina's Law No. 25,326 on Personal Data Protection. It complements our",
       "introTermsLink": "Terms and Conditions",
       "introAfter": ", which you also accept by using the Service.",
@@ -403,20 +406,80 @@
           "colOrigin": "Source",
           "colRequired": "Required?",
           "rows": [
-            { "data": "Email", "origin": "Direct registration or Google account", "required": "Yes" },
-            { "data": "Password", "origin": "Direct registration (stored hashed, never in plain text)", "required": "Yes, unless registering with Google only" },
-            { "data": "Username and handle (@)", "origin": "Direct registration", "required": "Yes" },
-            { "data": "Profile photo", "origin": "Voluntary upload by the user", "required": "No" },
-            { "data": "Profile bio", "origin": "Voluntary entry by the user", "required": "No" },
-            { "data": "Reviews, scores, and comments", "origin": "Voluntarily published by the user", "required": "—" },
-            { "data": "Follow relationships (who you follow)", "origin": "User action on the platform", "required": "—" },
-            { "data": "Reactions (like / dislike)", "origin": "User action on the platform", "required": "—" },
-            { "data": "Notification preferences", "origin": "User settings", "required": "—" },
-            { "data": "Device IP address and user agent", "origin": "Automatic, tied to access sessions", "required": "—" },
-            { "data": "Records of reports created or received", "origin": "Use of the moderation system", "required": "—" }
+            {
+              "data": "Email",
+              "origin": "Direct registration or Google account",
+              "required": "Yes"
+            },
+            {
+              "data": "Password",
+              "origin": "Direct registration (stored hashed, never in plain text)",
+              "required": "Yes, unless registering with Google only"
+            },
+            {
+              "data": "Username and handle (@)",
+              "origin": "Direct registration",
+              "required": "Yes"
+            },
+            {
+              "data": "Profile photo",
+              "origin": "Voluntary upload by the user",
+              "required": "No"
+            },
+            {
+              "data": "Profile bio",
+              "origin": "Voluntary entry by the user",
+              "required": "No"
+            },
+            {
+              "data": "Reviews, scores, and comments",
+              "origin": "Voluntarily published by the user",
+              "required": "—"
+            },
+            {
+              "data": "Follow relationships (who you follow)",
+              "origin": "User action on the platform",
+              "required": "—"
+            },
+            {
+              "data": "Reactions (like / dislike)",
+              "origin": "User action on the platform",
+              "required": "—"
+            },
+            {
+              "data": "Notification preferences",
+              "origin": "User settings",
+              "required": "—"
+            },
+            {
+              "data": "Device IP address and user agent",
+              "origin": "Automatic, tied to access sessions",
+              "required": "—"
+            },
+            {
+              "data": "Records of reports created or received",
+              "origin": "Use of the moderation system",
+              "required": "—"
+            },
+            {
+              "data": "Search history",
+              "origin": "Use of the in-app search",
+              "required": "No"
+            },
+            {
+              "data": "Recently viewed albums, tracks, and artists",
+              "origin": "Browsing activity within the app",
+              "required": "No"
+            },
+            {
+              "data": "Push notification subscription (browser identifier and encryption keys)",
+              "origin": "Voluntary activation from notification settings",
+              "required": "No"
+            }
           ]
         },
-        "body": "We don't request or store sensitive data (ethnic origin, health, political or religious opinions, sexual orientation) beyond what the user voluntarily chooses to include in their bio or reviews, at their sole responsibility."
+        "body": "We don't request or store sensitive data (ethnic origin, health, political or religious opinions, sexual orientation) beyond what the user voluntarily chooses to include in their bio or reviews, at their sole responsibility.",
+        "visibilityNote": "The visibility of your reviews, comments, and follow relationships depends on whether your account is set to public or private; see section 2.1 of our Terms and Conditions for full detail."
       },
       "section3": {
         "heading": "3. Purpose of processing",
@@ -441,11 +504,36 @@
           "colReceives": "What they receive",
           "colPurpose": "What for",
           "rows": [
-            { "provider": "Google (OAuth)", "receives": "Authentication request, if you choose to sign in with Google", "purpose": "Verify your identity without sharing an additional password with us" },
-            { "provider": "Music catalog providers (Deezer, MusicBrainz, Last.fm)", "receives": "Search terms for albums, tracks, and artists", "purpose": "Show you music catalog results and audio previews; they don't receive your account data or the content of your reviews" },
-            { "provider": "Image storage (Cloudinary)", "receives": "Your profile photo, if you upload one", "purpose": "Host and serve the image in an optimized way" },
-            { "provider": "Email delivery provider", "receives": "Your email address", "purpose": "Send you account verification, password recovery, and suspension notices" },
-            { "provider": "Error monitoring (Sentry)", "receives": "Technical application error data (no passwords)", "purpose": "Detect and fix Service failures" }
+            {
+              "provider": "Google (OAuth)",
+              "receives": "Authentication request, if you choose to sign in with Google",
+              "purpose": "Verify your identity without sharing an additional password with us"
+            },
+            {
+              "provider": "Music catalog providers (Deezer, MusicBrainz, Last.fm)",
+              "receives": "Search terms for albums, tracks, and artists",
+              "purpose": "Show you music catalog results and audio previews; they don't receive your account data or the content of your reviews"
+            },
+            {
+              "provider": "Image storage (Cloudinary)",
+              "receives": "Your profile photo, if you upload one",
+              "purpose": "Host and serve the image in an optimized way"
+            },
+            {
+              "provider": "Email delivery provider",
+              "receives": "Your email address",
+              "purpose": "Send you account verification, password recovery, and suspension notices"
+            },
+            {
+              "provider": "Error monitoring (Sentry)",
+              "receives": "Technical application error data (no passwords)",
+              "purpose": "Detect and fix Service failures"
+            },
+            {
+              "provider": "Browser push service (Google FCM, Mozilla Push Service, Apple Push, depending on the browser)",
+              "receives": "The push subscription endpoint and the encrypted content of each notification we send you",
+              "purpose": "Deliver notifications even when you don't have the app open"
+            }
           ]
         },
         "callout": "None of these providers receive your password. Music catalog searches are performed without linking your user identity to the query."
@@ -481,7 +569,10 @@
       },
       "section10": {
         "heading": "10. Cookies and local storage",
-        "body": "Vinlyst uses browser local storage strictly necessary to keep you signed in and remember interface preferences (such as the navigation bar's state). We don't use advertising cookies or third-party tracking cookies for commercial purposes."
+        "li1": "A session cookie that keeps you signed in.",
+        "li2": "A language preference cookie (up to 1 year), remembering whether you chose English or Spanish.",
+        "li3": "Local storage on your device for offline mode: it keeps a copy of your profile, your reviews, and content you've recently viewed, along with any review or profile change you created while offline until it syncs with our servers.",
+        "body": "We don't use advertising cookies or third-party tracking cookies for commercial purposes."
       },
       "section11": {
         "heading": "11. International transfers",

@@ -65,6 +65,7 @@ export default async function PrivacyPage() {
         </tbody>
       </table>
       <p className={s.p}>{t("section2.body")}</p>
+      <p className={s.p}>{t("section2.visibilityNote")}</p>
 
       <h2 className={s.h2}>{t("section3.heading")}</h2>
       <ul className={s.ul}>
@@ -145,6 +146,11 @@ export default async function PrivacyPage() {
       <p className={s.p}>{t("section9.body")}</p>
 
       <h2 className={s.h2}>{t("section10.heading")}</h2>
+      <ul className={s.ul}>
+        <li>{t("section10.li1")}</li>
+        <li>{t("section10.li2")}</li>
+        <li>{t("section10.li3")}</li>
+      </ul>
       <p className={s.p}>{t("section10.body")}</p>
 
       <h2 className={s.h2}>{t("section11.heading")}</h2>

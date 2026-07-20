@@ -54,6 +54,10 @@ export default async function TermsPage() {
         <li>{t("section2.li4")}</li>
       </ul>
 
+      <h3 className={s.h3}>{t("section2.sub1Heading")}</h3>
+      <p className={s.p}>{t("section2.sub1Body1")}</p>
+      <p className={s.p}>{t("section2.sub1Body2")}</p>
+
       <h2 className={s.h2}>{t("section3.heading")}</h2>
       <p className={s.p}>{t("section3.intro")}</p>
       <ul className={s.ul}>

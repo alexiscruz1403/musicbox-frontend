@@ -282,7 +282,7 @@
     },
     "terms": {
       "pageTitle": "Términos y Condiciones de Vinlyst",
-      "lastUpdated": "Última actualización: 10 de julio de 2026 · Vigentes desde su publicación",
+      "lastUpdated": "Última actualización: 19 de julio de 2026 — Vigentes desde su publicación",
       "introBefore": "Bienvenido/a a Vinlyst. Estos Términos y Condiciones (\"Términos\") rigen el acceso y uso de la aplicación web Vinlyst (el \"Servicio\"), operada desde la República Argentina. Al crear una cuenta o utilizar el Servicio, aceptás estos Términos y nuestra",
       "introPrivacyLink": "Política de Privacidad",
       "introAfter": "en su totalidad. Si no estás de acuerdo, no debés utilizar Vinlyst.",
@@ -301,7 +301,10 @@
         "li1Suffix": ") debe tener entre 3 y 30 caracteres, usando solo letras, números y guiones bajos, y no puede infringir marcas registradas ni suplantar a terceros.",
         "li2": "Debés proporcionar información veraz al registrarte y mantenerla actualizada.",
         "li3": "Al registrarte, prestás consentimiento explícito e informado para el tratamiento de tus datos personales conforme a nuestra Política de Privacidad, registrado con fecha y hora en tu cuenta.",
-        "li4": "Vinlyst se reserva el derecho de suspender o eliminar cuentas que incumplan estos Términos."
+        "li4": "Vinlyst se reserva el derecho de suspender o eliminar cuentas que incumplan estos Términos.",
+        "sub1Heading": "2.1 Perfiles privados",
+        "sub1Body1": "Desde la configuración de tu cuenta podés elegir si tu perfil es público o privado. Si tu cuenta es privada, tus reseñas y comentarios sólo son visibles para las cuentas que aceptaste como seguidoras; el resto de usuarios necesita enviarte una solicitud de seguimiento, que podés aceptar o rechazar.",
+        "sub1Body2": "Tus listas de seguidores y de cuentas que seguís permanecen públicas incluso si tu perfil es privado — el perfil privado controla quién ve tu contenido, no quién ve con quién estás conectado."
       },
       "section3": {
         "heading": "3. Contenido generado por el usuario",
@@ -388,7 +391,7 @@
     },
     "privacy": {
       "pageTitle": "Política de Privacidad de Vinlyst",
-      "lastUpdated": "Última actualización: 10 de julio de 2026 · Vigente desde su publicación",
+      "lastUpdated": "Última actualización: 19 de julio de 2026 — Vigente desde su publicación",
       "introBefore": "Esta Política de Privacidad describe qué datos personales recolecta Vinlyst, con qué finalidad los trata, con quién los compartimos y qué derechos tenés sobre ellos, conforme a la Ley N.º 25.326 de Protección de Datos Personales de la República Argentina. Se complementa con nuestros",
       "introTermsLink": "Términos y Condiciones",
       "introAfter": ", que también aceptás al usar el Servicio.",
@@ -403,20 +406,80 @@
           "colOrigin": "Origen",
           "colRequired": "¿Obligatorio?",
           "rows": [
-            { "data": "Correo electrónico", "origin": "Registro directo o cuenta de Google", "required": "Sí" },
-            { "data": "Contraseña", "origin": "Registro directo (almacenada con hashing, nunca en texto plano)", "required": "Sí, salvo registro solo con Google" },
-            { "data": "Nombre de usuario y handle (@)", "origin": "Registro directo", "required": "Sí" },
-            { "data": "Foto de perfil", "origin": "Subida voluntaria del usuario", "required": "No" },
-            { "data": "Biografía de perfil", "origin": "Ingreso voluntario del usuario", "required": "No" },
-            { "data": "Reseñas, puntajes y comentarios", "origin": "Publicados voluntariamente por el usuario", "required": "—" },
-            { "data": "Relaciones de seguimiento (a quién seguís)", "origin": "Acción del usuario en la plataforma", "required": "—" },
-            { "data": "Reacciones (me gusta / no me gusta)", "origin": "Acción del usuario en la plataforma", "required": "—" },
-            { "data": "Preferencias de notificación", "origin": "Configuración del usuario", "required": "—" },
-            { "data": "Dirección IP y user-agent del dispositivo", "origin": "Automático, asociado a sesiones de acceso", "required": "—" },
-            { "data": "Registros de reportes creados o recibidos", "origin": "Uso del sistema de moderación", "required": "—" }
+            {
+              "data": "Correo electrónico",
+              "origin": "Registro directo o cuenta de Google",
+              "required": "Sí"
+            },
+            {
+              "data": "Contraseña",
+              "origin": "Registro directo (almacenada con hashing, nunca en texto plano)",
+              "required": "Sí, salvo registro solo con Google"
+            },
+            {
+              "data": "Nombre de usuario y handle (@)",
+              "origin": "Registro directo",
+              "required": "Sí"
+            },
+            {
+              "data": "Foto de perfil",
+              "origin": "Subida voluntaria del usuario",
+              "required": "No"
+            },
+            {
+              "data": "Biografía de perfil",
+              "origin": "Ingreso voluntario del usuario",
+              "required": "No"
+            },
+            {
+              "data": "Reseñas, puntajes y comentarios",
+              "origin": "Publicados voluntariamente por el usuario",
+              "required": "—"
+            },
+            {
+              "data": "Relaciones de seguimiento (a quién seguís)",
+              "origin": "Acción del usuario en la plataforma",
+              "required": "—"
+            },
+            {
+              "data": "Reacciones (me gusta / no me gusta)",
+              "origin": "Acción del usuario en la plataforma",
+              "required": "—"
+            },
+            {
+              "data": "Preferencias de notificación",
+              "origin": "Configuración del usuario",
+              "required": "—"
+            },
+            {
+              "data": "Dirección IP y user-agent del dispositivo",
+              "origin": "Automático, asociado a sesiones de acceso",
+              "required": "—"
+            },
+            {
+              "data": "Registros de reportes creados o recibidos",
+              "origin": "Uso del sistema de moderación",
+              "required": "—"
+            },
+            {
+              "data": "Historial de búsquedas",
+              "origin": "Uso del buscador dentro de la app",
+              "required": "No"
+            },
+            {
+              "data": "Álbumes, canciones y artistas vistos recientemente",
+              "origin": "Navegación dentro de la app",
+              "required": "No"
+            },
+            {
+              "data": "Suscripción a notificaciones push (identificador del navegador y claves de cifrado)",
+              "origin": "Activación voluntaria desde la configuración de notificaciones",
+              "required": "No"
+            }
           ]
         },
-        "body": "No solicitamos ni almacenamos datos sensibles (origen étnico, salud, opiniones políticas o religiosas, orientación sexual) más allá de lo que el propio usuario decida incluir voluntariamente en su biografía o reseñas, bajo su exclusiva responsabilidad."
+        "body": "No solicitamos ni almacenamos datos sensibles (origen étnico, salud, opiniones políticas o religiosas, orientación sexual) más allá de lo que el propio usuario decida incluir voluntariamente en su biografía o reseñas, bajo su exclusiva responsabilidad.",
+        "visibilityNote": "La visibilidad de tus reseñas, comentarios y relaciones de seguimiento depende de si configurás tu cuenta como pública o privada; ver la sección 2.1 de nuestros Términos y Condiciones para el detalle completo."
       },
       "section3": {
         "heading": "3. Finalidad del tratamiento",
@@ -441,11 +504,36 @@
           "colReceives": "Qué recibe",
           "colPurpose": "Para qué",
           "rows": [
-            { "provider": "Google (OAuth)", "receives": "Solicitud de autenticación, si elegís iniciar sesión con Google", "purpose": "Verificar tu identidad sin que compartas una contraseña adicional con nosotros" },
-            { "provider": "Proveedores de catálogo musical (Deezer, MusicBrainz, Last.fm)", "receives": "Términos de búsqueda de álbumes, canciones y artistas", "purpose": "Mostrarte resultados de catálogo musical y previews de audio; no reciben tus datos de cuenta ni el contenido de tus reseñas" },
-            { "provider": "Almacenamiento de imágenes (Cloudinary)", "receives": "Tu foto de perfil, si subís una", "purpose": "Alojar y servir la imagen de forma optimizada" },
-            { "provider": "Proveedor de envío de correo", "receives": "Tu dirección de correo electrónico", "purpose": "Enviarte verificación de cuenta, recuperación de contraseña, y avisos de suspensión" },
-            { "provider": "Monitoreo de errores (Sentry)", "receives": "Datos técnicos de errores de la aplicación (sin contraseñas)", "purpose": "Detectar y corregir fallas del Servicio" }
+            {
+              "provider": "Google (OAuth)",
+              "receives": "Solicitud de autenticación, si elegís iniciar sesión con Google",
+              "purpose": "Verificar tu identidad sin que compartas una contraseña adicional con nosotros"
+            },
+            {
+              "provider": "Proveedores de catálogo musical (Deezer, MusicBrainz, Last.fm)",
+              "receives": "Términos de búsqueda de álbumes, canciones y artistas",
+              "purpose": "Mostrarte resultados de catálogo musical y previews de audio; no reciben tus datos de cuenta ni el contenido de tus reseñas"
+            },
+            {
+              "provider": "Almacenamiento de imágenes (Cloudinary)",
+              "receives": "Tu foto de perfil, si subís una",
+              "purpose": "Alojar y servir la imagen de forma optimizada"
+            },
+            {
+              "provider": "Proveedor de envío de correo",
+              "receives": "Tu dirección de correo electrónico",
+              "purpose": "Enviarte verificación de cuenta, recuperación de contraseña, y avisos de suspensión"
+            },
+            {
+              "provider": "Monitoreo de errores (Sentry)",
+              "receives": "Datos técnicos de errores de la aplicación (sin contraseñas)",
+              "purpose": "Detectar y corregir fallas del Servicio"
+            },
+            {
+              "provider": "Servicio de push del navegador (Google FCM, Mozilla Push Service, Apple Push, según el navegador)",
+              "receives": "El endpoint de suscripción push y el contenido cifrado de cada notificación que te enviamos",
+              "purpose": "Entregarte notificaciones incluso cuando no tenés la app abierta"
+            }
           ]
         },
         "callout": "Ninguno de estos proveedores recibe tu contraseña. Las búsquedas de catálogo musical se realizan sin asociar tu identidad de usuario a la consulta."
@@ -481,7 +569,10 @@
       },
       "section10": {
         "heading": "10. Cookies y almacenamiento local",
-        "body": "Vinlyst utiliza almacenamiento local del navegador estrictamente necesario para mantener tu sesión iniciada y recordar preferencias de interfaz (como el estado de la barra de navegación). No utilizamos cookies de publicidad ni de rastreo de terceros con fines comerciales."
+        "li1": "Una cookie de sesión que te mantiene con la sesión iniciada.",
+        "li2": "Una cookie de preferencia de idioma (hasta 1 año), que recuerda si elegiste español o inglés.",
+        "li3": "Almacenamiento local en tu dispositivo para el modo sin conexión: guarda una copia de tu perfil, tus reseñas y el contenido que visitaste recientemente, y cualquier reseña o cambio de perfil que hayas creado sin conexión hasta que se sincronice con nuestros servidores.",
+        "body": "No utilizamos cookies de publicidad ni de rastreo de terceros con fines comerciales."
       },
       "section11": {
         "heading": "11. Transferencias internacionales",
