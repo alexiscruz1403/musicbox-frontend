@@ -10,7 +10,7 @@ import {
   apiDeleteUserSearchHistory,
 } from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
-import { RecentSearchPanel } from "@/components/search/recent-search-panel";
+import { RecentSearchPanel } from "@/components/shared/recent-search-panel";
 import { FollowButton } from "./follow-button";
 import type { ApiSuccessResponse, UserSearchHistoryItem, UserQuickSearchItem } from "@/types/api";
 import type { FollowStatus } from "@/lib/follow-status";

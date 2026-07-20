@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { apiAdminListReports, apiAdminUpdateReportStatus } from "@/lib/api";
+import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
+import { Modal } from "@/components/ui/modal";
 import { ReportCard } from "./report-card";
 import type { AdminReportRow, ReportStatus, ReportTargetType } from "@/types/api";
 
@@ -35,7 +37,6 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
   const [targetType, setTargetType] = useState<ReportTargetType | undefined>(undefined);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [isPending, startTransition] = useTransition();
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
   const {
@@ -60,18 +61,11 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
   const items = (pages?.pages ?? []).flatMap((p) => p.data.items);
   const isLoading = isFetching && items.length === 0;
 
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
-      },
-      { threshold: 0.1 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const sentinelRef = useInfiniteScrollSentinel({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   function handleConfirm() {
     if (!confirmState) return;
@@ -96,7 +90,7 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
       </p>
 
       <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
-        <div className="flex gap-1 border-b border-mb-border overflow-x-auto">
+        <div className="flex gap-1 border-b border-mb-border overflow-x-auto overflow-y-hidden">
           {STATUS_TABS.map((t) => (
             <button
               key={t.label}
@@ -166,17 +160,14 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
       )}
 
       {confirmState && (
-        <div
-          onClick={() => setConfirmState(null)}
-          className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto cursor-pointer"
+        <Modal
+          open={!!confirmState}
+          onClose={() => setConfirmState(null)}
+          role="alertdialog"
+          ariaLabel={t("confirmAriaLabel")}
+          backdropClassName="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 overflow-y-auto cursor-pointer"
+          panelClassName="w-full max-w-[420px] bg-mb-card border border-mb-border rounded-xl p-6.5 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            role="alertdialog"
-            aria-modal="true"
-            aria-label={t("confirmAriaLabel")}
-            className="w-full max-w-[420px] bg-mb-card border border-mb-border rounded-xl p-6.5 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
-          >
             <h3 className="font-serif text-[19px] text-mb-text mb-3.5">
               {isAccept ? t("confirmAcceptHeading") : t("confirmDismissHeading")}
             </h3>
@@ -205,8 +196,7 @@ export default function AdminReportsClient({ accessToken }: AdminReportsClientPr
                 {isPending ? t("processing") : isAccept ? t("confirmAcceptButton") : t("confirmDismissButton")}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiChangeEmail, ApiError } from "@/lib/api";
+import { Modal } from "@/components/ui/modal";
 
 interface ChangeEmailModalProps {
   open: boolean;
@@ -26,17 +27,6 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
-
-  if (!open) return null;
 
   function handleClose() {
     setNewEmail("");
@@ -67,17 +57,12 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
   }
 
   return (
-    <div
-      onClick={handleClose}
-      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 cursor-pointer"
+    <Modal
+      open={open}
+      onClose={handleClose}
+      ariaLabel={t("changeEmail")}
+      panelClassName="w-full sm:max-w-[400px] bg-mb-card border border-mb-border rounded-t-2xl sm:rounded-xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t("changeEmail")}
-        className="w-full sm:max-w-[400px] bg-mb-card border border-mb-border rounded-t-2xl sm:rounded-xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
-      >
         {!sent ? (
           <>
             <h3 className="font-serif text-xl text-mb-text mb-3 leading-tight">
@@ -160,7 +145,6 @@ export function ChangeEmailModal({ open, onClose, accessToken }: ChangeEmailModa
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 }

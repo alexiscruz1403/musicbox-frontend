@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { X, CheckCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { apiMarkAllNotificationsRead, apiNotifications, apiListFollowRequests } 
 import { cn } from "@/lib/utils";
 import { useNotificationsPanelStore } from "@/stores/notifications-panel-store";
 import { useUnreadNotifications, UNREAD_PEEK_LIMIT } from "@/hooks/use-unread-notifications";
+import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { NotificationRow } from "./notification-row";
 
 type NotifTab = "all" | "unread";
@@ -26,7 +27,6 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
   const [tab, setTab] = useState<NotifTab>("all");
   const [markingAll, setMarkingAll] = useState(false);
   const [, startTransition] = useTransition();
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
   const { data: unreadData } = useUnreadNotifications(accessToken);
@@ -76,18 +76,12 @@ export function NotificationsPanel({ accessToken }: NotificationsPanelProps) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, close]);
 
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage || !isOpen) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
-      },
-      { threshold: 0.1 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isOpen]);
+  const sentinelRef = useInfiniteScrollSentinel({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    enabled: isOpen,
+  });
 
   function handleMarkAllRead() {
     if (!accessToken) return;

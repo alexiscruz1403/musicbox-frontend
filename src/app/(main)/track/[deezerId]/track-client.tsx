@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiTrackReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
+import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { formatMs, coverGradient, ratingColor } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import type { CatalogTrack } from "@/types/api";
@@ -173,7 +174,6 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
   const t = useTranslations("Track");
   const tCommon = useTranslations("Common");
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const {
     items: reviews,
@@ -190,18 +190,11 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
     },
   });
 
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
-      },
-      { threshold: 0.1 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const sentinelRef = useInfiniteScrollSentinel({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   const reviewTabs: { id: ReviewSort; label: string }[] = [
     { id: "recent", label: t("sortRecent") },

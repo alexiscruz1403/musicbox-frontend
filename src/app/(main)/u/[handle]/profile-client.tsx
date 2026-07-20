@@ -1,17 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition, type RefObject } from "react";
 import Link from "next/link";
-import { UserCheck, UserPlus, Clock, Pencil, Flag, Settings, Lock, Search } from "lucide-react";
+import { UserPlus, Pencil, Flag, Settings, Lock, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiFollow, apiUnfollow, apiUserReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { getInitials } from "@/lib/review-format";
 import { ProfileReviewCard } from "@/components/reviews/profile-review-card";
 import { ReportModal } from "@/components/reports/report-modal";
 import { FollowListDrawer } from "@/components/profile/follow-list-drawer";
+import { FollowButton } from "@/components/feed/follow-button";
+import type { FollowStatus } from "@/lib/follow-status";
 import type { PublicProfileResponse, UserReviewHistoryItem } from "@/types/api";
 
 type Tab = "todo" | "albums" | "songs";
@@ -84,10 +87,10 @@ export default function ProfileClient({
   const [isPending, startTransition] = useTransition();
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const [reviewQuery, setReviewQuery] = useState("");
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { user, stats } = profile;
   const locked = !isOwnProfile && user.isPrivate && !isFollowing;
+  const followStatus: FollowStatus = isFollowing ? "following" : requestSent ? "pending" : "not_following";
   const debouncedReviewQuery = useDebouncedValue(reviewQuery.trim(), 350);
 
   const {
@@ -114,20 +117,34 @@ export default function ProfileClient({
   const albumItems = reviewItems.filter((item) => item.type === "ALBUM");
   const songItems = reviewItems.filter((item) => item.type === "TRACK");
 
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
-      },
-      { threshold: 0.1 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [activeTab, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  // Un sentinel por tab (mismo hasNextPage/fetchNextPage compartido, ver
+  // useOfflineListQuery arriba) — renderReviewList monta un <div ref={...}>
+  // distinto por tab, así que cada uno necesita su propio ref/observer;
+  // `enabled` solo arma el del tab activo, mismo patrón que artist-client.tsx.
+  const sentinelRefTodo = useInfiniteScrollSentinel({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    enabled: activeTab === "todo",
+  });
+  const sentinelRefAlbums = useInfiniteScrollSentinel({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    enabled: activeTab === "albums",
+  });
+  const sentinelRefSongs = useInfiniteScrollSentinel({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    enabled: activeTab === "songs",
+  });
 
-  function renderReviewList(items: UserReviewHistoryItem[], emptyMessage: string) {
+  function renderReviewList(
+    items: UserReviewHistoryItem[],
+    emptyMessage: string,
+    sentinelRef: RefObject<HTMLDivElement | null>,
+  ) {
     if (reviewsLoading && reviewItems.length === 0) {
       return (
         <div className="space-y-3">
@@ -283,38 +300,16 @@ export default function ProfileClient({
                 </Link>
               </>
             ) : accessToken ? (
-              <button
-                onClick={handleFollowToggle}
+              <FollowButton
+                status={followStatus}
+                isPrivate={user.isPrivate}
+                displayName={user.displayName}
                 disabled={isPending}
-                className={cn(
-                  "flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-semibold transition-colors disabled:opacity-70 cursor-pointer disabled:cursor-not-allowed",
-                  isFollowing || requestSent
-                    ? "bg-mb-input border border-mb-border text-mb-text hover:border-mb-error hover:text-mb-error"
-                    : "bg-mb-primary hover:bg-mb-primary-h text-white",
-                )}
-              >
-                {isFollowing ? (
-                  <>
-                    <UserCheck className="w-3.5 h-3.5" />
-                    {tCommon("following")}
-                  </>
-                ) : requestSent ? (
-                  <>
-                    <Clock className="w-3.5 h-3.5" />
-                    {t("requestSentLabel")}
-                  </>
-                ) : user.isPrivate ? (
-                  <>
-                    <UserPlus className="w-3.5 h-3.5" />
-                    {t("requestFollowLabel")}
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-3.5 h-3.5" />
-                    {tCommon("follow")}
-                  </>
-                )}
-              </button>
+                onClick={handleFollowToggle}
+                showIcon
+                variant="danger-on-follow"
+                className="h-9 px-4 gap-2 text-sm"
+              />
             ) : (
               <Link
                 href="/login"
@@ -434,6 +429,7 @@ export default function ProfileClient({
                 debouncedReviewQuery
                   ? t("noReviewsMatchQuery", { query: debouncedReviewQuery })
                   : t("noReviewsAtAll"),
+                sentinelRefTodo,
               )}
             {activeTab === "albums" &&
               renderReviewList(
@@ -441,6 +437,7 @@ export default function ProfileClient({
                 debouncedReviewQuery
                   ? t("noReviewsMatchQuery", { query: debouncedReviewQuery })
                   : t("noAlbumReviews"),
+                sentinelRefAlbums,
               )}
             {activeTab === "songs" &&
               renderReviewList(
@@ -448,6 +445,7 @@ export default function ProfileClient({
                 debouncedReviewQuery
                   ? t("noReviewsMatchQuery", { query: debouncedReviewQuery })
                   : t("noTrackReviews"),
+                sentinelRefSongs,
               )}
           </>
         )}

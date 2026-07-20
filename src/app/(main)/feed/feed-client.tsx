@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { apiFeed } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
+import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { cn } from "@/lib/utils";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import { FollowSuggestionsWidget } from "@/components/feed/follow-suggestions-widget";
@@ -49,7 +50,6 @@ function EmptyFeed({ feedType }: { feedType: FeedType }) {
 
 export function FeedClient({ accessToken }: FeedClientProps) {
   const t = useTranslations("Feed");
-  const sentinelRef = useRef<HTMLDivElement>(null);
   const [feedType, setFeedType] = useState<FeedType>("FOLLOWED");
 
   const TABS: { id: FeedType; label: string }[] = [
@@ -72,18 +72,11 @@ export function FeedClient({ accessToken }: FeedClientProps) {
     },
   });
 
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
-      },
-      { threshold: 0.1 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const sentinelRef = useInfiniteScrollSentinel({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   return (
     <div className="min-h-screen bg-mb-bg text-mb-text font-sans">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock, X } from "lucide-react";
@@ -9,7 +9,9 @@ import { useTranslations } from "next-intl";
 import { apiFollow, apiUnfollow, apiGetFollowers, apiGetFollowing } from "@/lib/api";
 import { getInitials } from "@/lib/review-format";
 import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
+import { dedupeByKey } from "@/lib/array-utils";
 import { FollowButton } from "@/components/feed/follow-button";
+import { Modal } from "@/components/ui/modal";
 import type { FollowStatus } from "@/lib/follow-status";
 import type { FollowListItem } from "@/types/api";
 
@@ -20,17 +22,6 @@ interface FollowListDrawerProps {
   currentUserHandle?: string;
   accessToken?: string;
   onClose: () => void;
-}
-
-function dedupeByUserId(items: FollowListItem[]): FollowListItem[] {
-  const seen = new Set<string>();
-  const result: FollowListItem[] = [];
-  for (const item of items) {
-    if (seen.has(item.id)) continue;
-    seen.add(item.id);
-    result.push(item);
-  }
-  return result;
 }
 
 export function FollowListDrawer({
@@ -46,15 +37,6 @@ export function FollowListDrawer({
   const tCommon = useTranslations("Common");
   const [statusOverrides, setStatusOverrides] = useState<Record<string, FollowStatus>>({});
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
 
   const {
     data,
@@ -81,7 +63,7 @@ export function FollowListDrawer({
     enabled: open,
   });
 
-  const people = dedupeByUserId((data?.pages ?? []).flatMap((p) => p.data.items));
+  const people = dedupeByKey((data?.pages ?? []).flatMap((p) => p.data.items), (item) => item.id);
   const isLoading = isFetching && people.length === 0;
 
   function getStatus(item: FollowListItem): FollowStatus {
@@ -120,24 +102,18 @@ export function FollowListDrawer({
     });
   }
 
-  if (!open) return null;
-
   const title = kind === "followers" ? t("followersTitle") : tCommon("following");
   const emptyText =
     kind === "followers" ? t("noFollowers") : t("noFollowing");
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[70] bg-black/60 flex justify-center items-end sm:items-stretch sm:justify-end"
+    <Modal
+      open={open}
+      onClose={onClose}
+      ariaLabel={title}
+      backdropClassName="fixed inset-0 z-[70] bg-black/60 flex justify-center items-end sm:items-stretch sm:justify-end"
+      panelClassName="w-full sm:w-full sm:max-w-[420px] max-h-[85vh] sm:max-h-none sm:h-full mt-auto sm:mt-0 bg-mb-card sm:bg-mb-bg border-t sm:border-t-0 sm:border-l border-mb-border rounded-t-2xl sm:rounded-none flex flex-col"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className="w-full sm:w-full sm:max-w-[420px] max-h-[85vh] sm:max-h-none sm:h-full mt-auto sm:mt-0 bg-mb-card sm:bg-mb-bg border-t sm:border-t-0 sm:border-l border-mb-border rounded-t-2xl sm:rounded-none flex flex-col"
-      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-mb-border shrink-0">
           <h2 className="font-serif text-xl text-mb-text">{title}</h2>
           <button
@@ -232,7 +208,6 @@ export function FollowListDrawer({
             </>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { useQuery, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,11 +12,15 @@ import {
   apiCatalogRecentlyViewed,
   apiCatalogSearchHistory,
 } from "@/lib/api";
-import { ratingColor, formatMs, getInitials, coverGradient } from "@/lib/review-format";
+import { getInitials, coverGradient } from "@/lib/review-format";
 import { dedupeById } from "@/lib/array-utils";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useOutsideClose } from "@/hooks/use-outside-close";
 import { CatalogSearchDropdown } from "@/components/search/catalog-search-dropdown";
+import { AlbumCard, AlbumCardSkeleton } from "@/components/catalog/album-card";
+import { TrackCard } from "@/components/catalog/track-card";
+import { ArtistCard } from "@/components/catalog/artist-card";
+import { RecentlyViewedCard } from "@/components/catalog/recently-viewed-card";
 import type {
   CatalogAlbum,
   CatalogTrack,
@@ -29,277 +32,10 @@ import type {
 
 type SearchTab = "todo" | "albums" | "songs" | "artists";
 
-// ─── Skeleton ────────────────────────────────────────────────────────────────
-
-function AlbumCardSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="aspect-square rounded-xl bg-mb-input" />
-      <div className="mt-2.5 h-4 w-3/4 rounded bg-mb-input" />
-      <div className="mt-1.5 h-3 w-1/2 rounded bg-mb-input" />
-    </div>
-  );
-}
-
-function ArtistChipSkeleton() {
-  return (
-    <div className="flex flex-col items-center gap-2.5 animate-pulse" style={{ width: 88 }}>
-      <div className="w-[88px] h-[88px] rounded-full bg-mb-input" />
-      <div className="h-3 w-14 rounded bg-mb-input" />
-    </div>
-  );
-}
-
-
-// ─── Sub-components ──────────────────────────────────────────────────────────
-
-function AlbumCard({
-  title,
-  artist,
-  coverUrl,
-  deezerId,
-  avgRating,
-  reviewCount,
-  userRating,
-}: {
-  title: string;
-  artist: string;
-  coverUrl: string | null;
-  deezerId: string;
-  avgRating?: number | null;
-  reviewCount?: number;
-  userRating?: number | null;
-}) {
-  const t = useTranslations("Search");
-  const tCommon = useTranslations("Common");
-  return (
-    <Link href={`/album/${deezerId}`} className="group block">
-      <div className="relative rounded-xl overflow-hidden aspect-square">
-        {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverUrl}
-            alt={tCommon("coverAlt", { title })}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full"
-            style={{ background: coverGradient(deezerId) }}
-            role="img"
-            aria-label={tCommon("coverAlt", { title })}
-          />
-        )}
-        <div className="absolute inset-0 bg-mb-bg/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <span className="px-4 py-2 bg-mb-primary text-white font-semibold text-sm rounded-lg">
-            {t("viewAlbum")}
-          </span>
-        </div>
-        {userRating != null && (
-          <span
-            className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-mb-bg/80 border border-mb-ddp font-mono font-bold text-[11px]"
-            style={{ color: ratingColor(userRating) }}
-          >
-            {userRating.toFixed(2)}
-          </span>
-        )}
-      </div>
-      <div className="mt-2.5">
-        <p className="font-serif text-mb-text text-base leading-tight truncate">
-          {title}
-        </p>
-        <p className="text-mb-muted text-xs mt-0.5 truncate">{artist}</p>
-        {avgRating != null ? (
-          <span
-            className="font-mono font-bold text-sm mt-1 block"
-            style={{ color: ratingColor(avgRating) }}
-          >
-            {avgRating.toFixed(2)}
-          </span>
-        ) : reviewCount != null ? (
-          <span className="text-mb-dim text-xs mt-1 block">
-            {reviewCount > 0
-              ? t("reviewCount", { count: reviewCount })
-              : t("noReviewsYet")}
-          </span>
-        ) : (
-          <span className="text-mb-dim text-xs mt-1 block">{t("noReviews")}</span>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-function TrackCard({
-  title,
-  artist,
-  coverUrl,
-  deezerId,
-  durationMs,
-  reviewCount,
-  userRating,
-}: {
-  title: string;
-  artist: string;
-  coverUrl: string | null;
-  deezerId: string;
-  durationMs?: number | null;
-  reviewCount?: number;
-  userRating?: number | null;
-}) {
-  const t = useTranslations("Search");
-  const tCommon = useTranslations("Common");
-  return (
-    <Link href={`/track/${deezerId}`} className="group block">
-      <div className="relative rounded-xl overflow-hidden aspect-square">
-        {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverUrl}
-            alt={tCommon("coverAlt", { title })}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full"
-            style={{ background: coverGradient(deezerId) }}
-            role="img"
-            aria-label={tCommon("coverAlt", { title })}
-          />
-        )}
-        <div className="absolute inset-0 bg-mb-bg/55 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <span className="px-4 py-2 bg-mb-primary text-white font-semibold text-sm rounded-lg">
-            {t("viewTrack")}
-          </span>
-        </div>
-        {userRating != null && (
-          <span
-            className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-mb-bg/80 border border-mb-ddp font-mono font-bold text-[11px]"
-            style={{ color: ratingColor(userRating) }}
-          >
-            {userRating.toFixed(2)}
-          </span>
-        )}
-      </div>
-      <div className="mt-2.5">
-        <p className="font-serif text-mb-text text-base leading-tight truncate">
-          {title}
-        </p>
-        <p className="text-mb-muted text-xs mt-0.5 truncate">{artist}</p>
-        {durationMs != null && (
-          <span className="font-mono text-mb-dim text-xs mt-1 block">
-            {formatMs(durationMs)}
-          </span>
-        )}
-        {reviewCount != null && (
-          <span className="text-mb-dim text-xs mt-1 block">
-            {reviewCount > 0
-              ? t("reviewCount", { count: reviewCount })
-              : t("noReviewsYet")}
-          </span>
-        )}
-      </div>
-    </Link>
-  );
-}
-
-function ArtistCard({ artist }: { artist: CatalogArtist }) {
-  const t = useTranslations("Search");
-  return (
-    <Link
-      href={`/artist/${artist.deezerId}`}
-      className="flex flex-col items-center gap-3 bg-mb-card border border-mb-border rounded-xl p-6 hover:border-mb-ddp transition-colors"
-    >
-      {artist.imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={artist.imageUrl}
-          alt={artist.name}
-          className="w-20 h-20 rounded-full object-cover"
-        />
-      ) : (
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center font-serif text-2xl text-mb-accent"
-          style={{ background: coverGradient(artist.deezerId) }}
-          aria-hidden
-        >
-          {getInitials(artist.name)}
-        </div>
-      )}
-      <p className="font-semibold text-mb-text text-sm text-center">
-        {artist.name}
-      </p>
-      {artist.reviewCount != null && (
-        <p className="text-mb-dim text-xs -mt-1">
-          {t("reviewCount", { count: artist.reviewCount })}
-        </p>
-      )}
-    </Link>
-  );
-}
-
-function RecentlyViewedCard({ item }: { item: RecentlyViewedItem }) {
-  const t = useTranslations("Search");
-  const tCommon = useTranslations("Common");
-  const type = item.resourceType.toUpperCase();
-  const isAlbum = type === "ALBUM";
-  const isTrack = type === "TRACK";
-  const isArtist = !isAlbum && !isTrack;
-
-  const href = isAlbum
-    ? `/album/${item.deezerId}`
-    : isTrack
-      ? `/track/${item.deezerId}`
-      : `/artist/${item.deezerId}`;
-
-  const subtitle = isArtist
-    ? item.albumsCount != null
-      ? t("albumsCount", { count: item.albumsCount })
-      : t("typeLabels.artist")
-    : item.artistName;
-
-  const typeLabel = isAlbum ? t("typeLabels.album") : isTrack ? t("typeLabels.track") : null;
-
-  return (
-    <Link href={href} className="group block">
-      <div
-        className={cn(
-          "relative overflow-hidden",
-          isArtist ? "rounded-full aspect-square" : "rounded-xl aspect-square",
-        )}
-      >
-        {item.coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.coverUrl}
-            alt={tCommon("coverAlt", { title: item.title })}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center font-serif text-xl text-mb-accent"
-            style={{ background: coverGradient(item.deezerId) }}
-            role="img"
-            aria-label={tCommon("coverAlt", { title: item.title })}
-          >
-            {isArtist ? getInitials(item.title) : ""}
-          </div>
-        )}
-        {typeLabel && (
-          <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-mb-bg/70 text-[9px] font-semibold uppercase tracking-wide text-mb-accent">
-            {typeLabel}
-          </span>
-        )}
-      </div>
-      <div className="mt-2.5">
-        <p className="font-serif text-mb-text text-base leading-tight truncate">
-          {item.title}
-        </p>
-        <p className="text-mb-muted text-xs mt-0.5 truncate">{subtitle}</p>
-      </div>
-    </Link>
-  );
-}
+// Las cards (AlbumCard/TrackCard/ArtistCard/RecentlyViewedCard) y su skeleton
+// viven en src/components/catalog/ — quedan disponibles para cualquier otra
+// página que necesite el mismo tipo de grilla de catálogo. Ver
+// docs/musicbox-frontend-guide.md §12 (decisión del refactor).
 
 // ─── Main component ──────────────────────────────────────────────────────────
 

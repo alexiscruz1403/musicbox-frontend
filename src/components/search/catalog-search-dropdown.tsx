@@ -9,7 +9,7 @@ import {
   apiDeleteCatalogSearchHistory,
 } from "@/lib/api";
 import { coverGradient } from "@/lib/review-format";
-import { RecentSearchPanel } from "./recent-search-panel";
+import { RecentSearchPanel } from "@/components/shared/recent-search-panel";
 import type {
   ApiSuccessResponse,
   CatalogSearchHistoryItem,

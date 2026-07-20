@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiDeleteMe, ApiError } from "@/lib/api";
+import { Modal } from "@/components/ui/modal";
 
 interface DeleteAccountModalProps {
   open: boolean;
@@ -24,17 +25,6 @@ export function DeleteAccountModal({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
   const match = confirmText.trim() === `@${handle}`;
 
   function handleDelete() {
@@ -52,17 +42,12 @@ export function DeleteAccountModal({
   }
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 cursor-pointer"
+    <Modal
+      open={open}
+      onClose={onClose}
+      ariaLabel={t("deleteConfirmModalLabel")}
+      panelClassName="w-full sm:max-w-[400px] bg-mb-card border border-mb-border rounded-t-2xl sm:rounded-xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t("deleteConfirmModalLabel")}
-        className="w-full sm:max-w-[400px] bg-mb-card border border-mb-border rounded-t-2xl sm:rounded-xl p-7 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
-      >
         <h3 className="font-serif text-xl text-mb-text mb-3 leading-tight">
           {t("deleteConfirmHeading")}
         </h3>
@@ -120,7 +105,6 @@ export function DeleteAccountModal({
             {isPending ? t("deleting") : t("deletePermanently")}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

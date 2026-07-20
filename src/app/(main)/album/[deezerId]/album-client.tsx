@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiAlbumReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
+import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { formatMs, coverGradient, ratingColor } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import type { CatalogAlbum } from "@/types/api";
@@ -62,7 +63,6 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const togglePlay = useCallback(
     (trackId: string, previewUrl: string | null) => {
@@ -109,18 +109,11 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
     },
   });
 
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
-      },
-      { threshold: 0.1 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const sentinelRef = useInfiniteScrollSentinel({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   const reviewTabs: { id: ReviewSort; label: string }[] = [
     { id: "recent", label: t("sortRecent") },

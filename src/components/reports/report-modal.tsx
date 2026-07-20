@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiCreateReport, generateIdempotencyKey, ApiError } from "@/lib/api";
+import { Modal } from "@/components/ui/modal";
 import type { ReportTargetType } from "@/types/api";
 
 const REASON_MAX = 500;
@@ -37,17 +38,6 @@ export function ReportModal({
   // `open` is true, so a fresh key/blank form is guaranteed on every open.
   const [idempotencyKey] = useState(() => generateIdempotencyKey());
 
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
   const canSubmit = reason.trim().length > 0 && !isPending && !success;
 
   function handleSubmit() {
@@ -78,17 +68,12 @@ export function ReportModal({
   }
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto cursor-pointer"
+    <Modal
+      open={open}
+      onClose={onClose}
+      ariaLabel={t("title")}
+      panelClassName="w-full sm:max-w-[460px] max-h-[90vh] overflow-y-auto bg-mb-card border border-mb-border rounded-t-2xl sm:rounded-xl p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t("title")}
-        className="w-full sm:max-w-[460px] max-h-[90vh] overflow-y-auto bg-mb-card border border-mb-border rounded-t-2xl sm:rounded-xl p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]"
-      >
         <div className="flex items-center justify-between mb-1.5">
           <h3 className="font-serif text-xl text-mb-text">{t("title")}</h3>
           <button
@@ -179,7 +164,6 @@ export function ReportModal({
             {isPending ? t("sending") : success ? t("successMessage") : t("submit")}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

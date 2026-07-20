@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
@@ -12,157 +11,27 @@ import {
   apiCatalogArtistAlbums,
   apiCatalogArtistTracks,
 } from "@/lib/api";
-import { ratingColor, getInitials, coverGradient, formatMs } from "@/lib/review-format";
+import { getInitials, coverGradient } from "@/lib/review-format";
 import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { dedupeById } from "@/lib/array-utils";
+import { ArtistTopItemCard } from "@/components/catalog/artist-top-item-card";
+import { CatalogAlbumTile } from "@/components/catalog/catalog-album-tile";
+import { CatalogTrackRow } from "@/components/catalog/catalog-track-row";
+import { TopGridSkeleton } from "@/components/catalog/top-grid-skeleton";
 import type {
   CatalogArtist,
-  CatalogAlbum,
   ArtistTopAlbum,
   ArtistTopTrack,
-  ArtistTrackItem,
 } from "@/types/api";
 
 type TopMode = "albums" | "tracks";
 type CatalogTab = "albums" | "tracks";
 
-// ─── Presentational pieces ────────────────────────────────────────────────────
-
-function ArtistTopItemCard({
-  title,
-  href,
-  coverUrl,
-  deezerId,
-  avgRating,
-  reviewCount,
-}: {
-  title: string;
-  href: string;
-  coverUrl: string | null;
-  deezerId: string;
-  avgRating: number | null;
-  reviewCount: number;
-}) {
-  const t = useTranslations("Artist");
-  const tCommon = useTranslations("Common");
-  return (
-    <Link href={href} className="group block">
-      <div className="relative rounded-xl overflow-hidden aspect-square">
-        {coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverUrl}
-            alt={tCommon("coverAlt", { title })}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full"
-            style={{ background: coverGradient(deezerId) }}
-            role="img"
-            aria-label={tCommon("coverAlt", { title })}
-          />
-        )}
-      </div>
-      <div className="mt-2.5">
-        <p className="font-serif text-mb-text text-[15px] leading-tight truncate">
-          {title}
-        </p>
-        <span className="flex items-center gap-1.5 mt-1">
-          {avgRating != null ? (
-            <>
-              <span
-                className="font-mono font-bold text-xs"
-                style={{ color: ratingColor(avgRating) }}
-              >
-                {avgRating.toFixed(2)}
-              </span>
-              <span className="text-mb-dim text-[11px]">
-                {t("reviewCount", { count: reviewCount })}
-              </span>
-            </>
-          ) : (
-            <span className="text-mb-dim text-xs">{t("noReviews")}</span>
-          )}
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-function CatalogAlbumTile({ album }: { album: CatalogAlbum }) {
-  const tCommon = useTranslations("Common");
-  return (
-    <Link href={`/album/${album.deezerId}`} className="group block">
-      <div className="relative rounded-xl overflow-hidden aspect-square">
-        {album.coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={album.coverUrl}
-            alt={tCommon("coverAlt", { title: album.title })}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full"
-            style={{ background: coverGradient(album.deezerId) }}
-            role="img"
-            aria-label={tCommon("coverAlt", { title: album.title })}
-          />
-        )}
-      </div>
-      <p className="mt-2.5 font-serif text-mb-text text-sm leading-tight truncate">
-        {album.title}
-      </p>
-    </Link>
-  );
-}
-
-function CatalogTrackRow({ track }: { track: ArtistTrackItem }) {
-  const tCommon = useTranslations("Common");
-  return (
-    <Link
-      href={`/track/${track.deezerId}`}
-      className="flex items-center gap-3.5 min-h-[56px] px-2.5 py-2 rounded-lg border-b border-mb-border transition-colors hover:bg-[#16161F]"
-    >
-      <span
-        className="shrink-0 w-11 h-11 rounded-md"
-        style={
-          track.coverUrl
-            ? { backgroundImage: `url(${track.coverUrl})`, backgroundSize: "cover" }
-            : { background: coverGradient(track.deezerId) }
-        }
-        role="img"
-        aria-label={tCommon("coverAlt", { title: track.title })}
-      />
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm text-mb-text truncate">{track.title}</span>
-        {track.albumTitle && (
-          <span className="block text-xs text-mb-muted truncate">{track.albumTitle}</span>
-        )}
-      </span>
-      {track.durationMs != null && (
-        <span className="shrink-0 font-mono text-xs text-mb-dim w-10 text-right">
-          {formatMs(track.durationMs)}
-        </span>
-      )}
-    </Link>
-  );
-}
-
-function TopGridSkeleton() {
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="animate-pulse">
-          <div className="aspect-square rounded-xl bg-mb-input" />
-          <div className="mt-2.5 h-4 w-3/4 rounded bg-mb-input" />
-          <div className="mt-1.5 h-3 w-1/2 rounded bg-mb-input" />
-        </div>
-      ))}
-    </div>
-  );
-}
+// ArtistTopItemCard/CatalogAlbumTile/CatalogTrackRow/TopGridSkeleton viven en
+// src/components/catalog/ — son una familia de presentación distinta a las
+// cards de /search (sin overlay de hover, badge de userRating ni namespace
+// "Search"), así que no se fusionaron con AlbumCard/TrackCard; solo se
+// movieron para achicar este archivo. Ver docs/musicbox-frontend-guide.md §12.
 
 // ─── Main component ───────────────────────────────────────────────────────────
 

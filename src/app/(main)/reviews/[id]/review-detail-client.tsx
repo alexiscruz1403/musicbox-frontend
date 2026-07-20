@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -17,6 +17,7 @@ import {
 } from "@/lib/api";
 import { sendReaction } from "@/lib/reactions";
 import { ratingColor, timeAgo, getInitials, coverGradient } from "@/lib/review-format";
+import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { ReportModal } from "@/components/reports/report-modal";
 import type { ReviewDetail, ReactionType, ReportTargetType } from "@/types/api";
 
@@ -60,7 +61,6 @@ export function ReviewDetailClient({
   const [isPending, startTransition] = useTransition();
   const [, startReactionTransition] = useTransition();
   const [commentPending, startCommentTransition] = useTransition();
-  const commentsSentinelRef = useRef<HTMLDivElement>(null);
 
   const rating = Number(review.rating);
 
@@ -81,18 +81,11 @@ export function ReviewDetailClient({
 
   const comments = (commentPages?.pages ?? []).flatMap((p) => p.data.items);
 
-  useEffect(() => {
-    const el = commentsSentinelRef.current;
-    if (!el || !hasNextPage) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isFetchingNextPage) fetchNextPage();
-      },
-      { threshold: 0.1 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const commentsSentinelRef = useInfiniteScrollSentinel({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   const targetKind = review.type === "ALBUM" ? "album" : "track";
   const targetHref = review.targetDeezerId ? `/${targetKind}/${review.targetDeezerId}` : null;
