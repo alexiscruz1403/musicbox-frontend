@@ -3,6 +3,45 @@
     "title": "Vinlyst",
     "description": "Una red social para reseñas de música"
   },
+  "Landing": {
+    "metaTitle": "Vinlyst — Cada canción merece una crítica",
+    "metaDescription": "Reseñá álbumes y singles, seguí a otros oyentes, y descubrí música a través de quienes más sabés que escuchan bien.",
+    "nav": {
+      "signIn": "Iniciar sesión",
+      "signUp": "Registrarse"
+    },
+    "hero": {
+      "badge": "La red de quienes escuchan en serio",
+      "titleLine1": "Cada canción",
+      "titleLine2": "merece una crítica.",
+      "subtitle": "Reseñá álbumes y singles, seguí a otros oyentes, descubrí música a través de quienes más sabés que escuchan bien.",
+      "ctaPrimary": "Empezar gratis",
+      "ctaSecondary": "Ver trending hoy →"
+    },
+    "features": {
+      "item1": {
+        "title": "Reseñas por canción",
+        "body": "Calificá cada track de un álbum por separado. No todo disco es parejo, y tu reseña tampoco tiene por qué serlo."
+      },
+      "item2": {
+        "title": "Feed de personas reales",
+        "body": "Seguí oyentes con tu mismo gusto. Sin algoritmos opacos: lo que ves es lo que escucha tu gente."
+      },
+      "item3": {
+        "title": "Trending cada 1 hora",
+        "body": "Siempre sabés qué está sonando en la comunidad. El pulso de lo que se escucha, actualizado al ritmo del día."
+      }
+    },
+    "miniFeed": {
+      "heading": "Lo que la gente está escuchando",
+      "cta": "Ver más en trending →"
+    },
+    "footer": {
+      "privacy": "Privacidad",
+      "terms": "Términos",
+      "copyright": "© {year} Vinlyst"
+    }
+  },
   "Nav": {
     "feed": "Feed",
     "trending": "Trending",

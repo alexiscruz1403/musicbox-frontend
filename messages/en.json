@@ -3,6 +3,45 @@
     "title": "Vinlyst",
     "description": "A social network for music reviews"
   },
+  "Landing": {
+    "metaTitle": "Vinlyst — Every song deserves a review",
+    "metaDescription": "Review albums and singles, follow other listeners, and discover music through people who actually listen well.",
+    "nav": {
+      "signIn": "Sign in",
+      "signUp": "Sign up"
+    },
+    "hero": {
+      "badge": "For people who actually listen",
+      "titleLine1": "Every song",
+      "titleLine2": "deserves a review.",
+      "subtitle": "Review albums and singles, follow other listeners, and discover music through people you know actually have good taste.",
+      "ctaPrimary": "Get started free",
+      "ctaSecondary": "See what's trending →"
+    },
+    "features": {
+      "item1": {
+        "title": "Track-by-track reviews",
+        "body": "Rate every track on an album separately. Not every record is consistent, and your review doesn't have to be either."
+      },
+      "item2": {
+        "title": "A feed of real people",
+        "body": "Follow listeners with your taste. No opaque algorithms — what you see is what your people are listening to."
+      },
+      "item3": {
+        "title": "Trending every 1 hour",
+        "body": "Always know what the community is listening to. The pulse of what's playing, updated throughout the day."
+      }
+    },
+    "miniFeed": {
+      "heading": "What people are listening to",
+      "cta": "See more on trending →"
+    },
+    "footer": {
+      "privacy": "Privacy",
+      "terms": "Terms",
+      "copyright": "© {year} Vinlyst"
+    }
+  },
   "Nav": {
     "feed": "Feed",
     "trending": "Trending",

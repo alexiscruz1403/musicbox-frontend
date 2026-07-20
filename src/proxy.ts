@@ -43,7 +43,7 @@ export async function proxy(req: NextRequest) {
 
   if (isAuthOnly && session) {
     const url = req.nextUrl.clone();
-    url.pathname = `/u/${session.user.handle}`;
+    url.pathname = "/feed";
     return NextResponse.redirect(url);
   }
 
