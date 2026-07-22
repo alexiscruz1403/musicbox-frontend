@@ -1,0 +1,41 @@
+name: E2E
+
+# Opcional / no bloqueante. Se dispara a mano (workflow_dispatch) para no arriesgar el CI verde.
+# Para habilitarlo en cada PR, agregar `pull_request: { branches: [main] }` a los triggers.
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Playwright (Tier 1, sin backend)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E (anon + authenticated, backend mockeado)
+        run: npx playwright test --project=setup --project=anon --project=authenticated
+        env:
+          AUTH_SECRET: ${{ secrets.E2E_AUTH_SECRET || 'ci-e2e-secret-at-least-32-characters-long' }}
+          NEXT_PUBLIC_API_URL: http://localhost:3001/v1
+
+      - name: Upload report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
