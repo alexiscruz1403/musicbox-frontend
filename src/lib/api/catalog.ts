@@ -2,10 +2,10 @@ import type {
   ApiSuccessResponse,
   CatalogAlbum,
   CatalogTrack,
-  CatalogArtist,
   CatalogPage,
   CatalogSearchResult,
   CatalogSearchType,
+  CatalogResourceType,
   CatalogQuickSearchItem,
   CatalogSearchHistoryItem,
   RecentlyViewedItem,
@@ -106,21 +106,36 @@ export async function apiCatalogTrack(
   );
 }
 
-export async function apiCatalogArtist(
+const VIEW_SEGMENT: Record<CatalogResourceType, string> = {
+  ALBUM: "albums",
+  TRACK: "tracks",
+  ARTIST: "artists",
+};
+
+// Registra explícitamente una visita real (POST). Reemplaza el registro que el
+// backend hacía como efecto secundario del GET de detalle — ese GET ahora es
+// de solo lectura, así que el prefetch de Next y generateMetadata dejan de
+// contar como vistas. Ver docs/musicbox-frontend-guide.md y el contrato backend.
+export async function apiCatalogRecordView(
+  resourceType: CatalogResourceType,
   deezerId: string,
-  accessToken?: string,
-): Promise<ApiSuccessResponse<CatalogArtist>> {
-  return apiFetch<ApiSuccessResponse<CatalogArtist>>(
-    `/catalog/artists/${deezerId}`,
-    { accessToken },
-  );
+  accessToken: string,
+): Promise<void> {
+  return apiFetch<void>(`/catalog/${VIEW_SEGMENT[resourceType]}/${deezerId}/view`, {
+    method: "POST",
+    accessToken,
+  });
 }
 
-export async function apiCatalogArtistDetail(
+// Devuelve el detalle extendido del artista (info básica + top-reviewed +
+// trending). Endpoint público: antes existía un `/artists/:id/detail` separado
+// para los rankings; el backend lo consolidó en este endpoint base y eliminó
+// el `/detail` (ver docs/fase-2-features.md §GET /v1/catalog/artists/:deezerId).
+export async function apiCatalogArtist(
   deezerId: string,
 ): Promise<ApiSuccessResponse<ArtistDetail>> {
   return apiFetch<ApiSuccessResponse<ArtistDetail>>(
-    `/catalog/artists/${deezerId}/detail`,
+    `/catalog/artists/${deezerId}`,
   );
 }
 

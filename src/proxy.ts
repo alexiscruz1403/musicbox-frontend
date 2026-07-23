@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 
 const PROTECTED_PREFIXES = ["/settings", "/admin"];
 const AUTH_ONLY_PREFIXES = ["/login", "/register"];
@@ -11,7 +11,9 @@ export async function proxy(req: NextRequest) {
 
   let session;
   try {
-    session = await auth();
+    // getValidSession() ya trata una sesión con RefreshTokenError como null,
+    // igual que el resto de las rutas (ver src/lib/session.ts).
+    session = await getValidSession();
   } catch (err) {
     // auth() failing (e.g. the session endpoint/backend hiccupping) must not
     // block navigation for every route — send to /login instead of letting
@@ -21,10 +23,6 @@ export async function proxy(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
-  }
-
-  if (session?.error === "RefreshTokenError") {
-    session = null;
   }
 
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));

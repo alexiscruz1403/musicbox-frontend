@@ -1,5 +1,5 @@
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { apiCatalogTrack, apiGetReview, ApiError } from "@/lib/api";
 import type { ReviewDetail } from "@/types/api";
 import { TrackReviewFormClient } from "./track-review-form-client";
@@ -13,7 +13,7 @@ export default async function NewTrackReviewPage({
 }) {
   const { deezerId } = await params;
   const { edit } = await searchParams;
-  const session = await auth();
+  const session = await getValidSession();
 
   if (!session) {
     const target = `/track/${deezerId}/review/new${edit ? `?edit=${edit}` : ""}`;

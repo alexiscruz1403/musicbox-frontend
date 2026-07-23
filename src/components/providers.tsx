@@ -10,24 +10,34 @@ import { SwRegister } from "@/components/pwa/sw-register";
 import { setLocaleCookie } from "@/lib/locale-actions";
 import { isAppLocale } from "@/i18n/locale";
 
+// Defensa en profundidad sobre el guard de tokenStore: `tokenStore.set()` lo
+// resetea, y useSession puede emitir una sesión todavía cacheada mientras el
+// signOut viaja. Un signOut ya en curso no debe relanzarse.
+let signingOut = false;
+
 function SessionSync() {
   const { data: session } = useSession();
 
   // Registrar el callback de expiración una sola vez al montar
   useEffect(() => {
     tokenStore.onExpired(() => {
+      if (signingOut) return;
+      signingOut = true;
       void signOut({ callbackUrl: "/login" });
     });
   }, []);
 
   // Sincronizar tokens al store cada vez que la sesión cambia
   useEffect(() => {
-    if (session?.accessToken && session?.refreshToken) {
-      tokenStore.set(session.accessToken, session.refreshToken);
-    }
-    // Si el refresh proactivo de auth.ts falló, limpiar → dispara onExpired → signOut
+    // Si el refresh proactivo de auth.ts falló, los tokens que trae la sesión
+    // ya están muertos: limpiar (→ dispara onExpired → signOut) y no
+    // sincronizarlos. Antes se seteaban primero y se limpiaban después.
     if (session?.error === "RefreshTokenError") {
       tokenStore.clear();
+      return;
+    }
+    if (session?.accessToken && session?.refreshToken) {
+      tokenStore.set(session.accessToken, session.refreshToken);
     }
   }, [session]);
 

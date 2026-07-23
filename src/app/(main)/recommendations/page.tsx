@@ -1,7 +1,7 @@
 ﻿import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { RecommendationsClient } from "./recommendations-client";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -10,7 +10,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RecommendationsPage() {
-  const session = await auth();
+  const session = await getValidSession();
 
   if (!session) {
     redirect(`/login?callbackUrl=${encodeURIComponent("/recommendations")}`);

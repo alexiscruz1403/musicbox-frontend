@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { NotificationsProvider } from "@/components/notifications/notifications-provider";
@@ -10,7 +10,7 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getValidSession();
   const accessToken = session?.accessToken ?? null;
 
   return (

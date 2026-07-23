@@ -3,23 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import {
-  apiCatalogArtistDetail,
-  apiCatalogArtistAlbums,
-  apiCatalogArtistTracks,
-} from "@/lib/api";
+import { apiCatalogArtistAlbums, apiCatalogArtistTracks } from "@/lib/api";
 import { getInitials, coverGradient } from "@/lib/review-format";
 import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
+import { useRecordRecentlyViewed } from "@/hooks/use-record-recently-viewed";
 import { dedupeById } from "@/lib/array-utils";
 import { ArtistTopItemCard } from "@/components/catalog/artist-top-item-card";
 import { CatalogAlbumTile } from "@/components/catalog/catalog-album-tile";
 import { CatalogTrackRow } from "@/components/catalog/catalog-track-row";
-import { TopGridSkeleton } from "@/components/catalog/top-grid-skeleton";
 import type {
-  CatalogArtist,
+  ArtistDetail,
   ArtistTopAlbum,
   ArtistTopTrack,
 } from "@/types/api";
@@ -27,7 +23,7 @@ import type {
 type TopMode = "albums" | "tracks";
 type CatalogTab = "albums" | "tracks";
 
-// ArtistTopItemCard/CatalogAlbumTile/CatalogTrackRow/TopGridSkeleton viven en
+// ArtistTopItemCard/CatalogAlbumTile/CatalogTrackRow viven en
 // src/components/catalog/ — son una familia de presentación distinta a las
 // cards de /search (sin overlay de hover, badge de userRating ni namespace
 // "Search"), así que no se fusionaron con AlbumCard/TrackCard; solo se
@@ -36,29 +32,26 @@ type CatalogTab = "albums" | "tracks";
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface ArtistClientProps {
-  artist: CatalogArtist;
+  detail: ArtistDetail;
   albumsTotal: number;
   tracksTotal: number;
 }
 
-export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientProps) {
+export function ArtistClient({ detail, albumsTotal, tracksTotal }: ArtistClientProps) {
+  // El detalle (info + rankings) llega renderizado desde el server; ya no hay
+  // un fetch cliente duplicado ni estado de carga para esta sección.
+  const artist = detail.artist;
+  useRecordRecentlyViewed("ARTIST", artist.deezerId);
   const router = useRouter();
   const t = useTranslations("Artist");
   const tCommon = useTranslations("Common");
   const [topMode, setTopMode] = useState<TopMode>("albums");
   const [catalogTab, setCatalogTab] = useState<CatalogTab>("albums");
 
-  const { data: detailData, isLoading: detailLoading } = useQuery({
-    queryKey: ["artist-detail", artist.deezerId],
-    queryFn: () => apiCatalogArtistDetail(artist.deezerId),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const detail = detailData?.data;
   const topReviewed: (ArtistTopAlbum | ArtistTopTrack)[] =
-    (topMode === "albums" ? detail?.topReviewedAlbums : detail?.topReviewedTracks) ?? [];
+    topMode === "albums" ? detail.topReviewedAlbums : detail.topReviewedTracks;
   const topTrending: (ArtistTopAlbum | ArtistTopTrack)[] =
-    (topMode === "albums" ? detail?.trendingAlbums : detail?.trendingTracks) ?? [];
+    topMode === "albums" ? detail.trendingAlbums : detail.trendingTracks;
 
   const {
     data: albumPages,
@@ -189,9 +182,7 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
               ))}
             </div>
           </div>
-          {detailLoading ? (
-            <TopGridSkeleton />
-          ) : topReviewed.length === 0 ? (
+          {topReviewed.length === 0 ? (
             <p className="text-mb-muted text-sm py-6">
               {t("noReviewsForTop")}
             </p>
@@ -217,9 +208,7 @@ export function ArtistClient({ artist, albumsTotal, tracksTotal }: ArtistClientP
           <h2 className="font-serif font-normal text-[22px] text-mb-text mb-4.5">
             {t("trendingHeading")}
           </h2>
-          {detailLoading ? (
-            <TopGridSkeleton />
-          ) : topTrending.length === 0 ? (
+          {topTrending.length === 0 ? (
             <p className="text-mb-muted text-sm py-6">
               {t("noTrendingForArtist")}
             </p>

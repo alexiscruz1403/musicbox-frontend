@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { useTranslations } from "next-intl";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { refreshRecentlyViewedCache } from "@/lib/offline/recently-viewed-cache";
@@ -25,9 +26,14 @@ export function OfflineModeGate({ accessToken, children }: OfflineModeGateProps)
 
   useEffect(() => {
     if (!isOnline || !accessToken) return;
-    void refreshRecentlyViewedCache(accessToken);
-    void refreshProfileCache(accessToken);
-    void flushMutationQueue(accessToken);
+    // Best-effort: son caches y cola de sincronización, la app funciona sin
+    // ellos. Pero `void` silencia el lint, no el rechazo — sin este catch un
+    // 500 del backend se vuelve un unhandledRejection que Next muestra como
+    // overlay de Runtime Error, como si la app hubiera crasheado.
+    const report = (err: unknown) => Sentry.captureException(err);
+    refreshRecentlyViewedCache(accessToken).catch(report);
+    refreshProfileCache(accessToken).catch(report);
+    flushMutationQueue(accessToken).catch(report);
   }, [isOnline, accessToken]);
 
   if (isOnline) {

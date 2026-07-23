@@ -708,6 +708,13 @@
       "heading": "Trending ahora",
       "viewAll": "Ver todo",
       "empty": "Todavía no hay suficientes reseñas."
+    },
+    "installBanner": {
+      "heading": "Instalá Vinlyst",
+      "body": "Agregala a tu pantalla de inicio para entrar rápido y leer sin conexión.",
+      "installCta": "Instalar app",
+      "iosInstruction": "Tocá Compartir → Añadir a pantalla de inicio",
+      "dismissLabel": "Cerrar el aviso de instalación"
     }
   },
   "Search": {

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { apiGetProfile } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import ProfileClient from "./profile-client";
@@ -8,7 +8,7 @@ export default async function ProfilePage({
   params,
 }: PageProps<"/u/[handle]">) {
   const { handle } = await params;
-  const session = await auth();
+  const session = await getValidSession();
 
   let profileData;
   try {

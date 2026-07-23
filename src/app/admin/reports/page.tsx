@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import AdminReportsClient from "./admin-reports-client";
 
 export default async function AdminReportsPage() {
-  const session = await auth();
+  const session = await getValidSession();
   if (!session) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/feed");
 

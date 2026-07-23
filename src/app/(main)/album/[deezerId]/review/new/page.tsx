@@ -1,5 +1,5 @@
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { apiCatalogAlbum, apiGetReview, ApiError } from "@/lib/api";
 import type { ReviewDetail } from "@/types/api";
 import { AlbumReviewFormClient } from "./album-review-form-client";
@@ -13,7 +13,7 @@ export default async function NewAlbumReviewPage({
 }) {
   const { deezerId } = await params;
   const { edit } = await searchParams;
-  const session = await auth();
+  const session = await getValidSession();
 
   if (!session) {
     const target = `/album/${deezerId}/review/new${edit ? `?edit=${edit}` : ""}`;

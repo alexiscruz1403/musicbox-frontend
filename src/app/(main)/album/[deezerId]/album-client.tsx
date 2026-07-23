@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { apiAlbumReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
 import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
+import { useRecordRecentlyViewed } from "@/hooks/use-record-recently-viewed";
 import { formatMs, coverGradient, ratingColor } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import type { CatalogAlbum } from "@/types/api";
@@ -57,6 +58,7 @@ interface AlbumClientProps {
 }
 
 export function AlbumClient({ album, hasSession }: AlbumClientProps) {
+  useRecordRecentlyViewed("ALBUM", album.deezerId);
   const router = useRouter();
   const t = useTranslations("Album");
   const tCommon = useTranslations("Common");

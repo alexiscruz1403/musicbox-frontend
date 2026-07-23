@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { apiAlbumReviews, apiTrendingAlbums } from "@/lib/api";
 import { LandingPage, type LandingReviewItem } from "@/components/landing/landing-page";
 import type { CatalogReview, TrendingAlbum } from "@/types/api";
@@ -57,7 +57,7 @@ async function getLandingReviews(albums: TrendingAlbum[]): Promise<LandingReview
 }
 
 export default async function RootPage() {
-  const session = await auth();
+  const session = await getValidSession();
 
   if (session) {
     redirect("/feed");

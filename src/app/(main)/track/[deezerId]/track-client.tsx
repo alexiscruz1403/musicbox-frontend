@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { apiTrackReviews } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
 import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
+import { useRecordRecentlyViewed } from "@/hooks/use-record-recently-viewed";
 import { formatMs, coverGradient, ratingColor } from "@/lib/review-format";
 import { CommunityReviewList } from "@/components/reviews/community-review-list";
 import type { CatalogTrack } from "@/types/api";
@@ -170,6 +171,7 @@ interface TrackClientProps {
 }
 
 export function TrackClient({ track, hasSession }: TrackClientProps) {
+  useRecordRecentlyViewed("TRACK", track.deezerId);
   const router = useRouter();
   const t = useTranslations("Track");
   const tCommon = useTranslations("Common");

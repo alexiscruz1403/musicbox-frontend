@@ -10,6 +10,7 @@ import { CommunityReviewList } from "@/components/reviews/community-review-list"
 import { FollowSuggestionsWidget } from "@/components/feed/follow-suggestions-widget";
 import { TrendingWidget } from "@/components/feed/trending-widget";
 import { UserSearchWidget } from "@/components/feed/user-search-widget";
+import { InstallBanner } from "@/components/pwa/install-banner";
 import type { FeedType } from "@/types/api";
 
 interface FeedClientProps {
@@ -89,6 +90,8 @@ export function FeedClient({ accessToken }: FeedClientProps) {
             </h1>
             <p className="text-[15px] text-mb-muted">{t("subheading")}</p>
           </header>
+
+          <InstallBanner />
 
           <UserSearchWidget accessToken={accessToken} />
 

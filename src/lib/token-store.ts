@@ -4,10 +4,18 @@ let _accessToken: string | null = null;
 let _refreshToken: string | null = null;
 let _refreshPromise: Promise<boolean> | null = null;
 let _onExpired: (() => void) | null = null;
+let _expiredNotified = false;
 
 function clearTokens() {
   _accessToken = null;
   _refreshToken = null;
+  // Solo notificar en la transición a "sin sesión", no una vez por llamada.
+  // Sin este guard, N peticiones concurrentes que reciben 401 producen N
+  // signOut() completos (cada uno = GET /api/auth/csrf + POST /api/auth/signout),
+  // porque el camino "no hay refresh token" de refresh() esquiva el dedupe de
+  // _refreshPromise y llega acá una vez por petición.
+  if (_expiredNotified) return;
+  _expiredNotified = true;
   _onExpired?.();
 }
 
@@ -15,6 +23,7 @@ export const tokenStore = {
   set(at: string, rt: string) {
     _accessToken = at;
     _refreshToken = rt;
+    _expiredNotified = false;
   },
 
   getAccessToken: (): string | null => _accessToken,

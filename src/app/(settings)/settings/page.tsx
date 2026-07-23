@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { User, Bell, FileText, ChevronRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { LogoutButton } from "./logout-button";
 import { BackButton } from "./back-button";
 import { LanguageToggle } from "./language-toggle";
@@ -14,7 +14,7 @@ const ITEMS = [
 ] as const;
 
 export default async function SettingsHubPage() {
-  const session = await auth();
+  const session = await getValidSession();
   if (!session) redirect("/login");
   const t = await getTranslations("Settings.hub");
 

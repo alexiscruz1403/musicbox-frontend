@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { apiPatchMe, generateIdempotencyKey } from "@/lib/api";
 import { LOCALE_COOKIE, isAppLocale, type AppLocale } from "@/i18n/locale";
 
@@ -15,7 +15,7 @@ export async function setLocale(locale: AppLocale): Promise<void> {
     sameSite: "lax",
   });
 
-  const session = await auth();
+  const session = await getValidSession();
   if (session?.accessToken) {
     try {
       await apiPatchMe(

@@ -708,6 +708,13 @@
       "heading": "Trending now",
       "viewAll": "See all",
       "empty": "Not enough reviews yet."
+    },
+    "installBanner": {
+      "heading": "Install Vinlyst",
+      "body": "Add it to your home screen for quick access and offline reading.",
+      "installCta": "Install app",
+      "iosInstruction": "Tap Share → Add to Home Screen",
+      "dismissLabel": "Dismiss install banner"
     }
   },
   "Search": {

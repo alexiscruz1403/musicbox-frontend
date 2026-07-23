@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { apiGetMe } from "@/lib/api";
 import AccountClient from "./account-client";
 
 export default async function SettingsAccountPage() {
-  const session = await auth();
+  const session = await getValidSession();
   if (!session) redirect("/login");
 
   const { data } = await apiGetMe(session.accessToken);

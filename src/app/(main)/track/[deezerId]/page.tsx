@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { apiCatalogTrack } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { TrackClient } from "./track-client";
@@ -12,7 +12,7 @@ export async function generateMetadata({
   const t = await getTranslations("Track");
   try {
     const { deezerId } = await params;
-    const session = await auth();
+    const session = await getValidSession();
     const { data } = await apiCatalogTrack(deezerId, session?.accessToken);
     return {
       title: t("pageTitle", { trackTitle: data.title, artistName: data.artist.name }),
@@ -26,7 +26,7 @@ export default async function TrackPage({
   params,
 }: PageProps<"/track/[deezerId]">) {
   const { deezerId } = await params;
-  const session = await auth();
+  const session = await getValidSession();
 
   let track;
   try {

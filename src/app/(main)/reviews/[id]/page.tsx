@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { auth } from "@/auth";
+import { getValidSession } from "@/lib/session";
 import { apiGetReview, ApiError } from "@/lib/api";
 import { ReviewDetailClient } from "./review-detail-client";
 
@@ -30,7 +30,7 @@ export default async function ReviewDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const session = await auth();
+  const session = await getValidSession();
 
   let review;
   try {

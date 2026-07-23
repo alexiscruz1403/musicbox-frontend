@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { getCurrentPushPermission, subscribeToPush } from "@/lib/push";
 
 interface PushSubscribeProps {
@@ -16,7 +17,9 @@ export function PushSubscribe({ accessToken }: PushSubscribeProps) {
   useEffect(() => {
     if (!accessToken) return;
     if (getCurrentPushPermission() !== "granted") return;
-    void subscribeToPush(accessToken);
+    // Resincronización best-effort — el fallo se reporta, no se propaga como
+    // unhandledRejection (ver el mismo criterio en offline-mode-gate.tsx).
+    subscribeToPush(accessToken).catch((err) => Sentry.captureException(err));
   }, [accessToken]);
 
   return null;

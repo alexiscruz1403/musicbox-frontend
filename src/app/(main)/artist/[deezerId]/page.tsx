@@ -1,10 +1,15 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { auth } from "@/auth";
 import { apiCatalogArtist, apiCatalogArtistAlbums, apiCatalogArtistTracks } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { ArtistClient } from "./artist-client";
+
+// El endpoint base ahora devuelve el detalle extendido (payload pesado) y se
+// llama dos veces por request (generateMetadata + el render). cache() deduplica
+// esas dos llamadas dentro del mismo request. Endpoint público → sin token.
+const getArtistDetail = cache((deezerId: string) => apiCatalogArtist(deezerId));
 
 export async function generateMetadata({
   params,
@@ -12,10 +17,9 @@ export async function generateMetadata({
   const t = await getTranslations("Artist");
   try {
     const { deezerId } = await params;
-    const session = await auth();
-    const { data } = await apiCatalogArtist(deezerId, session?.accessToken);
+    const { data } = await getArtistDetail(deezerId);
     return {
-      title: t("pageTitle", { name: data.name }),
+      title: t("pageTitle", { name: data.artist.name }),
     };
   } catch {
     return { title: t("pageTitleFallback") };
@@ -26,18 +30,17 @@ export default async function ArtistPage({
   params,
 }: PageProps<"/artist/[deezerId]">) {
   const { deezerId } = await params;
-  const session = await auth();
 
-  let artist;
+  let detail;
   let albumsTotal;
   let tracksTotal;
   try {
     const [artistRes, albumsRes, tracksRes] = await Promise.all([
-      apiCatalogArtist(deezerId, session?.accessToken),
+      getArtistDetail(deezerId),
       apiCatalogArtistAlbums(deezerId, 1),
       apiCatalogArtistTracks(deezerId, 1),
     ]);
-    artist = artistRes.data;
+    detail = artistRes.data;
     albumsTotal = albumsRes.data.total;
     tracksTotal = tracksRes.data.total;
   } catch (err) {
@@ -49,7 +52,7 @@ export default async function ArtistPage({
 
   return (
     <ArtistClient
-      artist={artist}
+      detail={detail}
       albumsTotal={albumsTotal}
       tracksTotal={tracksTotal}
     />
