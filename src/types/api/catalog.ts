@@ -26,6 +26,11 @@ export interface CatalogTrack {
   // docs/fase-2-features.md). Absent from artist album/track listings.
   reviewCount?: number;
   userRating?: number | null;
+  // Present only on GET /catalog/tracks/:deezerId — id of the caller's active
+  // TRACK review for this song, null if anonymous or unreviewed. Used to
+  // deep-link into the review form's edit/preload flow. Not exposed in search
+  // or nested listings.
+  reviewId?: string | null;
 }
 
 export interface CatalogAlbum {
@@ -40,6 +45,11 @@ export interface CatalogAlbum {
   // absent from GET /catalog/artists/:deezerId/albums listings.
   reviewCount?: number;
   userRating?: number | null;
+  // Present only on GET /catalog/albums/:deezerId — id of the caller's active
+  // ALBUM review for this album, null if anonymous or unreviewed. Used to
+  // deep-link into the review form's edit/preload flow. Not exposed in search
+  // or nested listings.
+  reviewId?: string | null;
 }
 
 export interface CatalogPage<T> {

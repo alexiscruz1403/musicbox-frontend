@@ -66,6 +66,15 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // If the caller already reviewed this album, deep-link into the form's
+  // edit/preload flow (?edit=<reviewId>) instead of starting a create.
+  const reviewPath = album.reviewId
+    ? `/album/${album.deezerId}/review/new?edit=${album.reviewId}`
+    : `/album/${album.deezerId}/review/new`;
+  const reviewHref = hasSession
+    ? reviewPath
+    : `/login?callbackUrl=${encodeURIComponent(reviewPath)}`;
+
   const togglePlay = useCallback(
     (trackId: string, previewUrl: string | null) => {
       if (!previewUrl) return;
@@ -208,16 +217,10 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
               </div>
               <button
                 type="button"
-                onClick={() =>
-                  router.push(
-                    hasSession
-                      ? `/album/${album.deezerId}/review/new`
-                      : `/login?callbackUrl=${encodeURIComponent(`/album/${album.deezerId}/review/new`)}`,
-                  )
-                }
+                onClick={() => router.push(reviewHref)}
                 className="h-12 px-7 bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)] cursor-pointer"
               >
-                {t("writeReviewButton")}
+                {album.reviewId ? t("editReviewButton") : t("writeReviewButton")}
               </button>
             </div>
           </div>

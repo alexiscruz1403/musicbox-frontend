@@ -203,9 +203,14 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
     { id: "rating", label: t("sortRating") },
   ];
 
+  // If the caller already reviewed this track, deep-link into the form's
+  // edit/preload flow (?edit=<reviewId>) instead of starting a create.
+  const reviewPath = track.reviewId
+    ? `/track/${track.deezerId}/review/new?edit=${track.reviewId}`
+    : `/track/${track.deezerId}/review/new`;
   const newReviewHref = hasSession
-    ? `/track/${track.deezerId}/review/new`
-    : `/login?callbackUrl=${encodeURIComponent(`/track/${track.deezerId}/review/new`)}`;
+    ? reviewPath
+    : `/login?callbackUrl=${encodeURIComponent(reviewPath)}`;
 
   return (
     <div className="relative min-h-screen bg-mb-bg text-mb-text font-sans">
@@ -327,7 +332,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
                 onClick={() => router.push(newReviewHref)}
                 className="hidden md:block h-12 px-7 bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg transition-all hover:shadow-[0_0_20px_rgba(107,53,212,0.35)] cursor-pointer"
               >
-                {t("writeReviewButton")}
+                {track.reviewId ? t("editReviewButton") : t("writeReviewButton")}
               </button>
             </div>
 
@@ -337,7 +342,7 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
               onClick={() => router.push(newReviewHref)}
               className="md:hidden w-full h-12 border-none bg-mb-primary hover:bg-mb-primary-h text-white font-semibold text-[15px] rounded-lg mt-3 transition-colors cursor-pointer"
             >
-              {t("writeReviewButton")}
+              {track.reviewId ? t("editReviewButton") : t("writeReviewButton")}
             </button>
           </div>
         </div>
