@@ -201,7 +201,9 @@
     "noRecentSearches": "No recent searches.",
     "clearAllSearches": "Clear all",
     "removeFromRecent": "Remove from recent",
-    "coverAlt": "Cover art for {title}"
+    "coverAlt": "Cover art for {title}",
+    "typeAlbum": "Album",
+    "typeTrack": "Song"
   },
   "Notifications": {
     "targetReview": " on {title}",

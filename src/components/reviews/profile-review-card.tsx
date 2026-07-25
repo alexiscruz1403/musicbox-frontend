@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Disc3, Music } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ratingColor, timeAgo, coverGradient } from "@/lib/review-format";
 import type { UserReviewHistoryItem } from "@/types/api";
@@ -8,6 +9,9 @@ import type { UserReviewHistoryItem } from "@/types/api";
 export function ProfileReviewCard({ item }: { item: UserReviewHistoryItem }) {
   const tCommon = useTranslations("Common");
   const rating = Number(item.rating);
+  const isAlbum = item.type === "ALBUM";
+  const TypeIcon = isAlbum ? Disc3 : Music;
+  const typeLabel = isAlbum ? tCommon("typeAlbum") : tCommon("typeTrack");
 
   return (
     <Link
@@ -38,6 +42,10 @@ export function ProfileReviewCard({ item }: { item: UserReviewHistoryItem }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
+            <span className="inline-flex items-center gap-1 mb-1 px-2 py-0.5 border border-mb-ddp rounded-full text-[10px] uppercase tracking-wide text-mb-accent font-semibold">
+              <TypeIcon className="w-2.5 h-2.5" aria-hidden />
+              {typeLabel}
+            </span>
             <p className="font-serif text-mb-text text-base leading-tight truncate">
               {item.externalTitle ?? "—"}
             </p>
