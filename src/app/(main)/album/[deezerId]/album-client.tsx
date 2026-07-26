@@ -188,6 +188,23 @@ export function AlbumClient({ album, hasSession }: AlbumClientProps) {
                 </>
               )}
             </div>
+            {album.genres?.length > 0 && (
+              <div
+                role="list"
+                aria-label={t("genresLabel")}
+                className="flex flex-wrap gap-2 mb-5 justify-center md:justify-start"
+              >
+                {album.genres.map((genre) => (
+                  <span
+                    key={genre}
+                    role="listitem"
+                    className="px-2.5 py-1 bg-mb-card border border-mb-border rounded-full text-xs text-mb-muted"
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="flex items-end gap-6 flex-wrap justify-center md:justify-start">
               <div
                 role="group"

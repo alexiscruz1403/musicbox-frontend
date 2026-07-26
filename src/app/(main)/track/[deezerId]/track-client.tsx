@@ -294,6 +294,23 @@ export function TrackClient({ track, hasSession }: TrackClientProps) {
                 </>
               )}
             </div>
+            {track.genres?.length > 0 && (
+              <div
+                role="list"
+                aria-label={t("genresLabel")}
+                className="flex flex-wrap gap-2 mb-5 justify-center md:justify-start"
+              >
+                {track.genres.map((genre) => (
+                  <span
+                    key={genre}
+                    role="listitem"
+                    className="px-2.5 py-1 bg-mb-card border border-mb-border rounded-full text-xs text-mb-muted"
+                  >
+                    {genre}
+                  </span>
+                ))}
+              </div>
+            )}
             {/* Audio preview */}
             {track.previewUrl && (
               <AudioPreviewPlayer key={track.deezerId} previewUrl={track.previewUrl} />
