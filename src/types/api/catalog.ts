@@ -20,12 +20,20 @@ export interface CatalogTrack {
   durationMs: number | null;
   trackNumber: number | null;
   previewUrl: string | null;
+  // Genre names inherited from the track's album (Deezer has no per-track
+  // genre). May be empty until the album is persisted — see docs/fase-2-features.md.
+  genres: string[];
   // Present on GET /catalog/tracks/:deezerId, track search-result items, and
   // tracks nested in a GET /catalog/albums/:deezerId tracklist (userRating
   // only, sourced from the album review's per-track item there — see
   // docs/fase-2-features.md). Absent from artist album/track listings.
   reviewCount?: number;
   userRating?: number | null;
+  // Present only on GET /catalog/tracks/:deezerId — id of the caller's active
+  // TRACK review for this song, null if anonymous or unreviewed. Used to
+  // deep-link into the review form's edit/preload flow. Not exposed in search
+  // or nested listings.
+  reviewId?: string | null;
 }
 
 export interface CatalogAlbum {
@@ -34,12 +42,19 @@ export interface CatalogAlbum {
   artist: CatalogArtist;
   coverUrl: string | null;
   releaseDate: string | null;
-  genreLabel: string | null;
+  // All of the album's genre names (Deezer returns several). Replaces the old
+  // single `genreLabel` — present on detail/search. See docs/fase-2-features.md.
+  genres: string[];
   tracks: CatalogTrack[];
   // Present on GET /catalog/albums/:deezerId and album search-result items —
   // absent from GET /catalog/artists/:deezerId/albums listings.
   reviewCount?: number;
   userRating?: number | null;
+  // Present only on GET /catalog/albums/:deezerId — id of the caller's active
+  // ALBUM review for this album, null if anonymous or unreviewed. Used to
+  // deep-link into the review form's edit/preload flow. Not exposed in search
+  // or nested listings.
+  reviewId?: string | null;
 }
 
 export interface CatalogPage<T> {
