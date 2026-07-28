@@ -5,19 +5,20 @@ import Link from "next/link";
 import { UserPlus, Pencil, Flag, Settings, Lock, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { apiFollow, apiUnfollow, apiUserReviews } from "@/lib/api";
+import { apiFollow, apiUnfollow, apiUserReviews, apiUserTierlists } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { getInitials } from "@/lib/review-format";
 import { ProfileReviewCard } from "@/components/reviews/profile-review-card";
+import { TierlistSummaryCard } from "@/components/tierlists/tierlist-summary-card";
 import { ReportModal } from "@/components/reports/report-modal";
 import { FollowListDrawer } from "@/components/profile/follow-list-drawer";
 import { FollowButton } from "@/components/feed/follow-button";
 import type { FollowStatus } from "@/lib/follow-status";
 import type { PublicProfileResponse, UserReviewHistoryItem } from "@/types/api";
 
-type Tab = "todo" | "albums" | "songs";
+type Tab = "todo" | "albums" | "songs" | "tierlists";
 type ReviewSort = "recent" | "oldest" | "best" | "worst";
 
 interface ProfileClientProps {
@@ -138,6 +139,32 @@ export default function ProfileClient({
     isFetchingNextPage,
     fetchNextPage,
     enabled: activeTab === "songs",
+  });
+
+  // Las tierlists son un listado aparte (endpoint propio, sin sort ni búsqueda)
+  // y sólo se piden cuando el tab está activo, para no cargarlas de más en la
+  // visita normal al perfil.
+  const {
+    items: tierlists,
+    fetchNextPage: fetchNextTierlists,
+    hasNextPage: hasMoreTierlists,
+    isFetchingNextPage: fetchingMoreTierlists,
+    isLoading: tierlistsLoading,
+  } = useOfflineListQuery({
+    queryKey: ["user-tierlists", user.handle],
+    cacheKey: `user-tierlists:${user.handle}`,
+    fetchPage: async (cursor) => {
+      const { data } = await apiUserTierlists(user.handle, cursor, accessToken);
+      return data;
+    },
+    enabled: !locked && activeTab === "tierlists",
+  });
+
+  const sentinelRefTierlists = useInfiniteScrollSentinel({
+    hasNextPage: hasMoreTierlists,
+    isFetchingNextPage: fetchingMoreTierlists,
+    fetchNextPage: fetchNextTierlists,
+    enabled: activeTab === "tierlists",
   });
 
   function renderReviewList(
@@ -374,6 +401,7 @@ export default function ProfileClient({
                     { id: "todo" as Tab, label: t("tabAll") },
                     { id: "albums" as Tab, label: t("tabAlbums") },
                     { id: "songs" as Tab, label: t("tabTracks") },
+                    { id: "tierlists" as Tab, label: t("tabTierlists") },
                   ] as const
                 ).map(({ id, label }) => (
                   <button
@@ -392,8 +420,14 @@ export default function ProfileClient({
               </div>
             </div>
 
-            {/* Sort + search controls */}
-            <div className="flex items-center gap-3 flex-wrap mb-5">
+            {/* Sort + search controls — sólo aplican a las reseñas; el endpoint
+                de tierlists no acepta orden ni búsqueda. */}
+            <div
+              className={cn(
+                "items-center gap-3 flex-wrap mb-5",
+                activeTab === "tierlists" ? "hidden" : "flex",
+              )}
+            >
               <div className="relative flex-1 min-w-[200px]">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mb-dim pointer-events-none"
@@ -447,6 +481,43 @@ export default function ProfileClient({
                   : t("noTrackReviews"),
                 sentinelRefSongs,
               )}
+            {activeTab === "tierlists" && (
+              <>
+                {tierlistsLoading && tierlists.length === 0 ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="animate-pulse h-36 bg-mb-card border border-mb-border rounded-xl"
+                      />
+                    ))}
+                  </div>
+                ) : tierlists.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <p className="text-mb-muted text-sm">
+                      {isOwnProfile ? t("noTierlistsOwn") : t("noTierlists")}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 pb-6">
+                    {tierlists.map((tl) => (
+                      <TierlistSummaryCard key={tl.id} tierlist={tl} />
+                    ))}
+                  </div>
+                )}
+                <div
+                  ref={sentinelRefTierlists}
+                  className="h-8 flex items-center justify-center mt-4"
+                >
+                  {fetchingMoreTierlists && (
+                    <div
+                      className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
+                      aria-label={t("loadingMoreTierlistsAriaLabel")}
+                    />
+                  )}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

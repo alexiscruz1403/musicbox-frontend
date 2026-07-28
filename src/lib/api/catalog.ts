@@ -131,11 +131,27 @@ export async function apiCatalogRecordView(
 // trending). Endpoint público: antes existía un `/artists/:id/detail` separado
 // para los rankings; el backend lo consolidó en este endpoint base y eliminó
 // el `/detail` (ver docs/fase-2-features.md §GET /v1/catalog/artists/:deezerId).
+// El endpoint es público, pero con un JWT válido resuelve además
+// `artist.tierlistId` (la tierlist del caller para este artista) — por eso el
+// accessToken opcional, mismo patrón que apiGetProfile.
 export async function apiCatalogArtist(
   deezerId: string,
+  accessToken?: string,
 ): Promise<ApiSuccessResponse<ArtistDetail>> {
   return apiFetch<ApiSuccessResponse<ArtistDetail>>(
     `/catalog/artists/${deezerId}`,
+    { accessToken },
+  );
+}
+
+// Discografía completa en una sola respuesta, sin paginar — pensada para armar
+// una tierlist. A diferencia del endpoint paginado no devuelve nextCursor ni
+// total, así que no reusa CatalogPage<T>.
+export async function apiCatalogArtistAlbumsAll(
+  deezerId: string,
+): Promise<ApiSuccessResponse<{ items: CatalogAlbum[] }>> {
+  return apiFetch<ApiSuccessResponse<{ items: CatalogAlbum[] }>>(
+    `/catalog/artists/${deezerId}/albums/all`,
   );
 }
 

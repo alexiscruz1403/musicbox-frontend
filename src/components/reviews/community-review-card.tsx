@@ -73,10 +73,22 @@ export function CommunityReviewCard({
     });
   }
 
+  // Sólo los contextos que abarcan varios targets (el feed) mandan estos
+  // campos; en el detalle de álbum/canción el target es implícito de la página.
+  const hasTarget = !!review.externalTitle;
+  const coverAlt = tCommon("coverAlt", { title: review.externalTitle ?? "" });
+  const coverClass =
+    "shrink-0 block w-15 h-15 sm:w-20 sm:h-20 rounded-[10px] shadow-[inset_2px_2px_6px_rgba(0,0,0,0.4)]";
+  const coverStyle = review.externalCoverUrl
+    ? { backgroundImage: `url(${review.externalCoverUrl})`, backgroundSize: "cover" }
+    : { background: coverGradient(review.id) };
+  const titleClass = "block font-serif text-xl leading-tight text-mb-text truncate";
+
   return (
     <article className="bg-mb-card border border-mb-border rounded-xl p-5">
-      <div className="flex items-center gap-2.5 mb-3.5">
-        <Link href={`/reviews/${review.id}`} className="contents">
+      {/* Autor */}
+      <div className="flex items-center gap-2.5 mb-4">
+        <Link href={`/u/${review.user.handle}`} className="contents">
           {review.user.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -95,77 +107,97 @@ export function CommunityReviewCard({
         </Link>
         <div className="min-w-0 flex-1 flex items-baseline gap-1.5 flex-wrap">
           <Link
-            href={`/reviews/${review.id}`}
-            className="text-sm font-medium text-mb-text hover:text-mb-accent"
-          >
-            {review.user.displayName}
-          </Link>
-          <Link
             href={`/u/${review.user.handle}`}
-            className="font-mono text-xs text-mb-muted hover:text-mb-accent"
+            className="font-mono text-[13px] text-mb-muted hover:text-mb-accent"
           >
             @{review.user.handle}
           </Link>
+          <span className="text-[13px] font-medium text-mb-text">
+            {review.user.displayName}
+          </span>
           <span className="text-xs text-mb-dim">· {timeAgo(review.createdAt)}</span>
         </div>
-        <span
-          className="shrink-0 font-mono font-bold text-[26px] leading-none"
-          style={{ color: ratingColor(review.rating) }}
-        >
-          {review.rating.toFixed(2)}
-        </span>
+        {/* Sin fila de álbum (detalle de álbum/canción, donde el target es
+            implícito) la puntuación no tiene dónde ir: se queda acá. */}
+        {!hasTarget && (
+          <span
+            className="shrink-0 font-mono font-bold text-[26px] leading-none"
+            style={{ color: ratingColor(review.rating) }}
+          >
+            {review.rating.toFixed(2)}
+          </span>
+        )}
       </div>
 
-      {targetHref && (
-        <Link
-          href={targetHref}
-          className="flex items-center gap-3 p-2.5 bg-mb-input rounded-lg mb-3.5 hover:bg-mb-border transition-colors"
-        >
-          <div
-            className="shrink-0 w-12 h-12 rounded-md"
-            style={
-              review.externalCoverUrl
-                ? { backgroundImage: `url(${review.externalCoverUrl})`, backgroundSize: "cover" }
-                : { background: coverGradient(review.id) }
-            }
-            role="img"
-            aria-label={tCommon("coverAlt", { title: review.externalTitle ?? "" })}
-          />
+      {/* Álbum/canción reseñada. El feed manda externalTitle/externalArtistName/
+          externalCoverUrl pero no el álbum/canción anidado del que sale el
+          deezerId, así que la fila se muestra igual y sólo se vuelve un link
+          cuando hay a dónde ir. */}
+      {hasTarget && (
+        <div className="flex gap-4 mb-4">
+          {targetHref ? (
+            <Link
+              href={targetHref}
+              aria-label={coverAlt}
+              className={cn(coverClass, "transition-transform hover:scale-[1.04]")}
+              style={coverStyle}
+            />
+          ) : (
+            <div role="img" aria-label={coverAlt} className={coverClass} style={coverStyle} />
+          )}
           <div className="min-w-0 flex-1">
-            <div className="font-serif text-[15px] text-mb-text truncate">
-              {review.externalTitle ?? "—"}
+            {targetHref ? (
+              <Link href={targetHref} className={cn(titleClass, "hover:text-mb-accent transition-colors")}>
+                {review.externalTitle}
+              </Link>
+            ) : (
+              <span className={titleClass}>{review.externalTitle}</span>
+            )}
+            <div className="text-sm text-mb-muted truncate mt-0.5 mb-2.5">
+              {review.externalArtistName ?? ""}
             </div>
-            <div className="text-xs text-mb-muted truncate">{review.externalArtistName ?? ""}</div>
+            <span
+              className="font-mono font-bold text-[26px] leading-none"
+              style={{ color: ratingColor(review.rating) }}
+            >
+              {review.rating.toFixed(2)}
+            </span>
           </div>
-        </Link>
+        </div>
       )}
 
       {review.description && (
-        <Link href={`/reviews/${review.id}`}>
-          <p
-            className={cn(
-              "text-[15px] leading-relaxed text-mb-text mb-3.5",
-              clampDescription && "line-clamp-4",
-            )}
-          >
-            {review.description}
-          </p>
-        </Link>
+        <p
+          className={cn(
+            "text-[15px] leading-relaxed text-mb-text mb-1.5",
+            clampDescription && (hasTarget ? "line-clamp-2" : "line-clamp-4"),
+          )}
+        >
+          {review.description}
+        </p>
       )}
 
-      <div className="flex items-center gap-1">
+      <Link
+        href={`/reviews/${review.id}`}
+        className="inline-block text-sm font-medium text-mb-accent hover:underline"
+      >
+        {t("viewMore")} →
+      </Link>
+
+      {/* Acciones */}
+      <div className="flex items-center gap-2 pt-4 mt-3 border-t border-mb-border">
         <button
           type="button"
           onClick={() => handleReact("LIKE")}
           aria-label={t("likeAriaLabel")}
           aria-pressed={reaction === "LIKE"}
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input cursor-pointer"
+          className="inline-flex items-center gap-1.5 min-h-10 px-3 bg-mb-input border border-mb-border rounded-[10px] text-[13px] font-medium hover:border-mb-ddp transition-colors cursor-pointer"
           style={{ color: reaction === "LIKE" ? "#8B56E8" : "#9B95B0" }}
         >
           <ThumbsUp
             width={17}
             height={17}
-            strokeWidth={1.75}
+            strokeWidth={1.7}
             fill={reaction === "LIKE" ? "currentColor" : "none"}
           />
           {likes}
@@ -175,13 +207,13 @@ export function CommunityReviewCard({
           onClick={() => handleReact("DISLIKE")}
           aria-label={t("dislikeAriaLabel")}
           aria-pressed={reaction === "DISLIKE"}
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium transition-colors hover:bg-mb-input cursor-pointer"
+          className="inline-flex items-center gap-1.5 min-h-10 px-3 bg-mb-input border border-mb-border rounded-[10px] text-[13px] font-medium hover:border-mb-ddp transition-colors cursor-pointer"
           style={{ color: reaction === "DISLIKE" ? "#8B56E8" : "#9B95B0" }}
         >
           <ThumbsDown
             width={17}
             height={17}
-            strokeWidth={1.75}
+            strokeWidth={1.7}
             fill={reaction === "DISLIKE" ? "currentColor" : "none"}
           />
           {dislikes}
@@ -189,10 +221,11 @@ export function CommunityReviewCard({
         <Link
           href={`/reviews/${review.id}`}
           aria-label={t("commentsAriaLabel")}
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-lg text-sm font-medium text-mb-muted hover:bg-mb-input hover:text-mb-text transition-colors"
+          className="inline-flex items-center gap-1.5 min-h-10 px-3 bg-mb-input border border-mb-border rounded-[10px] text-[13px] font-medium text-mb-muted hover:text-mb-text hover:border-mb-ddp transition-colors"
         >
-          <MessageCircle width={17} height={17} strokeWidth={1.75} />
+          <MessageCircle width={17} height={17} strokeWidth={1.7} />
           {review.commentsCount}
+          <span className="hidden sm:inline">&nbsp;{t("commentsLabel")}</span>
         </Link>
       </div>
     </article>

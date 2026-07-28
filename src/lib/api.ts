@@ -10,6 +10,7 @@ export * from "./api/auth";
 export * from "./api/users";
 export * from "./api/catalog";
 export * from "./api/reviews";
+export * from "./api/tierlists";
 export * from "./api/social";
 export * from "./api/trending";
 export * from "./api/notifications";

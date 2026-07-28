@@ -2,14 +2,19 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { getValidSession } from "@/lib/session";
 import { apiCatalogArtist, apiCatalogArtistAlbums, apiCatalogArtistTracks } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { ArtistClient } from "./artist-client";
 
-// El endpoint base ahora devuelve el detalle extendido (payload pesado) y se
-// llama dos veces por request (generateMetadata + el render). cache() deduplica
-// esas dos llamadas dentro del mismo request. Endpoint público → sin token.
-const getArtistDetail = cache((deezerId: string) => apiCatalogArtist(deezerId));
+// El endpoint base devuelve el detalle extendido (payload pesado) y se llama
+// dos veces por request (generateMetadata + el render). cache() deduplica esas
+// dos llamadas dentro del mismo request; el accessToken forma parte de la clave
+// y las dos ramas lo resuelven igual, así que sigue siendo un solo fetch.
+// Sigue siendo público, pero con token resuelve además `artist.tierlistId`.
+const getArtistDetail = cache((deezerId: string, accessToken?: string) =>
+  apiCatalogArtist(deezerId, accessToken),
+);
 
 export async function generateMetadata({
   params,
@@ -17,7 +22,8 @@ export async function generateMetadata({
   const t = await getTranslations("Artist");
   try {
     const { deezerId } = await params;
-    const { data } = await getArtistDetail(deezerId);
+    const session = await getValidSession();
+    const { data } = await getArtistDetail(deezerId, session?.accessToken);
     return {
       title: t("pageTitle", { name: data.artist.name }),
     };
@@ -30,13 +36,14 @@ export default async function ArtistPage({
   params,
 }: PageProps<"/artist/[deezerId]">) {
   const { deezerId } = await params;
+  const session = await getValidSession();
 
   let detail;
   let albumsTotal;
   let tracksTotal;
   try {
     const [artistRes, albumsRes, tracksRes] = await Promise.all([
-      getArtistDetail(deezerId),
+      getArtistDetail(deezerId, session?.accessToken),
       apiCatalogArtistAlbums(deezerId, 1),
       apiCatalogArtistTracks(deezerId, 1),
     ]);
@@ -55,6 +62,7 @@ export default async function ArtistPage({
       detail={detail}
       albumsTotal={albumsTotal}
       tracksTotal={tracksTotal}
+      hasSession={!!session}
     />
   );
 }

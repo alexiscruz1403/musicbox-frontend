@@ -7,7 +7,10 @@ import type {
   FeedResponse,
   FeedType,
   CatalogReview,
+  FeedItem,
   ReviewType,
+  SocialTarget,
+  Tierlist,
   UserSearchResult,
   UserSearchResponse,
   UserQuickSearchItem,
@@ -17,14 +20,20 @@ import { apiFetch, type RawListEnvelope, type RawReviewUser } from "./client";
 
 // Social (Fase 4) — reactions, comments, feed, follow suggestions, búsqueda
 // de usuarios
+//
+// Reacciones y comentarios aceptan dos targets (`reviews` | `tierlists`): las
+// rutas de tierlist son un espejo exacto de las de reseña — mismo body, mismos
+// guards, mismos errores —, así que el target solo elige el prefijo. Default
+// "reviews" para no tocar los call sites previos a tierlists.
 
 export async function apiSetReaction(
   accessToken: string,
-  reviewId: string,
+  targetId: string,
   type: ReactionType,
   idempotencyKey: string,
+  target: SocialTarget = "reviews",
 ): Promise<void> {
-  await apiFetch<ApiSuccessResponse<unknown>>(`/reviews/${reviewId}/reactions`, {
+  await apiFetch<ApiSuccessResponse<unknown>>(`/${target}/${targetId}/reactions`, {
     method: "POST",
     accessToken,
     headers: { "Idempotency-Key": idempotencyKey },
@@ -34,9 +43,10 @@ export async function apiSetReaction(
 
 export async function apiRemoveReaction(
   accessToken: string,
-  reviewId: string,
+  targetId: string,
+  target: SocialTarget = "reviews",
 ): Promise<void> {
-  return apiFetch<void>(`/reviews/${reviewId}/reactions`, {
+  return apiFetch<void>(`/${target}/${targetId}/reactions`, {
     method: "DELETE",
     accessToken,
   });
@@ -64,26 +74,28 @@ function toComment(row: RawComment): Comment {
 }
 
 export async function apiGetComments(
-  reviewId: string,
+  targetId: string,
   cursor?: string,
   limit = 10,
+  target: SocialTarget = "reviews",
 ): Promise<ApiSuccessResponse<CommentsResponse>> {
   const params = new URLSearchParams({ limit: String(limit) });
   if (cursor) params.set("cursor", cursor);
   const raw = await apiFetch<RawListEnvelope<RawComment>>(
-    `/reviews/${reviewId}/comments?${params}`,
+    `/${target}/${targetId}/comments?${params}`,
   );
   return { data: { items: raw.data.map(toComment), nextCursor: raw.meta.cursor } };
 }
 
 export async function apiCreateComment(
   accessToken: string,
-  reviewId: string,
+  targetId: string,
   content: string,
   idempotencyKey: string,
+  target: SocialTarget = "reviews",
 ): Promise<ApiSuccessResponse<Comment>> {
   const raw = await apiFetch<ApiSuccessResponse<RawComment>>(
-    `/reviews/${reviewId}/comments`,
+    `/${target}/${targetId}/comments`,
     {
       method: "POST",
       accessToken,
@@ -109,7 +121,8 @@ export async function apiDeleteComment(
 // (minus trackReviewItems, which Feed cards don't need) since the doc states
 // Feed and Reviews/Album/Track listings all merge stats through the same
 // shared SocialService.getReviewStats(). Verify field names against the live API.
-interface RawFeedRow {
+interface RawFeedReviewRow {
+  resourceType: "REVIEW";
   id: string;
   type: ReviewType;
   rating: string;
@@ -118,8 +131,13 @@ interface RawFeedRow {
   externalTitle: string;
   externalArtistName: string;
   externalCoverUrl: string | null;
-  album: { deezerId: string } | null;
-  track: { deezerId: string } | null;
+  // `albumId`/`trackId` son los UUID **internos** del recurso reseñado: no
+  // sirven para armar una URL, sólo dicen de qué tipo es la reseña (la CHECK
+  // `reviews_type_target_check` garantiza que haya exactamente uno seteado).
+  // El deezerId con el que se linkea viene aparte, en `resourceId`.
+  albumId: string | null;
+  trackId: string | null;
+  resourceId: string | null;
   user?: RawReviewUser;
   likesCount: number;
   dislikesCount: number;
@@ -127,7 +145,13 @@ interface RawFeedRow {
   userReaction: ReactionType | null;
 }
 
-function toFeedReview(row: RawFeedRow): CatalogReview {
+// Los items TIERLIST ya llegan con el shape de `Tierlist` (incluidos los 7
+// `tiers` completos) — no necesitan un mapeo campo a campo como las reseñas.
+type RawFeedTierlistRow = { resourceType: "TIERLIST" } & Tierlist;
+
+type RawFeedRow = RawFeedReviewRow | RawFeedTierlistRow;
+
+function toFeedReview(row: RawFeedReviewRow): CatalogReview {
   return {
     id: row.id,
     user: row.user
@@ -140,8 +164,11 @@ function toFeedReview(row: RawFeedRow): CatalogReview {
     commentsCount: row.commentsCount,
     userReaction: row.userReaction,
     createdAt: row.createdAt,
-    targetType: row.type,
-    targetDeezerId: row.album?.deezerId ?? row.track?.deezerId,
+    // El tipo de destino lo marca cuál de los dos ids internos vino (si
+    // llegaran los dos, gana la canción por ser el recurso más específico);
+    // el deezerId con el que se arma la URL siempre sale de `resourceId`.
+    targetType: row.trackId ? "TRACK" : row.albumId ? "ALBUM" : row.type,
+    targetDeezerId: row.resourceId ?? undefined,
     externalTitle: row.externalTitle,
     externalArtistName: row.externalArtistName,
     externalCoverUrl: row.externalCoverUrl,
@@ -159,7 +186,12 @@ export async function apiFeed(
   const raw = await apiFetch<RawListEnvelope<RawFeedRow>>(`/feed?${params}`, {
     accessToken,
   });
-  return { data: { items: raw.data.map(toFeedReview), nextCursor: raw.meta.cursor } };
+  const items: FeedItem[] = raw.data.map((row) =>
+    row.resourceType === "TIERLIST"
+      ? row
+      : { resourceType: "REVIEW", ...toFeedReview(row) },
+  );
+  return { data: { items, nextCursor: raw.meta.cursor } };
 }
 
 export async function apiFollowSuggestions(

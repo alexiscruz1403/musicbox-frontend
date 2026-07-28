@@ -1,9 +1,16 @@
 import type { CatalogReview } from "./reviews";
+import type { Tierlist } from "./tierlists";
 
 // ─── Social (Fase 4) — feed, comments, follow suggestions, búsqueda de usuarios
 
+// El feed es multi-recurso: mezcla reseñas y tierlists en ambos modos y cada
+// item declara su `resourceType` (ver docs/social-features.md, "API — Feed").
+export type FeedItem =
+  | ({ resourceType: "REVIEW" } & CatalogReview)
+  | ({ resourceType: "TIERLIST" } & Tierlist);
+
 export interface FeedResponse {
-  items: CatalogReview[];
+  items: FeedItem[];
   nextCursor: string | null;
 }
 

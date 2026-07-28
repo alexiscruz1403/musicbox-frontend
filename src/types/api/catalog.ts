@@ -7,6 +7,11 @@ export interface CatalogArtist {
   // Present on GET /catalog/artists/:deezerId and artist search-result items —
   // absent when this artist appears nested inside a CatalogAlbum/CatalogTrack.
   reviewCount?: number;
+  // Present only on GET /catalog/artists/:deezerId — id of the caller's active
+  // tierlist for this artist, null if anonymous or not created yet. Per-viewer,
+  // so it needs a request carrying the JWT. The artist-level analogue of
+  // CatalogAlbum/CatalogTrack.reviewId; not exposed in search results.
+  tierlistId?: string | null;
 }
 
 export interface CatalogTrack {

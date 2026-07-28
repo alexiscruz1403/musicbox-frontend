@@ -6,7 +6,7 @@ import { apiFeed } from "@/lib/api";
 import { useOfflineListQuery } from "@/hooks/use-offline-list-query";
 import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
 import { cn } from "@/lib/utils";
-import { CommunityReviewList } from "@/components/reviews/community-review-list";
+import { FeedList } from "@/components/feed/feed-list";
 import { FollowSuggestionsWidget } from "@/components/feed/follow-suggestions-widget";
 import { TrendingWidget } from "@/components/feed/trending-widget";
 import { UserSearchWidget } from "@/components/feed/user-search-widget";
@@ -59,7 +59,7 @@ export function FeedClient({ accessToken }: FeedClientProps) {
   ];
 
   const {
-    items: reviews,
+    items,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -114,11 +114,11 @@ export function FeedClient({ accessToken }: FeedClientProps) {
             ))}
           </div>
 
-          {!isLoading && reviews.length === 0 ? (
+          {!isLoading && items.length === 0 ? (
             <EmptyFeed feedType={feedType} />
           ) : (
-            <CommunityReviewList
-              reviews={reviews}
+            <FeedList
+              items={items}
               isLoading={isLoading}
               isFetchingNextPage={isFetchingNextPage}
               sentinelRef={sentinelRef}

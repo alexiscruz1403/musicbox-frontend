@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, List } from "lucide-react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -35,9 +36,15 @@ interface ArtistClientProps {
   detail: ArtistDetail;
   albumsTotal: number;
   tracksTotal: number;
+  hasSession: boolean;
 }
 
-export function ArtistClient({ detail, albumsTotal, tracksTotal }: ArtistClientProps) {
+export function ArtistClient({
+  detail,
+  albumsTotal,
+  tracksTotal,
+  hasSession,
+}: ArtistClientProps) {
   // El detalle (info + rankings) llega renderizado desde el server; ya no hay
   // un fetch cliente duplicado ni estado de carga para esta sección.
   const artist = detail.artist;
@@ -102,6 +109,15 @@ export function ArtistClient({ detail, albumsTotal, tracksTotal }: ArtistClientP
     { id: "tracks", label: t("tracksLabel") },
   ];
 
+  // `tierlistId` solo llega con un JWT válido, así que su ausencia significa
+  // "sin sesión" o "todavía no armó ninguna" — el link cambia en consecuencia.
+  const builderHref = `/artist/${artist.deezerId}/tierlist`;
+  const tierlistHref = artist.tierlistId
+    ? `${builderHref}?edit=${artist.tierlistId}`
+    : hasSession
+      ? builderHref
+      : `/login?callbackUrl=${encodeURIComponent(builderHref)}`;
+
   return (
     <div className="relative min-h-screen bg-mb-bg text-mb-text font-sans">
       {/* Back button */}
@@ -153,6 +169,20 @@ export function ArtistClient({ detail, albumsTotal, tracksTotal }: ArtistClientP
                 reviewsCount: artist.reviewCount ?? 0,
               })}
             </p>
+            <div
+              aria-hidden
+              className="hidden md:block h-px w-45 mt-4.5"
+              style={{ background: "linear-gradient(90deg,#6B35D4,transparent)" }}
+            />
+            <div className="flex justify-center md:justify-start mt-5">
+              <Link
+                href={tierlistHref}
+                className="inline-flex items-center gap-2 min-h-11 px-5 bg-mb-primary hover:bg-mb-primary-h rounded-[10px] text-sm font-semibold text-white shadow-[0_6px_20px_rgba(107,53,212,0.35)] transition-colors"
+              >
+                <List className="w-4.5 h-4.5" aria-hidden />
+                {artist.tierlistId ? t("editTierlist") : t("buildTierlist")}
+              </Link>
+            </div>
           </div>
         </div>
       </section>

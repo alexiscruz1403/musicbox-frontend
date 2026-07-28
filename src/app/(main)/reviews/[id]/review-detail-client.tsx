@@ -3,21 +3,12 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { ArrowLeft, MoreVertical, Pencil, Trash2, Flag, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
-import {
-  apiDeleteReview,
-  apiGetComments,
-  apiCreateComment,
-  apiDeleteComment,
-  generateIdempotencyKey,
-  ApiError,
-} from "@/lib/api";
+import { apiDeleteReview, generateIdempotencyKey, ApiError } from "@/lib/api";
 import { sendReaction } from "@/lib/reactions";
 import { ratingColor, timeAgo, getInitials, coverGradient } from "@/lib/review-format";
-import { useInfiniteScrollSentinel } from "@/hooks/use-infinite-scroll-sentinel";
+import { CommentsSection } from "@/components/social/comments-section";
 import { ReportModal } from "@/components/reports/report-modal";
 import type { ReviewDetail, ReactionType, ReportTargetType } from "@/types/api";
 
@@ -52,40 +43,13 @@ export function ReviewDetailClient({
   const [likes, setLikes] = useState(review.likesCount);
   const [dislikes, setDislikes] = useState(review.dislikesCount);
   const [commentsCount, setCommentsCount] = useState(review.commentsCount);
-  const [draftComment, setDraftComment] = useState("");
-  const [commentError, setCommentError] = useState<string | null>(null);
-  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [isPending, startTransition] = useTransition();
   const [, startReactionTransition] = useTransition();
-  const [commentPending, startCommentTransition] = useTransition();
 
   const rating = Number(review.rating);
-
-  const {
-    data: commentPages,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isFetching: commentsFetching,
-    refetch: refetchComments,
-  } = useInfiniteQuery({
-    queryKey: ["review-comments", review.id],
-    queryFn: ({ pageParam }) => apiGetComments(review.id, pageParam as string | undefined),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
-    staleTime: 30 * 1000,
-  });
-
-  const comments = (commentPages?.pages ?? []).flatMap((p) => p.data.items);
-
-  const commentsSentinelRef = useInfiniteScrollSentinel({
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  });
 
   const targetKind = review.type === "ALBUM" ? "album" : "track";
   const targetHref = review.targetDeezerId ? `/${targetKind}/${review.targetDeezerId}` : null;
@@ -117,41 +81,6 @@ export function ReviewDetailClient({
         setReaction(prevReaction);
         setLikes(prevLikes);
         setDislikes(prevDislikes);
-      }
-    });
-  }
-
-  function addComment() {
-    const text = draftComment.trim();
-    if (!text || !accessToken) return;
-    setCommentError(null);
-    setCommentsCount((c) => c + 1);
-    startCommentTransition(async () => {
-      try {
-        await apiCreateComment(accessToken, review.id, text, generateIdempotencyKey());
-        setDraftComment("");
-        await refetchComments();
-      } catch (err) {
-        setCommentsCount((c) => c - 1);
-        const apiErr = err as ApiError;
-        setCommentError(apiErr.message || t("commentPostError"));
-      }
-    });
-  }
-
-  function handleDeleteComment(commentId: string) {
-    if (!accessToken) return;
-    if (!window.confirm(t("confirmDeleteComment"))) return;
-    setCommentsCount((c) => c - 1);
-    setDeletingCommentId(commentId);
-    startCommentTransition(async () => {
-      try {
-        await apiDeleteComment(accessToken, commentId);
-        await refetchComments();
-      } catch {
-        setCommentsCount((c) => c + 1);
-      } finally {
-        setDeletingCommentId(null);
       }
     });
   }
@@ -431,151 +360,23 @@ export function ReviewDetailClient({
         </div>
 
         {/* Comments */}
-        <section>
-          <h2 className="font-serif font-normal text-[22px] text-mb-text mb-5">
-            {t("commentsHeading", { count: commentsCount })}
-          </h2>
-
-          {accessToken ? (
-            <div className="flex gap-3 mb-7">
-              <span
-                aria-hidden
-                className="shrink-0 w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-xs font-semibold text-mb-accent"
-              >
-                {getInitials(currentUserDisplayName)}
-              </span>
-              <div className="flex-1 min-w-0">
-                <textarea
-                  value={draftComment}
-                  onChange={(e) => setDraftComment(e.target.value)}
-                  placeholder={t("commentPlaceholder")}
-                  className="w-full min-h-11 p-2.5 bg-mb-input border border-mb-border focus:border-mb-primary rounded-lg text-mb-text placeholder:text-mb-dim outline-none transition-colors resize-y text-sm leading-relaxed"
-                />
-                {commentError && (
-                  <p role="alert" className="text-mb-error text-xs mt-1.5">
-                    {commentError}
-                  </p>
-                )}
-                <div className="flex justify-end mt-2.5">
-                  <button
-                    type="button"
-                    onClick={addComment}
-                    disabled={draftComment.trim().length === 0 || commentPending}
-                    className={cn(
-                      "min-h-10 px-4.5 rounded-lg font-semibold text-sm transition-colors",
-                      draftComment.trim().length === 0 || commentPending
-                        ? "bg-mb-border text-mb-dim cursor-not-allowed"
-                        : "bg-mb-primary hover:bg-mb-primary-h text-white cursor-pointer",
-                    )}
-                  >
-                    {t("commentSubmit")}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-mb-muted text-sm mb-7">
-              <Link href="/login" className="text-mb-accent hover:underline">
-                {t("loginLinkLabel")}
-              </Link>{" "}
-              {t("loginToCommentSuffix")}
-            </p>
-          )}
-
-          {commentsFetching && comments.length === 0 ? (
-            <div className="flex flex-col gap-5">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex gap-3 animate-pulse">
-                  <div className="shrink-0 w-9 h-9 rounded-full bg-mb-input" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 w-1/4 rounded bg-mb-input" />
-                    <div className="h-3 w-4/5 rounded bg-mb-input" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : comments.length === 0 ? (
-            <p className="text-mb-muted text-sm">{t("noCommentsYet")}</p>
-          ) : (
-            <>
-              <div className="flex flex-col gap-5">
-                {comments.map((c) => (
-                  <div key={c.id} className="flex gap-3">
-                    {c.user.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={c.user.avatarUrl}
-                        alt={t("avatarAlt", { name: c.user.displayName })}
-                        className="shrink-0 w-9 h-9 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span
-                        aria-hidden
-                        className="shrink-0 w-9 h-9 rounded-full bg-mb-dp flex items-center justify-center text-xs font-semibold text-mb-accent"
-                      >
-                        {getInitials(c.user.displayName)}
-                      </span>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-1.5 flex-wrap mb-1">
-                        <span className="text-sm font-medium text-mb-text">{c.user.displayName}</span>
-                        {c.user.handle && (
-                          <Link
-                            href={`/u/${c.user.handle}`}
-                            className="font-mono text-xs text-mb-muted hover:text-mb-accent"
-                          >
-                            @{c.user.handle}
-                          </Link>
-                        )}
-                        <span className="text-xs text-mb-dim">· {timeAgo(c.createdAt)}</span>
-                      </div>
-                      <p className="text-sm leading-relaxed text-mb-text">{c.content}</p>
-                      {currentUserId === c.userId ? (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteComment(c.id)}
-                          disabled={commentPending && deletingCommentId === c.id}
-                          aria-label={t("deleteCommentAriaLabel")}
-                          className="min-h-8 py-1 mt-1 bg-transparent border-none text-mb-dim text-xs font-medium cursor-pointer hover:text-mb-error transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          {commentPending && deletingCommentId === c.id ? t("deletingLabel") : t("deleteAction")}
-                        </button>
-                      ) : (
-                        currentUserId && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setReportTarget({
-                                targetType: "COMMENT",
-                                targetId: c.id,
-                                previewTitle: c.content.slice(0, 140),
-                                previewSubtitle: c.user.handle
-                                  ? t("byHandle", { handle: c.user.handle })
-                                  : undefined,
-                              })
-                            }
-                            aria-label={t("reportCommentAriaLabel")}
-                            className="min-h-8 py-1 mt-1 bg-transparent border-none text-mb-dim text-xs font-medium cursor-pointer hover:text-mb-error transition-colors"
-                          >
-                            {t("reportAction")}
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div ref={commentsSentinelRef} className="h-8 flex items-center justify-center mt-4">
-                {isFetchingNextPage && (
-                  <div
-                    className="w-5 h-5 rounded-full border-2 border-mb-primary border-t-transparent animate-spin"
-                    aria-label={t("loadingMoreCommentsAriaLabel")}
-                  />
-                )}
-              </div>
-            </>
-          )}
-        </section>
+        <CommentsSection
+          target="reviews"
+          targetId={review.id}
+          commentsCount={commentsCount}
+          onCommentsCountChange={(delta) => setCommentsCount((c) => c + delta)}
+          currentUserId={currentUserId}
+          currentUserDisplayName={currentUserDisplayName}
+          accessToken={accessToken}
+          onReport={(target) =>
+            setReportTarget({
+              targetType: "COMMENT",
+              targetId: target.commentId,
+              previewTitle: target.content.slice(0, 140),
+              previewSubtitle: target.handle ? t("byHandle", { handle: target.handle }) : undefined,
+            })
+          }
+        />
       </div>
 
       {reportTarget && accessToken && (
